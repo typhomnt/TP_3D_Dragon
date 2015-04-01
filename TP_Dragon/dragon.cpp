@@ -23,6 +23,7 @@ void Dragon::draw(){
     //drawBody();
     //glRotatef(M_PI/2,1.0,0.0,0.0);
     drawTail();
+    c->draw();
     glPopMatrix();
 
 }
@@ -33,7 +34,7 @@ void Dragon::drawTail(){
     glFogi(GL_FOG_MODE, GL_EXP);
     glFogfv(GL_FOG_COLOR, fog);
     glFogf(GL_FOG_DENSITY, 0.35);*/
-    glScalef(T_TAIL,T_TAIL ,T_TAIL);
+    /*glScalef(T_TAIL,T_TAIL ,T_TAIL);
     c->draw();
     glPushMatrix();
 
@@ -48,6 +49,6 @@ void Dragon::drawTail(){
     glScalef(0.5,0.5,1.0);
     c->draw();
     glPopMatrix();
-    glTranslatef(0,0,1);
+    glTranslatef(0,0,1);*/
     glutSolidSphere(0.4,100,100);
 }
