@@ -12,7 +12,7 @@
 class Cylinder : public Renderable {
 
 public:
-    Cylinder(int height = 1, int radius = 1, int step = 60);
+    Cylinder(double height = 1, double radius = 1, int step = 60);
     ~Cylinder();
 
     void init(Viewer &v);
@@ -22,8 +22,8 @@ private:
     void drawImmediate();
     void drawArrays();
 
-    int h;     // Height
-    int r;     // Radius
+    double h;     // Height
+    double r;     // Radius
     int step;  // Number of steps
     GLfloat *allVertices;  // Vertices
     GLfloat *allNormals;   // Normals

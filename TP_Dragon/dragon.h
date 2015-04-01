@@ -16,6 +16,7 @@ public:
     Dragon();
     ~Dragon();
     void draw();
+    void init(Viewer &v);
 
 private :
     void drawBody();

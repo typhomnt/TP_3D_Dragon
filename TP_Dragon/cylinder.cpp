@@ -3,7 +3,7 @@
 #include "cylinder.h"
 
 /* *** CONSTRUCTOR - DESTRUCTOR *** */
-Cylinder::Cylinder(int height, int radius, int step) {
+Cylinder::Cylinder(double height, double radius, int step) {
     this->h = height;
     this->r = radius;
     this->step = step;
