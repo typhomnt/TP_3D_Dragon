@@ -1,5 +1,5 @@
-#ifndef _CYLINDER_
-#define _CYLINDER_
+#ifndef CYLINDER_H
+#define CYLINDER_H
 
 #include "renderable.h"
 #ifndef __APPLE__
@@ -8,22 +8,26 @@
 #include <GLUT/glut.h>
 #endif
 
-class Cylinder : public Renderable
-{
- public :
-    void draw();
-    //Cylinder(GLfloat r, GLfloat h, int s);
-    //~Cylinder();
-    //void init(Viewer & v);
 
- private:
+class Cylinder : public Renderable {
+
+public:
+    Cylinder(int height = 1, int radius = 1, int step = 60);
+    ~Cylinder();
+
+    void init(Viewer &v);
+    void draw();
+
+private:
     void drawImmediate();
-    void drawElements();
     void drawArrays();
-    GLfloat radius;
-    GLfloat height;
-    int step;
-    GLfloat *vertex;
-    GLfloat *normal;
+
+    int h;     // Height
+    int r;     // Radius
+    int step;  // Number of steps
+    GLfloat *allVertices;  // Vertices
+    GLfloat *allNormals;   // Normals
 };
-#endif
+
+
+#endif // CYLINDER_H
