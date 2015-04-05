@@ -3,6 +3,7 @@
 #include "renderable.h"
 #include "shader.h"
 #include "cylinder.h"
+#include "trapezeIsocele.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -18,7 +19,11 @@ public:
 private :
     void drawBody();
     void drawTail();
+
     Cylinder *c;
+    TrapezeIsocele *t;
+    TrapezeIsocele *t2;
+
     //std::vector<Renderable> component_list;
     void drawBasePlane(float size);
 

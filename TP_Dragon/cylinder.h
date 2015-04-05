@@ -2,11 +2,6 @@
 #define CYLINDER_H
 
 #include "renderable.h"
-#ifndef __APPLE__
-#include <GL/glut.h>
-#else
-#include <GLUT/glut.h>
-#endif
 
 
 class Cylinder : public Renderable {
@@ -18,6 +13,8 @@ public:
     void init(Viewer &v);
     void draw();
 
+    void updateTexture(GLint texture0, GLint texcoord0);
+
 private:
     void drawImmediate();
     void drawArrays();
@@ -27,6 +24,9 @@ private:
     int step;  // Number of steps
     GLfloat *allVertices;  // Vertices
     GLfloat *allNormals;   // Normals
+
+    GLint texture0;
+    GLint texcoord0;
 };
 
 

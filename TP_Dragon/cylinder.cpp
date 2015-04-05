@@ -1,5 +1,12 @@
 #include <iostream>
 #include <cmath>
+#ifndef __APPLE__
+    #include <GL/glew.h>
+    #include <GL/glut.h>
+#else
+    #include <GLUT/glut.h>
+#endif
+
 #include "cylinder.h"
 
 /* *** CONSTRUCTOR - DESTRUCTOR *** */
@@ -10,6 +17,9 @@ Cylinder::Cylinder(double height, double radius, int step) {
 
     this->allNormals = new GLfloat[12*step+17];
     this->allVertices = new GLfloat[12*step+17];
+
+    this->texture0 = 0;
+    this->texcoord0 = 0;
 }
 
 Cylinder::~Cylinder() {
@@ -77,6 +87,11 @@ void Cylinder::draw() {
     glPopMatrix();
 }
 
+void Cylinder::updateTexture(GLint texture0, GLint texcoord0) {
+    this->texture0 = texture0;
+    this->texcoord0 = texcoord0;
+}
+
 
 
 /* *** PRIVATE METHODS *** */
@@ -98,6 +113,7 @@ void Cylinder::drawImmediate() {
     // Lateral face
     glBegin(GL_QUAD_STRIP);
         for (int i = 6*step+12; i <= 12*step+12; i+=6) {
+            glVertexAttrib2f(texcoord0, 0, 0);
             glNormal3f(allNormals[i], allNormals[i+1], allNormals[i+2]);
             glVertex3f(allVertices[i], allVertices[i+1], allVertices[i+2]);
             glVertex3f(allVertices[i+3], allVertices[i+4], allVertices[i+5]);
