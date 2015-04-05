@@ -61,9 +61,9 @@ void Dragon::draw(){
     //draw the body
     //drawBody();
     //glRotatef(M_PI/2,1.0,0.0,0.0);
-    //drawTail();
+    drawTail();
     //c->draw();
-    drawBasePlane(5.0);
+    //drawBasePlane(5.0);
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));

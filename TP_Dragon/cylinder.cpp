@@ -15,8 +15,8 @@ Cylinder::Cylinder(double height, double radius, int step) {
     this->r = radius;
     this->step = step;
 
-    this->allNormals = new GLfloat[12*step+17];
-    this->allVertices = new GLfloat[12*step+17];
+    this->allNormals  = new GLfloat[18*step + 30];
+    this->allVertices = new GLfloat[18*step + 30];
 
     this->texture0 = 0;
     this->texcoord0 = 0;
@@ -66,15 +66,24 @@ void Cylinder::init(Viewer &v) {
 
     // Lateral face
     j = 0;
-    for (int i = 6*step+12; i <= 12*step+12; i+=6) {
+    for (int i = 6*step+12; i <= 18*step+12; i+=12) {
         allNormals[i] = allNormals[i+3] = cos(j*ANGLE);
         allNormals[i+1] = allNormals[i+4] = sin(j*ANGLE);
         allNormals[i+2] = allNormals[i+5] = 0;
+
+        allNormals[i+6] = allNormals[i+9] = cos((j+1)*ANGLE);
+        allNormals[i+7] = allNormals[i+10] = sin((j+1)*ANGLE);
+        allNormals[i+8] = allNormals[i+11] = 0;
 
         allVertices[i] = allVertices[i+3] = r * cos(j*ANGLE);
         allVertices[i+1] = allVertices[i+4] = r * sin(j*ANGLE);
         allVertices[i+2] = 0;
         allVertices[i+5] = h;
+
+        allVertices[i+6] = allVertices[i+9] = r * cos((j+1)*ANGLE);
+        allVertices[i+7] = allVertices[i+10] = r * sin((j+1)*ANGLE);
+        allVertices[i+11] = 0;
+        allVertices[i+8] = h;
 
         j++;
     }
@@ -111,16 +120,20 @@ void Cylinder::drawImmediate() {
     glEnd();
 
     // Lateral face
-    glBegin(GL_QUAD_STRIP);
-        for (int i = 6*step+12; i <= 12*step+12; i+=6) {
-            glVertexAttrib2f(texcoord0, 0, 0);
+    glBegin(GL_QUADS);
+        for (int i = 6*step+12; i <= 18*step+12; i+=12) {
             glNormal3f(allNormals[i], allNormals[i+1], allNormals[i+2]);
+            glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(allVertices[i], allVertices[i+1], allVertices[i+2]);
+            glVertexAttrib2f(texcoord0, 1, 0);
             glVertex3f(allVertices[i+3], allVertices[i+4], allVertices[i+5]);
+            glVertexAttrib2f(texcoord0, 1, 1);
+            glVertex3f(allVertices[i+6], allVertices[i+7], allVertices[i+8]);
+            glVertexAttrib2f(texcoord0, 0, 1);
+            glVertex3f(allVertices[i+9], allVertices[i+10], allVertices[i+11]);
         }
     glEnd();
 }
-
 void Cylinder::drawArrays() {
     // activate the use of GL_VERTEX_ARRAY and GL_NORMAL_ARRAY
     glEnableClientState(GL_NORMAL_ARRAY);
