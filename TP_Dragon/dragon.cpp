@@ -51,24 +51,7 @@ void Dragon::init(Viewer &v) {
     GLCHECK(glUniform1i( texture0, 0 ) );
 }
 
-void Dragon::draw(){
 
-    // load the texture shader program: use this program instead of the fixed pipeline
-    GLCHECK(glUseProgram( (GLint)program ));
-
-    glPushMatrix();
-
-    //draw the body
-    //drawBody();
-    //glRotatef(M_PI/2,1.0,0.0,0.0);
-    drawTail();
-    //c->draw();
-    //drawBasePlane(5.0);
-    glPopMatrix();
-
-    GLCHECK(glUseProgram( 0 ));
-
-}
 
 void Dragon::drawBasePlane(float size) {
     GLCHECK(glActiveTexture(GL_TEXTURE0));
@@ -125,30 +108,73 @@ GLuint Dragon::loadTexture(const char *filename, bool mipmap)
     return id;
 }
 
+void Dragon::draw(){
 
-
-void Dragon::drawTail(){
     /*glEnable(GL_FOG);
     GLfloat fog[4] = {0.5,0.5,0.5,1};
     glFogi(GL_FOG_MODE, GL_EXP);
     glFogfv(GL_FOG_COLOR, fog);
     glFogf(GL_FOG_DENSITY, 0.35);*/
-
+    GLCHECK(glUseProgram( (GLint)program ));
     GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_body));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     c->updateTexture(texture0, texcoord0);
+    glPushMatrix();
 
-    // Corps
     glScalef(T_TAIL,T_TAIL ,T_TAIL);
+
+    drawBody();
+
+    glPushMatrix();
+    drawTail();
+    glPopMatrix();
+
+    glPushMatrix();
+    drawHead();
+    glPopMatrix();
+
+    glPushMatrix();
+    drawPaw(true);
+    glPopMatrix();
+
+    glPushMatrix();
+    drawPaw(false);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.0,0.0,7.0);
+    drawPaw(true);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.0,0.0,7.0);
+    drawPaw(false);
+    glPopMatrix();
+
+    glPushMatrix();
+    drawWing(true);
+    glPopMatrix();
+
+    glPushMatrix();
+    drawWing(false);
+    glPopMatrix();
+
+    glPopMatrix();
+
+
+    GLCHECK(glUseProgram( 0 ));
+}
+
+void Dragon::drawBody() {
     glScalef(4.0,4.0,4.0);
     c->draw();
     glScalef(0.25,0.25,0.25);
-    glPushMatrix();
+}
 
-    //Queue
+void Dragon::drawTail() {
     glTranslatef(0,0,8.5);
     glutSolidSphere(0.2,100,100);
     glTranslatef(0,0,0.5);
@@ -183,11 +209,9 @@ void Dragon::drawTail(){
 
     glTranslatef(0,0,2);
     glutSolidSphere(0.4,100,100);
-    glPopMatrix();
-    //glPopMatrix();
+}
 
-    // Tete
-    glPushMatrix();
+void Dragon::drawHead() {
     glTranslatef(0,0,-0.5);
     glutSolidSphere(0.2,100,100);
     glTranslatef(0,0,-2.5);
@@ -221,18 +245,39 @@ void Dragon::drawTail(){
     glRotatef(-45.0,1.0,0.0,0.0);
     glutSolidCone(0.5,1.5,100,100);
     glPopMatrix();
+}
 
-    glPopMatrix();
+void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
+    if (leftPaw)
+        glRotatef(-90.0,1.0,0.0,0.0);
+    else
+        glRotatef(90.0,1.0,0.0,0.0);
 
-    // Patte avant gauche
+    if (leftClaw)
+        glRotatef(-30.0,0.0,1.0,0.0);
+    else
+        glRotatef(30.0,0.0,1.0,0.0);
 
-    glPushMatrix();
-    glRotatef(-70.0,1.0,0.0,0.0);
+    glTranslatef(0.0,0.0,1.2);
+    glutSolidCone(0.2,1.5,100,100);
+}
+
+void Dragon::drawPaw(bool left) {
+    if (left)
+        glRotatef(-70.0,1.0,0.0,0.0);
+    else
+        glRotatef(70.0,1.0,0.0,0.0);
+
     glRotatef(-60.0,0.0,1.0,0.0);
     glTranslatef(0.0,0.0,2.5);
     glutSolidSphere(0.2,100,100);
     glTranslatef(0.0,0.0,0.5);
-    glRotatef(-20.0,1.0,0.0,0.0);
+
+    if (left)
+        glRotatef(-20.0,1.0,0.0,0.0);
+    else
+        glRotatef(20.0,1.0,0.0,0.0);
+
     c->draw();
     glTranslatef(0.0,0.0,2.5);
     glutSolidSphere(0.2,100,100);
@@ -246,187 +291,47 @@ void Dragon::drawTail(){
     glutSolidSphere(1.0,100,100);
 
     glPushMatrix();
-    glRotatef(-90.0,1.0,0.0,0.0);
-    glRotatef(-30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
+    drawClaw(left, true);
     glPopMatrix();
 
     glPushMatrix();
-    glRotatef(-90.0,1.0,0.0,0.0);
-    glRotatef(30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
-    glPopMatrix();
-
-    glPopMatrix();
-    // Patte avant droite
-
-    glPushMatrix();
-    glRotatef(70.0,1.0,0.0,0.0);
-    glRotatef(-60.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    glRotatef(20.0,1.0,0.0,0.0);
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,3.5);
-    glutSolidSphere(1.0,100,100);
-
-    glPushMatrix();
-    glRotatef(90.0,1.0,0.0,0.0);
-    glRotatef(30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
-    glPopMatrix();
-
-    glPushMatrix();
-    glRotatef(90.0,1.0,0.0,0.0);
-    glRotatef(-30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
-    glPopMatrix();
-
-    glPopMatrix();
-
-    // Patte arrière gauche
-
-    glPushMatrix();
-    glTranslatef(0.0,0.0,7.0);
-    glRotatef(-70.0,1.0,0.0,0.0);
-    glRotatef(-60.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    glRotatef(-20.0,1.0,0.0,0.0);
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,3.5);
-    glutSolidSphere(1.0,100,100);
-
-    glPushMatrix();
-    glRotatef(-90.0,1.0,0.0,0.0);
-    glRotatef(-30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
-    glPopMatrix();
-
-    glPushMatrix();
-    glRotatef(-90.0,1.0,0.0,0.0);
-    glRotatef(30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
-    glPopMatrix();
-
-    glPopMatrix();
-
-    // Patte avant droite
-
-    glPushMatrix();
-    glTranslatef(0.0,0.0,7.0);
-    glRotatef(70.0,1.0,0.0,0.0);
-    glRotatef(-60.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    glRotatef(20.0,1.0,0.0,0.0);
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,3.5);
-    glutSolidSphere(1.0,100,100);
-
-    glPushMatrix();
-    glRotatef(90.0,1.0,0.0,0.0);
-    glRotatef(30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
-    glPopMatrix();
-
-    glPushMatrix();
-    glRotatef(90.0,1.0,0.0,0.0);
-    glRotatef(-30.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,1.2);
-    glutSolidCone(0.2,1.5,100,100);
-    glPopMatrix();
-
-    glPopMatrix();
-
-    // Aile gauche
-
-    glPushMatrix();
-    glTranslatef(0.0,2.5,0.5);
-    glRotatef(-30.0,0.0,0.0,1.0);
-    glScalef(0.4,0.4,3.5);
-    c->draw();
-    glScalef(2.5,2.5,1.0/3.5);
-    glTranslatef(0.0,0.5,0.0);
-    t->draw();
-    glTranslatef(0.0,5.5,1.0);
-    glScalef(0.4,0.4,2.5);
-    c->draw();
-    glScalef(2.5,2.5,0.4);
-    glTranslatef(0.0,0.5,0.0);
-    glRotatef(20.0,0.0,0.0,1.0);
-    glScalef(1.0,1.0,5.0/7.0);
-    t->draw();
-    glScalef(1.0,1.0,7.0/5.0);
-    glTranslatef(0.0,5.5,5.0/7.0);
-    glScalef(0.4,0.4,25.0/14.0);
-    c->draw();
-    glScalef(2.5,2.5,14.0/25.0);
-    glTranslatef(0.0,0.5,0.0);
-    t2->draw();
-    glPopMatrix();
-
-    // Aile droite
-
-    glPushMatrix();
-    glTranslatef(0.0,-2.5,0.5);
-    glRotatef(210.0,0.0,0.0,1.0);
-    glScalef(0.4,0.4,3.5);
-    c->draw();
-    glScalef(2.5,2.5,1.0/3.5);
-    glTranslatef(0.0,0.5,0.0);
-    t->draw();
-    glTranslatef(0.0,5.5,1.0);
-    glScalef(0.4,0.4,2.5);
-    c->draw();
-    glScalef(2.5,2.5,0.4);
-    glTranslatef(0.0,0.5,0.0);
-    glRotatef(-20.0,0.0,0.0,1.0);
-    glScalef(1.0,1.0,5.0/7.0);
-    t->draw();
-    glScalef(1.0,1.0,7.0/5.0);
-    glTranslatef(0.0,5.5,5.0/7.0);
-    glScalef(0.4,0.4,25.0/14.0);
-    c->draw();
-    glScalef(2.5,2.5,14.0/25.0);
-    glTranslatef(0.0,0.5,0.0);
-    t2->draw();
+    drawClaw(left, false);
     glPopMatrix();
 }
 
+void Dragon::drawWing(bool left){
+    if (left) {
+        glTranslatef(0.0,2.5,0.5);
+        glRotatef(-30.0,0.0,0.0,1.0);
+    } else {
+        glTranslatef(0.0,-2.5,0.5);
+        glRotatef(210.0,0.0,0.0,1.0);
+    }
 
+    glScalef(0.4,0.4,3.5);
+    c->draw();
+    glScalef(2.5,2.5,1.0/3.5);
+    glTranslatef(0.0,0.5,0.0);
+    t->draw();
+    glTranslatef(0.0,5.5,1.0);
+    glScalef(0.4,0.4,2.5);
+    c->draw();
+    glScalef(2.5,2.5,0.4);
+    glTranslatef(0.0,0.5,0.0);
+
+    if (left)
+        glRotatef(20.0,0.0,0.0,1.0);
+    else
+        glRotatef(-20.0,0.0,0.0,1.0);
+
+    glScalef(1.0,1.0,5.0/7.0);
+    t->draw();
+    glScalef(1.0,1.0,7.0/5.0);
+    glTranslatef(0.0,5.5,5.0/7.0);
+    glScalef(0.4,0.4,25.0/14.0);
+    c->draw();
+    glScalef(2.5,2.5,14.0/25.0);
+    glTranslatef(0.0,0.5,0.0);
+    t2->draw();
+}
 

@@ -19,6 +19,12 @@ public:
 private :
     void drawBody();
     void drawTail();
+    void drawHead();
+    // Draw the left claw of the left paw if leftPaw==true and leftClaw==true
+    void drawClaw(bool leftPaw, bool leftClaw);
+    // Draw the left paw if left==true else the right paw
+    void drawPaw(bool left);
+    void drawWing(bool left);
 
     Cylinder *c;
     TrapezeIsocele *t;
