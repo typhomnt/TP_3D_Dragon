@@ -146,14 +146,14 @@ void DynamicSystem::createTestCollisions() {
 void DynamicSystem::draw()
 {
     // Particles
-    glColor3f(1,0,0);
+    glColor3f(0,1,0);
     std::vector<Particle *>::iterator itP;
     for (itP = particles.begin(); itP != particles.end(); ++itP) {
         (*itP)->draw();
     }
 
     // Springs
-    glColor3f(1.0, 0.28, 0.0);
+    glColor3f(0.0, 0.28, 1.0);
     glLineWidth(5.0);
     std::vector<Spring *>::iterator itS;
     for (itS = springs.begin(); itS != springs.end(); ++itS) {
@@ -161,7 +161,7 @@ void DynamicSystem::draw()
     }
 
     // Ground :
-    glColor3f(0.0, 0.0, 1.0);
+    glColor3f(1.0, 0.0, 0.0);
     glBegin(GL_QUADS);
     glVertex3f(-10.0f, -10.0f, 0.0f);
     glVertex3f(-10.0f, 10.0f,  0.0f);
@@ -298,8 +298,6 @@ void DynamicSystem::collisionParticleParticle(Particle *p1, Particle *p2)
     penetration -= (p1->getRadius() + p2->getRadius());
     if (penetration >= 0)
         return;
-
-    std::cout << "collision" << std::endl;
     n.normalize();
     double m1 = p1->getMass(), m2 = p2->getMass();
 

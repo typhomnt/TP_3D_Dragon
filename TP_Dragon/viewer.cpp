@@ -1,6 +1,7 @@
 #include <QKeyEvent>
 
 #ifndef __APPLE__
+#include <GL/glew.h>
 #include <GL/glut.h>
 #else
 #include <GLUT/glut.h>
@@ -9,13 +10,15 @@
 #include "viewer.h"
 #include "renderable.h"
 
-Viewer::Viewer() {
+Viewer::Viewer( const QGLFormat& format )
+  : QGLViewer( format )
+{
 }
 
 Viewer::~Viewer()
 {
-	list<Renderable *>::iterator it;
-	for (it = renderableList.begin(); it != renderableList.end(); ++it) {
+	for (std::list<Renderable *>::iterator it = renderableList.begin(),
+	    end = renderableList.end(); it != end; ++ it ) {
  		delete(*it);
 	}
 	renderableList.clear();
@@ -23,32 +26,41 @@ Viewer::~Viewer()
 
 void Viewer::addRenderable(Renderable *r)
 {
-        renderableList.push_back(r);
+  renderableList.push_back(r);
 }
 
 void Viewer::init()
 {
-        // glut initialisation (mandatory) 
-        int dum = 0;
-  	glutInit(&dum, NULL);
+	// glut initialisation (mandatory)
+	int dum = 0;
+	glutInit(&dum, NULL);
 
+#ifndef __APPLE__
+	// glew initialization for extensions
+  GLenum err = glewInit();
+  if (err != GLEW_OK) {
+	  //fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+	  std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
+	  exit(1); 
+  }
+#endif
 	//=== VIEWING PARAMETERS
 	restoreStateFromFile();   // Restore previous viewer state.
 
-	toogleWireframe = false;  // filled faces
-	toogleLight = true;       // light on
-	help();                   // display help
+	toggleWireframe = false;  // filled faces
+	toggleLight = true;       // light on
+	//help();                   // display help
 
-	if (toogleLight == true)
+	if (toggleLight == true)
 		glEnable(GL_LIGHTING);
 	else
 		glDisable(GL_LIGHTING);
 	
-	setSceneRadius(5.0f);
+	setSceneRadius(30.0f);
 
-	list<Renderable *>::iterator it;
-	for (it = renderableList.begin(); it != renderableList.end(); ++it) {
-	        (*it)->init(*this);
+	for (std::list<Renderable *>::iterator it = renderableList.begin(),
+			end = renderableList.end(); it != end; ++ it ) {
+		(*it)->init(*this);
 	}
 }
 
@@ -56,8 +68,8 @@ void Viewer::init()
 void Viewer::draw()
 {  
 	// draw every objects in renderableList
-	list<Renderable *>::iterator it;
-	for(it = renderableList.begin(); it != renderableList.end(); ++it) {
+	for (std::list<Renderable *>::iterator it = renderableList.begin(),
+			end = renderableList.end(); it != end; ++ it ) {
 		(*it)->draw();
 	}
 }
@@ -66,8 +78,8 @@ void Viewer::draw()
 void Viewer::animate()
 {
 	// animate every objects in renderableList
-	list<Renderable *>::iterator it;
-	for(it = renderableList.begin(); it != renderableList.end(); ++it) {
+	for (std::list<Renderable *>::iterator it = renderableList.begin(),
+			end = renderableList.end(); it != end; ++ it ) {
 		(*it)->animate();
 	}
 	
@@ -80,9 +92,9 @@ void Viewer::animate()
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
 	// all renderables may respond to key events
-	list<Renderable *>::iterator it;
-	for(it = renderableList.begin(); it != renderableList.end(); ++it) {
-	  (*it)->mouseMoveEvent(e, *this);
+	for (std::list<Renderable *>::iterator it = renderableList.begin(),
+			end = renderableList.end(); it != end; ++ it ) {
+		(*it)->mouseMoveEvent(e, *this);
 	}
 	
 	// default QGLViewer behaviour
@@ -96,21 +108,21 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 	const Qt::KeyboardModifiers modifiers = e->modifiers();
 
 	// all renderables may respond to key events
-	list<Renderable *>::iterator it;
-	for(it = renderableList.begin(); it != renderableList.end(); ++it) {
+  for (std::list<Renderable *>::iterator it = renderableList.begin(),
+      end = renderableList.end(); it != end; ++ it ) {
 	  (*it)->keyPressEvent(e, *this);
 	}
 
 	if ((e->key()==Qt::Key_W) && (modifiers==Qt::NoButton)) {
 	// events with modifiers: CTRL+W, ALT+W, ... to handle separately
-		toogleWireframe = !toogleWireframe;
-		if (toogleWireframe)
+		toggleWireframe = !toggleWireframe;
+		if (toggleWireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		else
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	} else if ((e->key()==Qt::Key_L) && (modifiers==Qt::NoButton)) {
-		toogleLight = !toogleLight;
-		if (toogleLight == true)
+		toggleLight = !toggleLight;
+		if (toggleLight == true)
 			glEnable(GL_LIGHTING);
 		else
 			glDisable(GL_LIGHTING);       
