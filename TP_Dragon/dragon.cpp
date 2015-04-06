@@ -34,7 +34,7 @@ static float no_shininess(0.0f);
 static float low_shininess(5.0f);
 static float high_shininess(50.0f);
 
-static Light light(vec4(0, 0, 1, 1), black, white, white);
+static Light light(vec4(30, 30, 30, 1), black, white, white);
 
 static const Material material(mat_ambient_color, mat_diffuse, white, low_shininess);
 
@@ -286,7 +286,7 @@ void Dragon::drawHead() {
     c->draw();
     glTranslatef(0,0,-2.5);
 
-
+    
     GLCHECK(glUseProgram(lighting));
     GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ka"), 1, &material.ka.x));
     GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.kd"), 1, &material.kd.x));
@@ -309,6 +309,7 @@ void Dragon::drawHead() {
     glPopMatrix();
     
     GLCHECK(glUseProgram(0));
+    GLCHECK(glUseProgram(program));
 }
 
 
@@ -324,8 +325,15 @@ void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
     else
         glRotatef(30.0,0.0,1.0,0.0);
 
+    GLCHECK(glUseProgram(lighting));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ka"), 1, &material.ka.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.kd"), 1, &material.kd.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ks"), 1, &material.ks.x));
+    GLCHECK(glUniform1f(glGetUniformLocation(lighting, "material.shininess"), material.shininess));
     glTranslatef(0.0,0.0,1.2);
     glutSolidCone(0.2,1.5,100,100);
+
+    GLCHECK(glUseProgram(program));
 }
 
 
@@ -339,6 +347,7 @@ void Dragon::drawPaw(bool left) {
     glRotatef(-60.0,0.0,1.0,0.0);
     glTranslatef(0.0,0.0,2.5);
     glutSolidSphere(0.2,100,100);
+
     glTranslatef(0.0,0.0,0.5);
 
     if (left)
@@ -356,7 +365,14 @@ void Dragon::drawPaw(bool left) {
     glTranslatef(0.0,0.0,0.5);
     c->draw();
     glTranslatef(0.0,0.0,3.5);
+
+    GLCHECK(glUseProgram(lighting));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ka"), 1, &material.ka.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.kd"), 1, &material.kd.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ks"), 1, &material.ks.x));
+    GLCHECK(glUniform1f(glGetUniformLocation(lighting, "material.shininess"), material.shininess));
     glutSolidSphere(1.0,100,100);
+    GLCHECK(glUseProgram(program));
 
     glPushMatrix();
     drawClaw(left, true);
