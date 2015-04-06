@@ -16,7 +16,7 @@ public:
     void draw();
     void init(Viewer &v);
 
-private :
+private:
     void drawBody();
     void drawTail();
     void drawHead();
@@ -44,9 +44,13 @@ private :
 
     // shader program
     ShaderProgram program;
+    ShaderProgram lighting;
 
     // load a single texture file to associate with a Textureid
     GLuint loadTexture(const char *filename, bool mipmap=false);
+
+    // Inits lighting
+    void initLighting();
 
 
 };

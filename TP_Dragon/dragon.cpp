@@ -1,5 +1,8 @@
 #include "dragon.h"
 #include "glCheck.h"
+#include "vec.h"
+#include "light.h"
+#include "material.h"
 
 #include <QKeyEvent>
 
@@ -18,8 +21,27 @@
 
 using namespace std;
 
+// Data used for lighting
+static const vec4 black(0.0f, 0.0f, 0.0f, 1.0f);
+static const vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+static const vec4 red(1.0f, 0.0f, 0.0f, 1.0f);
+static vec4 no_color = black;
+
+static vec4 mat_ambient(0.7f, 0.7f, 0.7f, 1.0f);
+static vec4 mat_ambient_color(0.8f, 0.8f, 0.2f, 1.0f);
+static vec4 mat_diffuse(0.1f, 0.5f, 0.8f, 1.0f);
+static float no_shininess(0.0f);
+static float low_shininess(5.0f);
+static float high_shininess(50.0f);
+
+static Light light(vec4(0, 0, 1, 1), black, white, white);
+
+static const Material material(mat_ambient_color, mat_diffuse, white, low_shininess);
 
 
+
+
+///////////////////////////////////////////////////////////////////////////////
 Dragon::Dragon() {
     c = new Cylinder(2,0.5,60);
     t = new TrapezeIsocele(7.0,5.0,5.0,0.2);
@@ -27,12 +49,16 @@ Dragon::Dragon() {
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 Dragon::~Dragon() {
     delete c;
     delete t;
     delete t2;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::init(Viewer &v) {
     c->init(v);
     // load textures
@@ -49,10 +75,29 @@ void Dragon::init(Viewer &v) {
     GLCHECK(texcoord0 = glGetAttribLocation( program_id, "texcoord0"));
     // tex0 on the sampler will use the texture unit #0
     GLCHECK(glUniform1i( texture0, 0 ) );
+
+    initLighting();
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::initLighting() {
+    lighting.load("shaders/material.vert", "shaders/material.frag");
+    GLCHECK(glUseProgram(lighting));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.la"), 1, &light.la.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.ld"), 1, &light.ld.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.ls" ), 1, &light.ls.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.position"), 1, &light.position.x));
+    GLCHECK(glUseProgram(0));
 
+    glEnable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+    glClearColor(0.0f, 0.1f, 0.1f, 0.0f);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawBasePlane(float size) {
     GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_field));
@@ -81,6 +126,8 @@ void Dragon::drawBasePlane(float size) {
 
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 GLuint Dragon::loadTexture(const char *filename, bool mipmap)
 {
     // generates an OpenGL texture id, and store it
@@ -108,6 +155,8 @@ GLuint Dragon::loadTexture(const char *filename, bool mipmap)
     return id;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
 
     /*glEnable(GL_FOG);
@@ -168,12 +217,16 @@ void Dragon::draw(){
     GLCHECK(glUseProgram( 0 ));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawBody() {
     glScalef(4.0,4.0,4.0);
     c->draw();
     glScalef(0.25,0.25,0.25);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawTail() {
     glTranslatef(0,0,8.5);
     glutSolidSphere(0.2,100,100);
@@ -211,6 +264,8 @@ void Dragon::drawTail() {
     glutSolidSphere(0.4,100,100);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawHead() {
     glTranslatef(0,0,-0.5);
     glutSolidSphere(0.2,100,100);
@@ -230,6 +285,13 @@ void Dragon::drawHead() {
     glTranslatef(0,0,-2.5);
     c->draw();
     glTranslatef(0,0,-2.5);
+
+
+    GLCHECK(glUseProgram(lighting));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ka"), 1, &material.ka.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.kd"), 1, &material.kd.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ks"), 1, &material.ks.x));
+    GLCHECK(glUniform1f(glGetUniformLocation(lighting, "material.shininess"), material.shininess));
     glutSolidSphere(3,100,100);
 
     glPushMatrix();
@@ -245,8 +307,12 @@ void Dragon::drawHead() {
     glRotatef(-45.0,1.0,0.0,0.0);
     glutSolidCone(0.5,1.5,100,100);
     glPopMatrix();
+    
+    GLCHECK(glUseProgram(0));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
     if (leftPaw)
         glRotatef(-90.0,1.0,0.0,0.0);
@@ -262,6 +328,8 @@ void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
     glutSolidCone(0.2,1.5,100,100);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawPaw(bool left) {
     if (left)
         glRotatef(-70.0,1.0,0.0,0.0);
@@ -299,6 +367,8 @@ void Dragon::drawPaw(bool left) {
     glPopMatrix();
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawWing(bool left){
     if (left) {
         glTranslatef(0.0,2.5,0.5);
