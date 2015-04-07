@@ -15,6 +15,7 @@ public:
     ~Dragon();
     void draw();
     void init(Viewer &v);
+    void animate();
 
 private:
     void drawBody();
@@ -29,6 +30,19 @@ private:
     Cylinder *c;
     TrapezeIsocele *t;
     TrapezeIsocele *t2;
+
+    float first_angle_wing;
+    bool first_angle_wing_up;
+
+    float second_angle_wing;
+    bool second_angle_wing_up;
+
+    float third_angle_wing;
+    bool third_angle_wing_up;
+
+    float time_wing1;
+    float time_wing2;
+    float time_wing3;
 
     //std::vector<Renderable> component_list;
     void drawBasePlane(float size);

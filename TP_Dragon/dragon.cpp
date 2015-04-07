@@ -47,6 +47,15 @@ Dragon::Dragon() {
     t = new TrapezeIsocele(7.0,5.0,5.0,0.2);
     // Trapeze au bout des ailes
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
+    first_angle_wing = 0;
+    first_angle_wing_up = true;
+    second_angle_wing = 0;
+    second_angle_wing_up = true;
+    third_angle_wing = 0;
+    third_angle_wing_up = true;
+    time_wing1 = 0;
+    time_wing2 = 0;
+    time_wing3 = 0;
 }
 
 
@@ -155,6 +164,49 @@ GLuint Dragon::loadTexture(const char *filename, bool mipmap)
     return id;
 }
 
+void Dragon::animate(){
+    if(sin(time_wing1) > 0.9)
+        first_angle_wing_up = false;
+    if(sin(time_wing1) < -0.9)
+        first_angle_wing_up = true;
+    if(first_angle_wing_up)
+    {
+        first_angle_wing++;
+        time_wing1+= 0.1;
+    }
+    else{
+        first_angle_wing--;
+        time_wing1-= 0.1;
+    }
+
+    if(sin(time_wing2 + M_PI/12) > 0.9)
+        second_angle_wing_up = false;
+    if(sin(time_wing2 + M_PI/12) < -0.9)
+        second_angle_wing_up = true;
+    if(second_angle_wing_up)
+    {
+        second_angle_wing++;
+        time_wing2+= 0.1;
+    }
+    else{
+        second_angle_wing--;
+         time_wing2-= 0.1;
+    }
+
+    if(sin(time_wing3 + M_PI/6) > 0.9)
+        third_angle_wing_up = false;
+    if(sin(time_wing3 + M_PI/6) < -0.9)
+        third_angle_wing_up = true;
+    if(third_angle_wing_up)
+    {
+        third_angle_wing++;
+        time_wing3+=0.1;
+    }
+    else{
+        third_angle_wing--;
+        time_wing3-=0.1;
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
@@ -309,7 +361,7 @@ void Dragon::drawHead() {
     glPopMatrix();
     
     GLCHECK(glUseProgram(0));
-    GLCHECK(glUseProgram(program));
+    //GLCHECK(glUseProgram(program));
 }
 
 
@@ -333,7 +385,7 @@ void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
     glTranslatef(0.0,0.0,1.2);
     glutSolidCone(0.2,1.5,100,100);
 
-    GLCHECK(glUseProgram(program));
+    //GLCHECK(glUseProgram(program));
 }
 
 
@@ -372,7 +424,7 @@ void Dragon::drawPaw(bool left) {
     GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ks"), 1, &material.ks.x));
     GLCHECK(glUniform1f(glGetUniformLocation(lighting, "material.shininess"), material.shininess));
     glutSolidSphere(1.0,100,100);
-    GLCHECK(glUseProgram(program));
+    //GLCHECK(glUseProgram(program));
 
     glPushMatrix();
     drawClaw(left, true);
@@ -398,6 +450,10 @@ void Dragon::drawWing(bool left){
     c->draw();
     glScalef(2.5,2.5,1.0/3.5);
     glTranslatef(0.0,0.5,0.0);
+    if(left)
+        glRotatef(first_angle_wing,0.0,0.0,-1.0);
+    else
+        glRotatef(-first_angle_wing,0.0,0.0,-1.0);
     t->draw();
     glTranslatef(0.0,5.5,1.0);
     glScalef(0.4,0.4,2.5);
@@ -411,6 +467,10 @@ void Dragon::drawWing(bool left){
         glRotatef(-20.0,0.0,0.0,1.0);
 
     glScalef(1.0,1.0,5.0/7.0);
+    if(left)
+        glRotatef(second_angle_wing,0.0,0.0,-1.0);
+    else
+        glRotatef(-second_angle_wing,0.0,0.0,-1.0);
     t->draw();
     glScalef(1.0,1.0,7.0/5.0);
     glTranslatef(0.0,5.5,5.0/7.0);
@@ -418,6 +478,10 @@ void Dragon::drawWing(bool left){
     c->draw();
     glScalef(2.5,2.5,14.0/25.0);
     glTranslatef(0.0,0.5,0.0);
+    if(left)
+        glRotatef(third_angle_wing,0.0,0.0,-1.0);
+    else
+        glRotatef(-third_angle_wing,0.0,0.0,-1.0);
     t2->draw();
 }
 
