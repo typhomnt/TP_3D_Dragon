@@ -58,7 +58,6 @@ private:
 
     // shader program
     ShaderProgram program;
-    ShaderProgram lighting;
 
     // load a single texture file to associate with a Textureid
     GLuint loadTexture(const char *filename, bool mipmap=false);

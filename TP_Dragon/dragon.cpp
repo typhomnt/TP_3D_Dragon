@@ -34,7 +34,7 @@ static float no_shininess(0.0f);
 static float low_shininess(5.0f);
 static float high_shininess(50.0f);
 
-static Light light(vec4(30, 30, 30, 1), black, white, white);
+static Light light(vec4(0, 100, 100, 1), white, white, white);
 
 static const Material material(mat_ambient_color, mat_diffuse, white, low_shininess);
 
@@ -74,7 +74,7 @@ void Dragon::init(Viewer &v) {
     tex_body = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/field1.jpg");
 
-    program.load("shaders/texture.vert", "shaders/texture.frag");
+    program.load("shaders/shader.vert", "shaders/shader.frag");
     // get the program id and use it to have access to uniforms
     GLint program_id = (GLint)program;
     GLCHECK(glUseProgram( program_id ) );
@@ -91,18 +91,15 @@ void Dragon::init(Viewer &v) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::initLighting() {
-    lighting.load("shaders/material.vert", "shaders/material.frag");
-    GLCHECK(glUseProgram(lighting));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.la"), 1, &light.la.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.ld"), 1, &light.ld.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.ls" ), 1, &light.ls.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "light.position"), 1, &light.position.x));
-    GLCHECK(glUseProgram(0));
+    GLCHECK(glUniform4fv(glGetUniformLocation(program, "light.la"), 1, &light.la.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(program, "light.ld"), 1, &light.ld.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(program, "light.ls" ), 1, &light.ls.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(program, "light.position"), 1, &light.position.x));
 
     glEnable(GL_LIGHTING);
     glDisable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
-    glClearColor(0.0f, 0.1f, 0.1f, 0.0f);
+    glClearColor(119.0 / 255.0, 181.0 / 255.0, 254.0 / 255.0, 0.0f);
 }
 
 
@@ -112,6 +109,11 @@ void Dragon::drawBasePlane(float size) {
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_field));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ka"), 1, &material.ka.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.kd"), 1, &material.kd.x));
+    GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ks"), 1, &material.ks.x));
+    GLCHECK(glUniform1f(glGetUniformLocation(program, "material.shininess"), material.shininess));
 
     glNormal3f(0.0, 0.0, 1.0);
     float height = 0;
@@ -225,6 +227,8 @@ void Dragon::draw(){
     c->updateTexture(texture0, texcoord0);
     glPushMatrix();
 
+    drawBasePlane(5);
+
     glScalef(T_TAIL,T_TAIL ,T_TAIL);
 
     drawBody();
@@ -262,9 +266,9 @@ void Dragon::draw(){
     glPushMatrix();
     drawWing(false);
     glPopMatrix();
-
+    
     glPopMatrix();
-
+    
 
     GLCHECK(glUseProgram( 0 ));
 }
@@ -338,12 +342,6 @@ void Dragon::drawHead() {
     c->draw();
     glTranslatef(0,0,-2.5);
 
-    
-    GLCHECK(glUseProgram(lighting));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ka"), 1, &material.ka.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.kd"), 1, &material.kd.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ks"), 1, &material.ks.x));
-    GLCHECK(glUniform1f(glGetUniformLocation(lighting, "material.shininess"), material.shininess));
     glutSolidSphere(3,100,100);
 
     glPushMatrix();
@@ -359,9 +357,6 @@ void Dragon::drawHead() {
     glRotatef(-45.0,1.0,0.0,0.0);
     glutSolidCone(0.5,1.5,100,100);
     glPopMatrix();
-    
-    GLCHECK(glUseProgram(0));
-    //GLCHECK(glUseProgram(program));
 }
 
 
@@ -377,15 +372,8 @@ void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
     else
         glRotatef(30.0,0.0,1.0,0.0);
 
-    GLCHECK(glUseProgram(lighting));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ka"), 1, &material.ka.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.kd"), 1, &material.kd.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ks"), 1, &material.ks.x));
-    GLCHECK(glUniform1f(glGetUniformLocation(lighting, "material.shininess"), material.shininess));
     glTranslatef(0.0,0.0,1.2);
     glutSolidCone(0.2,1.5,100,100);
-
-    //GLCHECK(glUseProgram(program));
 }
 
 
@@ -418,13 +406,7 @@ void Dragon::drawPaw(bool left) {
     c->draw();
     glTranslatef(0.0,0.0,3.5);
 
-    GLCHECK(glUseProgram(lighting));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ka"), 1, &material.ka.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.kd"), 1, &material.kd.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(lighting, "material.ks"), 1, &material.ks.x));
-    GLCHECK(glUniform1f(glGetUniformLocation(lighting, "material.shininess"), material.shininess));
     glutSolidSphere(1.0,100,100);
-    //GLCHECK(glUseProgram(program));
 
     glPushMatrix();
     drawClaw(left, true);
