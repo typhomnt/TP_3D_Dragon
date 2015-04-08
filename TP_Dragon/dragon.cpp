@@ -240,8 +240,6 @@ void Dragon::draw(){
     c->updateTexture(texture0, texcoord0);
     glPushMatrix();
 
-    drawBasePlane(5);
-
     glScalef(T_TAIL,T_TAIL ,T_TAIL);
 
     drawBody();
