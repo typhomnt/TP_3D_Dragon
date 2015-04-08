@@ -56,6 +56,10 @@ Dragon::Dragon() {
     time_wing1 = 0;
     time_wing2 = 0;
     time_wing3 = 0;
+    fly_up = true;
+    dist_flyx = 0.1;
+    dist_flyy = 0.1;
+    dist_flyz = 0.1;
 }
 
 
@@ -174,10 +178,14 @@ void Dragon::animate(){
     if(first_angle_wing_up)
     {
         first_angle_wing++;
+        fly_up = true;
+        //dist_flyx = 0.1;
         time_wing1+= 0.1;
     }
     else{
         first_angle_wing--;
+        fly_up = false;
+        //dist_flyx = -0.1;
         time_wing1-= 0.1;
     }
 
@@ -219,6 +227,11 @@ void Dragon::draw(){
     glFogfv(GL_FOG_COLOR, fog);
     glFogf(GL_FOG_DENSITY, 0.35);*/
     GLCHECK(glUseProgram( (GLint)program ));
+    glPushMatrix();
+    glRotatef(90,0,1,0);
+    glTranslatef(0,0,-5);
+    drawBasePlane(50.0);
+    glPopMatrix();
     GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_body));
     GLCHECK(glUniform1i(texture0, 0));
@@ -277,6 +290,7 @@ void Dragon::draw(){
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawBody() {
     glScalef(4.0,4.0,4.0);
+    glTranslatef(c->getx(),c->gety(),c->getz());
     c->draw();
     glScalef(0.25,0.25,0.25);
 }
@@ -465,5 +479,43 @@ void Dragon::drawWing(bool left){
     else
         glRotatef(-third_angle_wing,0.0,0.0,-1.0);
     t2->draw();
+}
+
+void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
+    // Get event modifiers key
+    const Qt::KeyboardModifiers modifiers = e->modifiers();
+
+        /* Controls added for Lab Session 6 "Physicall Modeling" */
+        if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
+                c->setCenter(c->getx() + dist_flyx,c->gety(),c->getz());
+        /*toggleGravity = !toggleGravity;
+        setGravity(toggleGravity);
+        viewer.displayMessage("Set gravity to "
+            + (toggleGravity ? QString("true") : QString("false")));*/
+
+    } else if ((e->key()==Qt::Key_D) && (modifiers==Qt::NoButton)) {
+                c->setCenter(c->getx() - dist_flyx,c->gety(),c->getz());
+        /*toggleViscosity = !toggleViscosity;
+        setViscosity(toggleViscosity);
+        viewer.displayMessage("Set viscosity to "
+            + (toggleViscosity ? QString("true") : QString("false")));*/
+
+    } else if ((e->key()==Qt::Key_Q) && (modifiers==Qt::NoButton)) {
+                c->setCenter(c->getx(),c->gety(),c->getz()+dist_flyz);
+        /*toggleCollisions = !toggleCollisions;
+        setCollisionsDetection(toggleCollisions);
+        viewer.displayMessage("Detects collisions "
+            + (toggleCollisions ? QString("true") : QString("false")));*/
+
+    } else if ((e->key()==Qt::Key_F) && (modifiers==Qt::NoButton)) {
+            c->setCenter(c->getx(),c->gety(),c->getz() - dist_flyz);
+        // stop the animation, and reinit the scene
+        /*viewer.stopAnimation();
+        init(viewer);
+        viewer.manipulatedFrame()->setPosition(getFixedParticlePosition());
+        toggleGravity = true;
+        toggleViscosity = true;
+        toggleCollisions = true;*/
+    }
 }
 
