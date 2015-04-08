@@ -16,6 +16,7 @@ public:
     void draw();
     void init(Viewer &v);
     void animate();
+    void keyPressEvent(QKeyEvent*e, Viewer& viewer);
 
 private:
     void drawBody();
@@ -44,6 +45,10 @@ private:
     float time_wing2;
     float time_wing3;
 
+    bool fly_up;
+    float dist_flyx;
+    float dist_flyy;
+    float dist_flyz;
     //std::vector<Renderable> component_list;
     void drawBasePlane(float size);
 

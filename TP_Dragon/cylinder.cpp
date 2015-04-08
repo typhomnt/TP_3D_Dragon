@@ -15,6 +15,10 @@ Cylinder::Cylinder(double height, double radius, int step) {
     this->r = radius;
     this->step = step;
 
+    this->center_x = 0;
+    this->center_y = 0;
+    this->center_z = 0;
+
     this->allNormals  = new GLfloat[18*step + 30];
     this->allVertices = new GLfloat[18*step + 30];
 
@@ -27,6 +31,24 @@ Cylinder::~Cylinder() {
     delete[] this->allVertices;
 }
 
+void Cylinder::setCenter(double x, double y ,double z){
+    this->center_x = x;
+    this->center_y = y;
+    this->center_z = z;
+
+}
+
+ double Cylinder::getx(){
+     return this->center_x;
+ }
+
+ double Cylinder::gety(){
+     return this->center_y;
+ }
+
+ double Cylinder::getz(){
+     return this->center_z;
+ }
 
 /* *** METHODS *** */
 void Cylinder::init(Viewer &v) {
