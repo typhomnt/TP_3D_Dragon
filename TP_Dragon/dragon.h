@@ -4,6 +4,7 @@
 #include "shader.h"
 #include "cylinder.h"
 #include "trapezeIsocele.h"
+#include "sphere.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -31,6 +32,7 @@ private:
     Cylinder *c;
     TrapezeIsocele *t;
     TrapezeIsocele *t2;
+    Sphere *s;
 
     float first_angle_wing;
     bool first_angle_wing_up;

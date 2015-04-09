@@ -34,7 +34,10 @@ static float no_shininess(0.0f);
 static float low_shininess(5.0f);
 static float high_shininess(50.0f);
 
-static Light light(vec4(0, 100, 100, 1), white, white, white);
+static const vec4 la(0.5f, 0.5f, 0.5f, 1.0f);
+static const vec4 ld(0.5f, 0.5f, 0.5f, 1.0f);
+static const vec4 ls(0.5f, 0.5f, 0.5f, 1.0f);
+static Light light(vec4(0, 100, 100, 1), la, ld, ls);
 
 static const Material material(mat_ambient_color, mat_diffuse, white, low_shininess);
 
@@ -60,6 +63,8 @@ Dragon::Dragon() {
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
+
+    s = new Sphere();
 }
 
 
@@ -68,6 +73,7 @@ Dragon::~Dragon() {
     delete c;
     delete t;
     delete t2;
+    delete s;
 }
 
 
@@ -90,6 +96,8 @@ void Dragon::init(Viewer &v) {
     GLCHECK(glUniform1i( texture0, 0 ) );
 
     initLighting();
+
+    s->init(v);
 }
 
 
@@ -238,6 +246,7 @@ void Dragon::draw(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     c->updateTexture(texture0, texcoord0);
+    s->setTexture(tex_body);
     glPushMatrix();
 
     glScalef(T_TAIL,T_TAIL ,T_TAIL);
@@ -354,7 +363,9 @@ void Dragon::drawHead() {
     c->draw();
     glTranslatef(0,0,-2.5);
 
-    glutSolidSphere(3,100,100);
+    //glutSolidSphere(3,100,100);
+    s->generate(3);
+    glUseProgram(program);
 
     glPushMatrix();
     glTranslatef(2.5,-2.5,0);
