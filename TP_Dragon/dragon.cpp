@@ -38,7 +38,16 @@ static Light light(vec4(0, 100, 100, 1), white, white, white);
 
 static const Material material(mat_ambient_color, mat_diffuse, white, low_shininess);
 
+//Data used for dynamics
 
+static qglviewer::Vec defaultGravity;
+static qglviewer::Vec gravity;
+static float viscosity;
+static float dt;
+static  qglviewer::Vec groundPosition = qglviewer::Vec(0.0, 0.0, -5.0);
+static  qglviewer::Vec groundNormal = qglviewer::Vec(0.0, 0.0, 1.0);
+static float rebound = 0.5;
+static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,6 +56,10 @@ Dragon::Dragon() {
     t = new TrapezeIsocele(7.0,5.0,5.0,0.2);
     // Trapeze au bout des ailes
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
+    mass = 3000;
+    qglviewer::Vec initPos = qglviewer::Vec(c->getx()/2,c->gety()/2,(c->getz() + c->geth())/2);
+    qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
+    dragPart = new Particle(initPos,initVec,mass,c->geth()/2);
     first_angle_wing = 0;
     first_angle_wing_up = true;
     second_angle_wing = 0;
@@ -90,6 +103,12 @@ void Dragon::init(Viewer &v) {
     GLCHECK(glUniform1i( texture0, 0 ) );
 
     initLighting();
+
+    defaultGravity = qglviewer::Vec(0.0, 0.0, -10.0);
+    gravity = defaultGravity;
+    viscosity = 1.0;
+    dt = 0.01;
+
 }
 
 
@@ -120,7 +139,6 @@ void Dragon::drawBasePlane(float size) {
     GLCHECK(glUniform1f(glGetUniformLocation(program, "material.shininess"), material.shininess));
 
     glNormal3f(0.0, 0.0, 1.0);
-    float height = 0;
     float s = size;
 
     glPushMatrix();
@@ -129,13 +147,13 @@ void Dragon::drawBasePlane(float size) {
     // TODO... improve code for arbitrary scaling and texture tiling
     glBegin(GL_QUADS);  
     glVertexAttrib2f(texcoord0, 0, 0);
-    glVertex3f(0, 0, height);
+    glVertex3f(groundPosition[0],groundPosition[1],groundPosition[2]);
     glVertexAttrib2f(texcoord0, 1, 0);
-    glVertex3f(s, 0, height);
+    glVertex3f(s + groundPosition[0] , groundPosition[1], groundPosition[2]);
     glVertexAttrib2f(texcoord0, 1, 1);
-    glVertex3f(s, s, height);
+    glVertex3f(s + groundPosition[0], s + groundPosition[1], groundPosition[2]);
     glVertexAttrib2f(texcoord0, 0, 1);
-    glVertex3f(0, s, height);
+    glVertex3f(groundPosition[0], s + groundPosition[1], groundPosition[2]);
     glEnd();
     glPopMatrix();
 
@@ -179,13 +197,11 @@ void Dragon::animate(){
     {
         first_angle_wing++;
         fly_up = true;
-        //dist_flyx = 0.1;
         time_wing1+= 0.1;
     }
     else{
         first_angle_wing--;
         fly_up = false;
-        //dist_flyx = -0.1;
         time_wing1-= 0.1;
     }
 
@@ -216,6 +232,16 @@ void Dragon::animate(){
         third_angle_wing--;
         time_wing3-=0.1;
     }
+
+    std::map<const Particle *, qglviewer::Vec> forces;
+    forces[dragPart] = gravity * dragPart->getMass();
+    forces[dragPart] -= viscosity*dragPart->getVelocity();
+    forces[dragPart] += fly_force ;
+    dragPart->incrVelocity(dt*dragPart->getInvMass()*forces[dragPart]);
+    dragPart->incrPosition(dt * dragPart->getVelocity());
+    c->setCenter((dragPart->getPosition())[0],(dragPart->getPosition())[1],(dragPart->getPosition())[2]);
+    collisionParticleGround(dragPart);
+    fly_force = {0,0,0};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -228,8 +254,6 @@ void Dragon::draw(){
     glFogf(GL_FOG_DENSITY, 0.35);*/
     GLCHECK(glUseProgram( (GLint)program ));
     glPushMatrix();
-    glRotatef(90,0,1,0);
-    glTranslatef(0,0,-5);
     drawBasePlane(50.0);
     glPopMatrix();
     GLCHECK(glActiveTexture(GL_TEXTURE0));
@@ -241,7 +265,6 @@ void Dragon::draw(){
     glPushMatrix();
 
     glScalef(T_TAIL,T_TAIL ,T_TAIL);
-
     drawBody();
 
     glPushMatrix();
@@ -288,6 +311,7 @@ void Dragon::draw(){
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawBody() {
     glScalef(4.0,4.0,4.0);
+    dragPart->draw();
     glTranslatef(c->getx(),c->gety(),c->getz());
     c->draw();
     glScalef(0.25,0.25,0.25);
@@ -353,7 +377,10 @@ void Dragon::drawHead() {
     glTranslatef(0,0,-2.5);
     c->draw();
     glTranslatef(0,0,-2.5);
-
+    /*GLUquadric *quadSphere = gluNewQuadric();
+    gluQuadricTexture(quadSphere,GL_TRUE);
+    glVertexAttrib2f(texcoord0,0,0);*/
+    //gluSphere(quadSphere,3,100,100);
     glutSolidSphere(3,100,100);
 
     glPushMatrix();
@@ -479,20 +506,41 @@ void Dragon::drawWing(bool left){
     t2->draw();
 }
 
+void Dragon::collisionParticleGround(Particle *p)
+{
+    // don't process fixed particles (ground plane is fixed)
+    if (p->getInvMass() == 0)
+        return;
+
+    // particle-plane distance
+    double penetration = (p->getPosition() - groundPosition) * groundNormal;
+    penetration -= p->getRadius();
+    if (penetration >= 0)
+        return;
+
+    // penetration velocity
+    double vPen = p->getVelocity() * groundNormal;
+
+    // updates position and velocity of the particle
+    p->incrPosition(-penetration * groundNormal);
+    p->incrVelocity(-(1 + rebound) * vPen * groundNormal);
+}
+
 void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     // Get event modifiers key
     const Qt::KeyboardModifiers modifiers = e->modifiers();
 
         /* Controls added for Lab Session 6 "Physicall Modeling" */
-        if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
+     if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
                 c->setCenter(c->getx() + dist_flyx,c->gety(),c->getz());
+
         /*toggleGravity = !toggleGravity;
         setGravity(toggleGravity);
         viewer.displayMessage("Set gravity to "
             + (toggleGravity ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_D) && (modifiers==Qt::NoButton)) {
-                c->setCenter(c->getx() - dist_flyx,c->gety(),c->getz());
+                fly_force[2] -= 500;
         /*toggleViscosity = !toggleViscosity;
         setViscosity(toggleViscosity);
         viewer.displayMessage("Set viscosity to "
@@ -514,6 +562,11 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         toggleGravity = true;
         toggleViscosity = true;
         toggleCollisions = true;*/
+    } else if ((e->key()==Qt::Key_T) && (modifiers==Qt::NoButton)) {
+            c->setCenter(c->getx(),c->gety() + dist_flyy,c->getz());
+
+    } else if ((e->key()==Qt::Key_Y) && (modifiers==Qt::NoButton)) {
+            c->setCenter(c->getx(),c->gety() - dist_flyy,c->getz());
     }
 }
 

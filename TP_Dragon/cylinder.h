@@ -21,6 +21,8 @@ public:
     double gety();
     double getz();
 
+    double geth();
+
 
 private:
     void drawImmediate();

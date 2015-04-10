@@ -3,6 +3,7 @@
 #include "renderable.h"
 #include "shader.h"
 #include "cylinder.h"
+#include "particle.h"
 #include "trapezeIsocele.h"
 #include <vector>
 #include <string>
@@ -17,6 +18,7 @@ public:
     void init(Viewer &v);
     void animate();
     void keyPressEvent(QKeyEvent*e, Viewer& viewer);
+    void collisionParticleGround(Particle *p);
 
 private:
     void drawBody();
@@ -49,6 +51,11 @@ private:
     float dist_flyx;
     float dist_flyy;
     float dist_flyz;
+
+    double mass;
+
+    Particle* dragPart;
+
     //std::vector<Renderable> component_list;
     void drawBasePlane(float size);
 

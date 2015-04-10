@@ -50,6 +50,10 @@ void Cylinder::setCenter(double x, double y ,double z){
      return this->center_z;
  }
 
+ double Cylinder::geth(){
+     return this->h;
+ }
+
 /* *** METHODS *** */
 void Cylinder::init(Viewer &v) {
     const float ANGLE = 2.0 * M_PI / (float)step;
