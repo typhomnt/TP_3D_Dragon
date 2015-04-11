@@ -52,6 +52,7 @@ static  qglviewer::Vec groundNormal = qglviewer::Vec(0.0, 0.0, 1.0);
 static float rebound = 0.5;
 static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
 
+/*nouveau dragon*/
 
 ///////////////////////////////////////////////////////////////////////////////
 Dragon::Dragon() {
