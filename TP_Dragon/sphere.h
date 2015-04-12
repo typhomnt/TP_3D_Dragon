@@ -9,9 +9,22 @@ class Sphere : public Renderable
 {
 	public:
 		Sphere();
+        Sphere(float x, float y, float z, float radius);
 		void init(Viewer &v);
 		void draw();
-		void generate(float radius);
+        void generate(float radius);
+
+        float getRadius();
+        float getX();
+        float getY();
+        float getZ();
+
+        void setRadius(float radius);
+        void setX(float x);
+        void setY(float y);
+        void setZ(float z);
+
+        void operator=(const Sphere& s);
 
 		void setTexture(GLint id);
 
@@ -20,6 +33,9 @@ class Sphere : public Renderable
 
 	private:
 		float radius;
+        float x;
+        float y;
+        float z;
 
 		ShaderProgram program;
 

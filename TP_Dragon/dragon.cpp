@@ -3,7 +3,7 @@
 #include "vec.h"
 #include "light.h"
 #include "material.h"
-
+#include <cmath>
 #include <QKeyEvent>
 
 #include <iostream>
@@ -60,6 +60,14 @@ Dragon::Dragon() {
     t = new TrapezeIsocele(7.0,5.0,5.0,0.2);
     // Trapeze au bout des ailes
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
+    R = 10;
+    indexBody = 0;
+    indexTail = 15;
+    indexNeck = 31;
+    indexPawLeftUp = 46;
+    indexPawRightUp = 56;
+    indexPawLeftDown = 66;
+    indexPawRightDown = 76;
     mass = 3000;
     qglviewer::Vec initPos = qglviewer::Vec(c->getx()/2,c->gety()/2,(c->getz() + c->geth())/2);
     qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
@@ -273,43 +281,36 @@ void Dragon::draw(){
     s->setTexture(tex_body);
     glPushMatrix();
 
-    glScalef(T_TAIL,T_TAIL ,T_TAIL);
-    drawBody();
+    glScalef(T_TAIL, T_TAIL, T_TAIL);
 
     glPushMatrix();
-    drawTail();
+    drawBody(indexBody, indexTail-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawHead();
+    drawTail(indexTail, indexNeck-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawPaw(true);
+    drawNeck(indexNeck, indexPawLeftUp-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawPaw(false);
+    drawPawLeftUp(-70.0, indexPawLeftUp, indexPawRightUp-1);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(0.0,0.0,7.0);
-    drawPaw(true);
+    drawPawRightUp(-110.0, indexPawLeftDown, indexPawRightDown-1);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(0.0,0.0,7.0);
-    drawPaw(false);
+    drawPawLeftDown(-70.0);
     glPopMatrix();
 
     glPushMatrix();
-    drawWing(true);
+    drawPawRightDown(-110.0);
     glPopMatrix();
 
-    glPushMatrix();
-    drawWing(false);
-    glPopMatrix();
-    
     glPopMatrix();
     
 
@@ -319,91 +320,42 @@ void Dragon::draw(){
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawBody() {
-    glScalef(4.0,4.0,4.0);
-    dragPart->draw();
-    glTranslatef(c->getx(),c->gety(),c->getz());
-    c->draw();
-    glScalef(0.25,0.25,0.25);
+    glColor3f(1,1,1);
+    float height = 150;
+    skeleton.push_back(new Sphere(0,0,height,R));
+    skeleton[0]->draw();
+    for (int i = 1; i <= 14; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),R));
+        skeleton[i]->draw();
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawTail() {
-    glTranslatef(0,0,8.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0,0,0.5);
-    c->draw();
-    glTranslatef(0,0,2.5);
-    glutSolidSphere(0.2, 100, 100);
-    glTranslatef(0,0,0.5);
-    c->draw();
-    glTranslatef(0,0,2.5);
-    glutSolidSphere(0.2, 100, 100);
-    glTranslatef(-0.25,0,0.5);
-    glRotatef(-30,0,1,0);
-    c->draw();
-    glTranslatef(0,0,2.5);
-    glutSolidSphere(0.2, 100, 100);
-    glTranslatef(0,0,0.5);
-    c->draw();
-
-    glPushMatrix();
-    glTranslatef(0,-0.25,2.3) ;
-    glRotatef(45,1.0,0.0,0.0);
-    glScalef(0.5,0.5,1.0);
-    c->draw();
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(0,0.25,2.3);
-    glRotatef(-45,1.0,0.0,0.0);
-    glScalef(0.5,0.5,1.0);
-    c->draw();
-    glPopMatrix();
-
-    glTranslatef(0,0,2);
-    glutSolidSphere(0.4,100,100);
+    glColor3f(1,0,0);
+    for (int i = 15; i <= 30; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R*cos(-M_PI/180.0*30),
+                                      0,
+                                      skeleton[i-1]->getZ()+2*R*sin(-M_PI/180.0*30),
+                                      R));
+        skeleton[i]->draw();
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawHead() {
-    glTranslatef(0,0,-0.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0,0,-2.5);
-    c->draw();
-    glTranslatef(0,0,-0.5);
-    glutSolidSphere(0.2, 100, 100);
-    glTranslatef(1.25,0,-2.5);
-    glRotatef(-30,0,1,0);
-    c->draw();
-    glTranslatef(0,0,-0.5);
-    glutSolidSphere(0.2, 100, 100);
-    glTranslatef(0,0,-2.5);
-    c->draw();
-    glTranslatef(0,0,-0.5);
-    glutSolidSphere(0.2, 100, 100);
-    glTranslatef(0,0,-2.5);
-    c->draw();
-    glTranslatef(0,0,-2.5);
-
-    //glutSolidSphere(3,100,100);
-    s->generate(3);
-    glUseProgram(program);
-
-    glPushMatrix();
-    glTranslatef(2.5,-2.5,0);
-    glRotatef(100.0,0.0,1.0,0.0);
-    glRotatef(45.0,1.0,0.0,0.0);
-    glutSolidCone(0.5,1.5,100,100);
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(2.5,2.5,0);
-    glRotatef(100.0,0.0,1.0,0.0);
-    glRotatef(-45.0,1.0,0.0,0.0);
-    glutSolidCone(0.5,1.5,100,100);
-    glPopMatrix();
+void Dragon::drawNeck() {
+    glColor3f(0,0,1);
+    skeleton.push_back(new Sphere(skeleton[0]->getX()-2*R, 0, skeleton[0]->getZ(), R));
+    skeleton[31]->draw();
+    for (int i = 32; i <= 45; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()-2*R*cos(M_PI/180.0*30),
+                                      0,
+                                      skeleton[i-1]->getZ()+2*R*sin(M_PI/180.0*30),
+                                      R));
+        skeleton[i]->draw();
+    }
 }
 
 
@@ -425,43 +377,99 @@ void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawPaw(bool left) {
-    if (left)
-        glRotatef(-70.0,1.0,0.0,0.0);
-    else
-        glRotatef(70.0,1.0,0.0,0.0);
+void Dragon::drawPawLeftUp(float angle) {
+    skeleton.push_back(new Sphere(skeleton[0]->getX(),
+                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R));
+    skeleton[46]->draw();
+    for (int i = 47; i <= 55; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R));
+        skeleton[i]->draw();
+    }
 
-    glRotatef(-60.0,0.0,1.0,0.0);
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-
-    glTranslatef(0.0,0.0,0.5);
-
-    if (left)
-        glRotatef(-20.0,1.0,0.0,0.0);
-    else
-        glRotatef(20.0,1.0,0.0,0.0);
-
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,2.5);
-    glutSolidSphere(0.2,100,100);
-    glTranslatef(0.0,0.0,0.5);
-    c->draw();
-    glTranslatef(0.0,0.0,3.5);
-
-    glutSolidSphere(1.0,100,100);
-
-    glPushMatrix();
+    /*glPushMatrix();
     drawClaw(left, true);
     glPopMatrix();
 
     glPushMatrix();
     drawClaw(left, false);
+    glPopMatrix();*/
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::drawPawRightUp(float angle) {
+    skeleton.push_back(new Sphere(skeleton[0]->getX(),
+                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R));
+    skeleton[56]->draw();
+    for (int i = 57; i <= 65; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R));
+        skeleton[i]->draw();
+    }
+
+    /*glPushMatrix();
+    drawClaw(left, true);
     glPopMatrix();
+
+    glPushMatrix();
+    drawClaw(left, false);
+    glPopMatrix();*/
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::drawPawLeftDown(float angle) {
+    skeleton.push_back(new Sphere(skeleton[14]->getX(),
+                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R));
+    skeleton[66]->draw();
+    for (int i = 67; i <= 75; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R));
+        skeleton[i]->draw();
+    }
+
+    /*glPushMatrix();
+    drawClaw(left, true);
+    glPopMatrix();
+
+    glPushMatrix();
+    drawClaw(left, false);
+    glPopMatrix();*/
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::drawPawRightDown(float angle) {
+    skeleton.push_back(new Sphere(skeleton[14]->getX(),
+                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R));
+    skeleton[76]->draw();
+    for (int i = 77; i <= 85; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R));
+        skeleton[i]->draw();
+    }
+
+    /*glPushMatrix();
+    drawClaw(left, true);
+    glPopMatrix();
+
+    glPushMatrix();
+    drawClaw(left, false);
+    glPopMatrix();*/
 }
 
 

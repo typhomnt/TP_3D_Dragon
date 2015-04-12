@@ -3,6 +3,7 @@
 #include "vec.h"
 #include "light.h"
 #include "material.h"
+#include <stdexcept>
 
 #include <iostream>
 #include <cstdio>
@@ -34,6 +35,16 @@ static const Material material(mat_ambient_color, mat_diffuse, white, 5.0);
 
 ///////////////////////////////////////////////////////////////////////////////
 Sphere::Sphere() : toggleCollisions(true) {}
+
+///////////////////////////////////////////////////////////////////////////////
+Sphere::Sphere(float x, float y, float z, float radius) : toggleCollisions(true) {
+    this->x = x;
+    this->y = y;
+    this->z = z;
+    if (radius < 0)
+        std::invalid_argument("Radius must not be negative");
+    this->radius = radius;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,18 +88,69 @@ void Sphere::draw() {
     GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ks"), 1, &material.ks.x));
     GLCHECK(glUniform1f(glGetUniformLocation(program, "material.shininess"), material.shininess));
 
+    glPushMatrix();
+    glTranslatef(this->x, this->y, this->z);
 	glutSolidSphere(this->radius, 100, 100);
+    glPopMatrix();
 
 	GLCHECK(glUseProgram(0));
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::generate(float radius) {
-	this->radius = radius;
-	draw();
+    this->setRadius(radius);
+    this->draw();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+float Sphere::getRadius() {
+    return this->radius;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float Sphere::getX() {
+    return this->x;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float Sphere::getY() {
+    return this->y;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float Sphere::getZ() {
+    return this->z;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::setRadius(float radius) {
+    if (radius < 0)
+        std::invalid_argument("Radius must not be negative");
+	this->radius = radius;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::setX(float x) {
+    this->x = x;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::setY(float y) {
+    this->y = y;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::setZ(float z) {
+    this->z = z;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::operator=(const Sphere& s) {
+    this->x = s.x;
+    this->y = s.y;
+    this->z = s.z;
+    this->radius = s.radius;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::setTexture(GLint id) {

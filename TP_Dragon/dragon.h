@@ -22,14 +22,27 @@ public:
     void collisionParticleGround(Particle *p);
 
 private:
-    void drawBody();
-    void drawTail();
-    void drawHead();
+    void drawBody(int first, int last);
+    void drawTail(int first, int last);
+    void drawNeck(int first, int last);
     // Draw the left claw of the left paw if leftPaw==true and leftClaw==true
     void drawClaw(bool leftPaw, bool leftClaw);
     // Draw the left paw if left==true else the right paw
-    void drawPaw(bool left);
+    void drawPawLeftUp(float angle, int first, int last);
+    void drawPawRightUp(float angle, int first, int last);
+    void drawPawLeftDown(float angle, int first, int last);
+    void drawPawRightDown(float angle, int first, int last);
     void drawWing(bool left);
+
+    std::vector<Sphere*> skeleton;
+    int indexBody;
+    int indexTail;
+    int indexNeck;
+    int indexPawLeftUp;
+    int indexPawRightUp;
+    int indexPawLeftDown;
+    int indexPawRightDown;
+    float R;
 
     Cylinder *c;
     TrapezeIsocele *t;
