@@ -284,23 +284,23 @@ void Dragon::draw(){
     glScalef(T_TAIL, T_TAIL, T_TAIL);
 
     glPushMatrix();
-    drawBody(indexBody, indexTail-1);
+    drawBody();
     glPopMatrix();
 
     glPushMatrix();
-    drawTail(indexTail, indexNeck-1);
+    drawTail();
     glPopMatrix();
 
     glPushMatrix();
-    drawNeck(indexNeck, indexPawLeftUp-1);
+    drawNeck();
     glPopMatrix();
 
     glPushMatrix();
-    drawPawLeftUp(-70.0, indexPawLeftUp, indexPawRightUp-1);
+    drawPawLeftUp(-70.0);
     glPopMatrix();
 
     glPushMatrix();
-    drawPawRightUp(-110.0, indexPawLeftDown, indexPawRightDown-1);
+    drawPawRightUp(-110.0);
     glPopMatrix();
 
     glPushMatrix();

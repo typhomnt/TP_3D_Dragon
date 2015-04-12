@@ -22,16 +22,16 @@ public:
     void collisionParticleGround(Particle *p);
 
 private:
-    void drawBody(int first, int last);
-    void drawTail(int first, int last);
-    void drawNeck(int first, int last);
+    void drawBody();//int first, int last);
+    void drawTail();//int first, int last);
+    void drawNeck();//int first, int last);
     // Draw the left claw of the left paw if leftPaw==true and leftClaw==true
     void drawClaw(bool leftPaw, bool leftClaw);
     // Draw the left paw if left==true else the right paw
-    void drawPawLeftUp(float angle, int first, int last);
-    void drawPawRightUp(float angle, int first, int last);
-    void drawPawLeftDown(float angle, int first, int last);
-    void drawPawRightDown(float angle, int first, int last);
+    void drawPawLeftUp(float angle);//, int first, int last);
+    void drawPawRightUp(float angle);//, int first, int last);
+    void drawPawLeftDown(float angle);//, int first, int last);
+    void drawPawRightDown(float angle);//, int first, int last);
     void drawWing(bool left);
 
     std::vector<Sphere*> skeleton;
