@@ -5,6 +5,7 @@
 #include "cylinder.h"
 #include "trapezeIsocele.h"
 #include "sphere.h"
+#include "spring.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -40,8 +41,10 @@ private:
     void createPawLeftDown(float angle);
     void createPawRightDown(float angle);
     void drawSkeleton();
+    void drawSprings();
 
     std::vector<Sphere*> skeleton;
+    std::vector<Spring*> sprgSkel;
     int indexBody;
     int indexTail;
     int indexNeck;

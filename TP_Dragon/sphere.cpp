@@ -47,6 +47,7 @@ Sphere::Sphere(float x, float y, float z, float radius,float mass,GLint tex) : t
     if (mass < 0)
         std::invalid_argument("Mass must not be negative");
     this->mass = mass;
+    this->invMass = (mass > 0 ? 1 / mass : 0.0);
     this->position = qglviewer::Vec(x,y,z);
     this->velocity = qglviewer::Vec(0,0,0);
     this->tex = tex;
