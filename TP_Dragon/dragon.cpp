@@ -56,11 +56,10 @@ static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
 
 ///////////////////////////////////////////////////////////////////////////////
 Dragon::Dragon() {
-    c = new Cylinder(2,0.5,60);
     t = new TrapezeIsocele(7.0,5.0,5.0,0.2);
     // Trapeze au bout des ailes
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
-    R = 10;
+    R = 0.1;
     indexBody = 0;
     indexTail = 15;
     indexNeck = 31;
@@ -69,9 +68,9 @@ Dragon::Dragon() {
     indexPawLeftDown = 66;
     indexPawRightDown = 76;
     mass = 3000;
-    qglviewer::Vec initPos = qglviewer::Vec(c->getx()/2,c->gety()/2,(c->getz() + c->geth())/2);
+    qglviewer::Vec initPos = qglviewer::Vec(0,0,15);
     qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
-    dragPart = new Particle(initPos,initVec,mass,c->geth()/2);
+    dragPart = new Sphere(initPos,initVec,R,mass);
     first_angle_wing = 0;
     first_angle_wing_up = true;
     second_angle_wing = 0;
@@ -85,23 +84,28 @@ Dragon::Dragon() {
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
-
-    s = new Sphere();
+    createBody();
+    createTail();
+    createNeck();
+    createPawLeftUp(-70);
+    createPawRightUp(-110);
+    createPawLeftDown(-70);
+    createPawRightDown(-110);
+    //drawSkeleton();
+    //this->skeleton.push_back(dragPart);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 Dragon::~Dragon() {
-    delete c;
     delete t;
     delete t2;
-    delete s;
+    delete dragPart;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::init(Viewer &v) {
-    c->init(v);
     // load textures
     tex_body = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/field1.jpg");
@@ -123,7 +127,11 @@ void Dragon::init(Viewer &v) {
     gravity = defaultGravity;
     viscosity = 1.0;
     dt = 0.01;
-    s->init(v);
+    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
 
 }
 
@@ -249,25 +257,24 @@ void Dragon::animate(){
         time_wing3-=0.1;
     }
 
-    std::map<const Particle *, qglviewer::Vec> forces;
-    forces[dragPart] = gravity * dragPart->getMass();
-    forces[dragPart] -= viscosity*dragPart->getVelocity();
-    forces[dragPart] += fly_force ;
-    dragPart->incrVelocity(dt*dragPart->getInvMass()*forces[dragPart]);
-    dragPart->incrPosition(dt * dragPart->getVelocity());
-    c->setCenter((dragPart->getPosition())[0],(dragPart->getPosition())[1],(dragPart->getPosition())[2]);
-    collisionParticleGround(dragPart);
-    fly_force = {0,0,0};
+    std::map<const Sphere *, qglviewer::Vec> forces;
+    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
+        Sphere* s = *it;
+        forces[s] = gravity * s->getMass();
+        forces[s] -= viscosity*s->getVelocity();
+        forces[s] += fly_force ;
+        s->incrVelocity(dt*s->getInvMass()*forces[s]);
+        s->incrPosition(dt * s->getVelocity());
+        collisionParticleGround(s);
+    }
+    fly_force[0] = 0;
+    fly_force[1] = 0;
+    fly_force[2] = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
 
-    /*glEnable(GL_FOG);
-    GLfloat fog[4] = {0.5,0.5,0.5,1};
-    glFogi(GL_FOG_MODE, GL_EXP);
-    glFogfv(GL_FOG_COLOR, fog);
-    glFogf(GL_FOG_DENSITY, 0.35);*/
     GLCHECK(glUseProgram( (GLint)program ));
     glPushMatrix();
     drawBasePlane(50.0);
@@ -277,17 +284,11 @@ void Dragon::draw(){
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    c->updateTexture(texture0, texcoord0);
-    s->setTexture(tex_body);
-    glPushMatrix();
-
-    glScalef(T_TAIL, T_TAIL, T_TAIL);
-
     glPushMatrix();
     drawBody();
     glPopMatrix();
 
-    glPushMatrix();
+    /*glPushMatrix();
     drawTail();
     glPopMatrix();
 
@@ -311,21 +312,16 @@ void Dragon::draw(){
     drawPawRightDown(-110.0);
     glPopMatrix();
 
-    glPopMatrix();
+    glPopMatrix();*/
     
-
     GLCHECK(glUseProgram( 0 ));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawBody() {
-    glColor3f(1,1,1);
-    float height = 150;
-    skeleton.push_back(new Sphere(0,0,height,R));
     skeleton[0]->draw();
     for (int i = 1; i <= 14; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),R));
         skeleton[i]->draw();
     }
 }
@@ -333,12 +329,7 @@ void Dragon::drawBody() {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawTail() {
-    glColor3f(1,0,0);
     for (int i = 15; i <= 30; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R*cos(-M_PI/180.0*30),
-                                      0,
-                                      skeleton[i-1]->getZ()+2*R*sin(-M_PI/180.0*30),
-                                      R));
         skeleton[i]->draw();
     }
 }
@@ -346,14 +337,8 @@ void Dragon::drawTail() {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawNeck() {
-    glColor3f(0,0,1);
-    skeleton.push_back(new Sphere(skeleton[0]->getX()-2*R, 0, skeleton[0]->getZ(), R));
     skeleton[31]->draw();
     for (int i = 32; i <= 45; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()-2*R*cos(M_PI/180.0*30),
-                                      0,
-                                      skeleton[i-1]->getZ()+2*R*sin(M_PI/180.0*30),
-                                      R));
         skeleton[i]->draw();
     }
 }
@@ -378,98 +363,37 @@ void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawPawLeftUp(float angle) {
-    skeleton.push_back(new Sphere(skeleton[0]->getX(),
-                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R));
     skeleton[46]->draw();
     for (int i = 47; i <= 55; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R));
         skeleton[i]->draw();
     }
 
-    /*glPushMatrix();
-    drawClaw(left, true);
-    glPopMatrix();
-
-    glPushMatrix();
-    drawClaw(left, false);
-    glPopMatrix();*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawPawRightUp(float angle) {
-    skeleton.push_back(new Sphere(skeleton[0]->getX(),
-                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R));
     skeleton[56]->draw();
     for (int i = 57; i <= 65; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R));
         skeleton[i]->draw();
     }
 
-    /*glPushMatrix();
-    drawClaw(left, true);
-    glPopMatrix();
-
-    glPushMatrix();
-    drawClaw(left, false);
-    glPopMatrix();*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawPawLeftDown(float angle) {
-    skeleton.push_back(new Sphere(skeleton[14]->getX(),
-                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R));
     skeleton[66]->draw();
     for (int i = 67; i <= 75; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R));
         skeleton[i]->draw();
     }
 
-    /*glPushMatrix();
-    drawClaw(left, true);
-    glPopMatrix();
-
-    glPushMatrix();
-    drawClaw(left, false);
-    glPopMatrix();*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawPawRightDown(float angle) {
-    skeleton.push_back(new Sphere(skeleton[14]->getX(),
-                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R));
     skeleton[76]->draw();
     for (int i = 77; i <= 85; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R));
         skeleton[i]->draw();
     }
-
-    /*glPushMatrix();
-    drawClaw(left, true);
-    glPopMatrix();
-
-    glPushMatrix();
-    drawClaw(left, false);
-    glPopMatrix();*/
 }
 
 
@@ -484,7 +408,6 @@ void Dragon::drawWing(bool left){
     }
 
     glScalef(0.4,0.4,3.5);
-    c->draw();
     glScalef(2.5,2.5,1.0/3.5);
     glTranslatef(0.0,0.5,0.0);
     if(left)
@@ -494,7 +417,6 @@ void Dragon::drawWing(bool left){
     t->draw();
     glTranslatef(0.0,5.5,1.0);
     glScalef(0.4,0.4,2.5);
-    c->draw();
     glScalef(2.5,2.5,0.4);
     glTranslatef(0.0,0.5,0.0);
 
@@ -512,7 +434,6 @@ void Dragon::drawWing(bool left){
     glScalef(1.0,1.0,7.0/5.0);
     glTranslatef(0.0,5.5,5.0/7.0);
     glScalef(0.4,0.4,25.0/14.0);
-    c->draw();
     glScalef(2.5,2.5,14.0/25.0);
     glTranslatef(0.0,0.5,0.0);
     if(left)
@@ -522,7 +443,89 @@ void Dragon::drawWing(bool left){
     t2->draw();
 }
 
-void Dragon::collisionParticleGround(Particle *p)
+void Dragon::createBody(){
+    skeleton.push_back(new Sphere(0,0,15,R));
+    for (int i = 1; i <= 14; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),0.1,10,tex_body));
+    }
+}
+void Dragon::createTail(){
+    for (int i = 15; i <= 30; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R*cos(-M_PI/180.0*30),
+                                      0,
+                                      skeleton[i-1]->getZ()+2*R*sin(-M_PI/180.0*30),
+                                      R,10,tex_body));
+    }
+}
+
+void Dragon::createNeck(){
+    skeleton.push_back(new Sphere(skeleton[0]->getX()-2*R, 0, skeleton[0]->getZ(), R,10,tex_body));
+    for (int i = 32; i <= 45; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()-2*R*cos(M_PI/180.0*30),
+                                      0,
+                                      skeleton[i-1]->getZ()+2*R*sin(M_PI/180.0*30),
+                                      R,10,tex_body));
+    }
+}
+
+void Dragon::createPawLeftUp(float angle){
+    skeleton.push_back(new Sphere(skeleton[0]->getX(),
+                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body));
+    for (int i = 47; i <= 55; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+    }
+}
+void Dragon::createPawRightUp(float angle){
+    skeleton.push_back(new Sphere(skeleton[0]->getX(),
+                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body));
+    for (int i = 57; i <= 65; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+    }
+}
+void Dragon::createPawLeftDown(float angle){
+    skeleton.push_back(new Sphere(skeleton[14]->getX(),
+                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body));
+    for (int i = 67; i <= 75; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+    }
+}
+void Dragon::createPawRightDown(float angle){
+    skeleton.push_back(new Sphere(skeleton[14]->getX(),
+                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body));
+    for (int i = 77; i <= 85; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+    }
+}
+
+void Dragon::drawSkeleton(){
+    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
+        Sphere* s = *it;
+        s->draw();
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+void Dragon::collisionParticleGround(Sphere *p)
 {
     // don't process fixed particles (ground plane is fixed)
     if (p->getInvMass() == 0)
@@ -548,29 +551,26 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 
         /* Controls added for Lab Session 6 "Physicall Modeling" */
      if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
-                c->setCenter(c->getx() + dist_flyx,c->gety(),c->getz());
-
+        fly_force -= 50*gravity;
         /*toggleGravity = !toggleGravity;
         setGravity(toggleGravity);
         viewer.displayMessage("Set gravity to "
             + (toggleGravity ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_D) && (modifiers==Qt::NoButton)) {
-                fly_force[2] -= 500;
+                fly_force[2] -= 50;
         /*toggleViscosity = !toggleViscosity;
         setViscosity(toggleViscosity);
         viewer.displayMessage("Set viscosity to "
             + (toggleViscosity ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_Q) && (modifiers==Qt::NoButton)) {
-                c->setCenter(c->getx(),c->gety(),c->getz()+dist_flyz);
         /*toggleCollisions = !toggleCollisions;
         setCollisionsDetection(toggleCollisions);
         viewer.displayMessage("Detects collisions "
             + (toggleCollisions ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_F) && (modifiers==Qt::NoButton)) {
-            c->setCenter(c->getx(),c->gety(),c->getz() - dist_flyz);
         // stop the animation, and reinit the scene
         /*viewer.stopAnimation();
         init(viewer);
@@ -579,10 +579,8 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         toggleViscosity = true;
         toggleCollisions = true;*/
     } else if ((e->key()==Qt::Key_T) && (modifiers==Qt::NoButton)) {
-            c->setCenter(c->getx(),c->gety() + dist_flyy,c->getz());
 
     } else if ((e->key()==Qt::Key_Y) && (modifiers==Qt::NoButton)) {
-            c->setCenter(c->getx(),c->gety() - dist_flyy,c->getz());
     }
 }
 

@@ -37,15 +37,36 @@ static const Material material(mat_ambient_color, mat_diffuse, white, 5.0);
 Sphere::Sphere() : toggleCollisions(true) {}
 
 ///////////////////////////////////////////////////////////////////////////////
-Sphere::Sphere(float x, float y, float z, float radius) : toggleCollisions(true) {
+Sphere::Sphere(float x, float y, float z, float radius,float mass,GLint tex) : toggleCollisions(true) {
     this->x = x;
     this->y = y;
     this->z = z;
     if (radius < 0)
         std::invalid_argument("Radius must not be negative");
     this->radius = radius;
+    if (mass < 0)
+        std::invalid_argument("Mass must not be negative");
+    this->mass = mass;
+    this->position = qglviewer::Vec(x,y,z);
+    this->velocity = qglviewer::Vec(0,0,0);
+    this->tex = tex;
 }
 
+Sphere::Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass,GLint tex) : toggleCollisions(true) {
+    this->x = pos[0];
+    this->y = pos[1];
+    this->z = pos[2];
+    if (radius < 0)
+        std::invalid_argument("Radius must not be negative");
+    this->radius = radius;
+    if (mass < 0)
+        std::invalid_argument("Mass must not be negative");
+    this->mass = mass;
+    this->position = pos;
+    this->velocity = vel;
+    this->invMass = (mass > 0 ? 1 / mass : 0.0);
+    this->tex = tex;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::init(Viewer &v) {
@@ -168,3 +189,59 @@ bool Sphere::getCollisions() {
 void Sphere::setCollisions(bool enable) {
 	this->toggleCollisions = enable;
 }
+///////////////////////////////////////////////////////////////////////////////
+
+const qglviewer::Vec & Sphere::getPosition() const
+{
+    return position;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+const qglviewer::Vec & Sphere::getVelocity() const
+{
+    return velocity;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float Sphere::getMass() const
+{
+    return mass;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+float Sphere::getInvMass() const
+{
+    return invMass;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::setPosition(const qglviewer::Vec &pos)
+{
+    this->position = pos;
+    this->x = pos[0];
+    this->y = pos[1];
+    this->z = pos[2];
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::setVelocity(const qglviewer::Vec &vel)
+{
+    this->velocity = vel;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::incrPosition(const qglviewer::Vec &pos)
+{
+    this->position += pos;
+    this->x += pos[0];
+    this->y += pos[1];
+    this->z += pos[2];
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::incrVelocity(const qglviewer::Vec &vel)
+{
+    this->velocity += vel;
+}
+

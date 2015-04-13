@@ -3,7 +3,6 @@
 #include "renderable.h"
 #include "shader.h"
 #include "cylinder.h"
-#include "particle.h"
 #include "trapezeIsocele.h"
 #include "sphere.h"
 #include <vector>
@@ -19,7 +18,7 @@ public:
     void init(Viewer &v);
     void animate();
     void keyPressEvent(QKeyEvent*e, Viewer& viewer);
-    void collisionParticleGround(Particle *p);
+    void collisionParticleGround(Sphere *p);
 
 private:
     void drawBody();//int first, int last);
@@ -33,6 +32,14 @@ private:
     void drawPawLeftDown(float angle);//, int first, int last);
     void drawPawRightDown(float angle);//, int first, int last);
     void drawWing(bool left);
+    void createBody();
+    void createTail();
+    void createNeck();
+    void createPawLeftUp(float angle);
+    void createPawRightUp(float angle);
+    void createPawLeftDown(float angle);
+    void createPawRightDown(float angle);
+    void drawSkeleton();
 
     std::vector<Sphere*> skeleton;
     int indexBody;
@@ -44,10 +51,8 @@ private:
     int indexPawRightDown;
     float R;
 
-    Cylinder *c;
     TrapezeIsocele *t;
     TrapezeIsocele *t2;
-    Sphere *s;
 
     float first_angle_wing;
     bool first_angle_wing_up;
@@ -69,7 +74,7 @@ private:
 
     double mass;
 
-    Particle* dragPart;
+    Sphere* dragPart;
 
     //std::vector<Renderable> component_list;
     void drawBasePlane(float size);
