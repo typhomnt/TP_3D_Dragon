@@ -125,6 +125,8 @@ Dragon::Dragon() {
     createFire();
     createWingR();
     meshWingR();
+
+    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
 }
 
 
@@ -133,6 +135,7 @@ Dragon::~Dragon() {
     delete t;
     delete t2;
     delete dragPart;
+    delete firesmoke;
 }
 
 
@@ -178,7 +181,7 @@ void Dragon::init(Viewer &v) {
             }
         }
     }
-
+    firesmoke->init(v);
 }
 
 
@@ -411,19 +414,24 @@ void Dragon::animate(){
         i++;
     }
     tp++;
+
+
+    firesmoke->animate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
 
-    //GLCHECK(glUseProgram( (GLint)program ));
+    /*
+    GLCHECK(glUseProgram( (GLint)program ));
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
-    /*GLCHECK(glActiveTexture(GL_TEXTURE0));
+    
+    GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_feu));
     GLCHECK(glUniform1i(texture0, 0));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     //drawFire();
     drawWingR();
@@ -458,8 +466,10 @@ void Dragon::draw(){
     drawSprings();
     drawMeshWingR();
     glPopMatrix();
-    
+    */
     //GLCHECK(glUseProgram( 0 ));
+    firesmoke->draw();
+
 }
 
 
