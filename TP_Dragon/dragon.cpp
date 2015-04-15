@@ -126,7 +126,7 @@ Dragon::Dragon() {
     createWingR();
     meshWingR();
 
-    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
+    this->firesmoke = new FireSmoke(false, qglviewer::Vec(1,1,1), 50000);
 }
 
 
