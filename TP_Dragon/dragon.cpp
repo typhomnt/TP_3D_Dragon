@@ -422,8 +422,8 @@ void Dragon::animate(){
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
 
-    /*
-    GLCHECK(glUseProgram( (GLint)program ));
+
+    //GLCHECK(glUseProgram( (GLint)program ));
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
@@ -466,7 +466,7 @@ void Dragon::draw(){
     drawSprings();
     drawMeshWingR();
     glPopMatrix();
-    */
+
     //GLCHECK(glUseProgram( 0 ));
     firesmoke->draw();
 
