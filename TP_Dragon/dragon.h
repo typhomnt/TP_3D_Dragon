@@ -6,6 +6,7 @@
 #include "trapezeIsocele.h"
 #include "sphere.h"
 #include "spring.h"
+#include "firesmoke.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -111,6 +112,8 @@ private:
 
     // Inits lighting
     void initLighting();
+
+    FireSmoke *firesmoke;
 
 
 };
