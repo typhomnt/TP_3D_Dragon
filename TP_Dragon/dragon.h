@@ -20,6 +20,7 @@ public:
     void animate();
     void keyPressEvent(QKeyEvent*e, Viewer& viewer);
     void collisionParticleGround(Sphere *p);
+    void collisionParticleParticle(Sphere *s1, Sphere *s2);
 
 private:
     void drawBody();//int first, int last);
@@ -40,11 +41,20 @@ private:
     void createPawRightUp(float angle);
     void createPawLeftDown(float angle);
     void createPawRightDown(float angle);
+    void createFire();
+    void drawFire();
     void drawSkeleton();
     void drawSprings();
+    void createWingR();
+    void drawWingR();
+    void meshWingR();
+    void drawMeshWingR();
 
     std::vector<Sphere*> skeleton;
     std::vector<Spring*> sprgSkel;
+    std::vector<Spring*> sprgWing1R;
+    std::vector<Sphere*> fire;
+    qglviewer::Vec originFire;
     int indexBody;
     int indexTail;
     int indexNeck;
@@ -77,13 +87,15 @@ private:
 
     double mass;
 
+    Sphere*** wingR1;
+
     Sphere* dragPart;
 
     //std::vector<Renderable> component_list;
     void drawBasePlane(float size);
 
     // textures used in this practical
-    GLuint tex_body,tex_field;
+    GLuint tex_body,tex_field,tex_feu;
 
     // texture unit shader binding
     GLint texture0;

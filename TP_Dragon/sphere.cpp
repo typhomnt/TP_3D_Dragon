@@ -34,10 +34,10 @@ static const Material material(mat_ambient_color, mat_diffuse, white, 5.0);
 
 
 ///////////////////////////////////////////////////////////////////////////////
-Sphere::Sphere() : toggleCollisions(true) {}
+Sphere::Sphere() : toggleCollisions(true),colored(false),fixed(false) {}
 
 ///////////////////////////////////////////////////////////////////////////////
-Sphere::Sphere(float x, float y, float z, float radius,float mass,GLint tex) : toggleCollisions(true) {
+Sphere::Sphere(float x, float y, float z, float radius,float mass,GLint tex,bool fix, bool col) :colored(false) {
     this->x = x;
     this->y = y;
     this->z = z;
@@ -51,9 +51,11 @@ Sphere::Sphere(float x, float y, float z, float radius,float mass,GLint tex) : t
     this->position = qglviewer::Vec(x,y,z);
     this->velocity = qglviewer::Vec(0,0,0);
     this->tex = tex;
+    this->fixed = fix;
+    this->toggleCollisions = col;
 }
 
-Sphere::Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass,GLint tex) : toggleCollisions(true) {
+Sphere::Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass,GLint tex,bool fix, bool col) : colored(false){
     this->x = pos[0];
     this->y = pos[1];
     this->z = pos[2];
@@ -67,6 +69,8 @@ Sphere::Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass,
     this->velocity = vel;
     this->invMass = (mass > 0 ? 1 / mass : 0.0);
     this->tex = tex;
+    this->fixed = fix;
+    this->toggleCollisions = col;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -98,24 +102,41 @@ void Sphere::initLighting() {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::draw() {
-	GLCHECK(glUseProgram(program));
+    if(!colored){
+        GLCHECK(glUseProgram(program));
+        GLCHECK(glActiveTexture(GL_TEXTURE0));
+        GLCHECK(glBindTexture(GL_TEXTURE_2D, tex));
+        GLCHECK(glUniform1i(texture0, 0));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ka"), 1, &material.ka.x));
+        GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.kd"), 1, &material.kd.x));
+        GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ks"), 1, &material.ks.x));
+        GLCHECK(glUniform1f(glGetUniformLocation(program, "material.shininess"), material.shininess));
+    }else{
+        glColor4f(r,g,b,a);
+    }
 
-	GLCHECK(glActiveTexture(GL_TEXTURE0));
-	GLCHECK(glBindTexture(GL_TEXTURE_2D, tex));
-	GLCHECK(glUniform1i(texture0, 0));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ka"), 1, &material.ka.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.kd"), 1, &material.kd.x));
-    GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ks"), 1, &material.ks.x));
-    GLCHECK(glUniform1f(glGetUniformLocation(program, "material.shininess"), material.shininess));
 
     glPushMatrix();
     glTranslatef(this->x, this->y, this->z);
-	glutSolidSphere(this->radius, 100, 100);
+    glutSolidSphere(this->radius, 10, 10);
     glPopMatrix();
 
 	GLCHECK(glUseProgram(0));
+}
+void Sphere::setColor(float r, float g, float b, float a){
+    colored = true;
+    this->r = r;
+    this->g = g;
+    this->b = b;
+    this->a = a;
+}
+void Sphere::setFixed(bool b){
+    this->fixed = b;
+}
+
+bool Sphere::getFixed() const{
+    return this->fixed;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -176,6 +197,7 @@ void Sphere::operator=(const Sphere& s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::setTexture(GLint id) {
+    this->colored = false;
 	this->tex = id;
 }
 
