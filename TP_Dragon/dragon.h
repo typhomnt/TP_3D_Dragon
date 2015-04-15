@@ -19,7 +19,7 @@ public:
     void init(Viewer &v);
     void animate();
     void keyPressEvent(QKeyEvent*e, Viewer& viewer);
-    void collisionParticleGround(Sphere *p);
+    bool collisionParticleGround(Sphere *p);
     void collisionParticleParticle(Sphere *s1, Sphere *s2);
 
 private:
