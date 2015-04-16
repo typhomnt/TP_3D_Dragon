@@ -89,6 +89,7 @@ private:
     double mass;
 
     Sphere*** wingR1;
+    Sphere*** wingR2;
 
     Sphere* dragPart;
 

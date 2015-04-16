@@ -57,6 +57,7 @@ static float k = 800;
 static float amort = 500;
 static float lo;
 static float nbw1 = 10;
+static float nbw2 = 8;
 static qglviewer::Vec wing1root = qglviewer::Vec(2,2,2);
 static qglviewer::Vec wing1vel = qglviewer::Vec(0,0,0);
 static qglviewer::Vec initForces = qglviewer::Vec(0,0,0);
@@ -65,9 +66,9 @@ static float amort1 = 100;
 static float lo1;
 static float meshStep = 3.0;
 static float wr = 0.2;
-static qglviewer::Vec  wingForce = qglviewer::Vec(30,30,80);
-static qglviewer::Vec  wingForce2 = qglviewer::Vec(0,80,80);
-static qglviewer::Vec  wingForce3 = qglviewer::Vec(80,0,80);
+static qglviewer::Vec  wingForce = qglviewer::Vec(20,20,50);
+static qglviewer::Vec  wingForce2 = qglviewer::Vec(0,60,50);
+static qglviewer::Vec  wingForce3 = qglviewer::Vec(60,0,50);
 static int tp = 1;
 static int mod = 2;
 /*nouveau dragon*/
@@ -113,6 +114,15 @@ Dragon::Dragon() {
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             wingR1[i][j] = NULL;
+        }
+    }
+    wingR2 = (Sphere***)malloc(nbw2*sizeof(Sphere**));
+    for(int i = 0 ; i < nbw2 ; i++){
+        wingR2[i] = (Sphere**)malloc(nbw2*sizeof(Sphere*));
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j = 0 ; j < nbw2 ; j++){
+            wingR2[i][j] = NULL;
         }
     }
     createBody();
@@ -178,6 +188,14 @@ void Dragon::init(Viewer &v) {
             if(wingR1[i][j] != NULL){
                 wingR1[i][j]->setTexture(tex_body);
                 wingR1[i][j]->init(v);
+            }
+        }
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j= 0 ; j < nbw2 ; j++){
+            if(wingR2[i][j] != NULL){
+                wingR2[i][j]->setTexture(tex_body);
+                wingR2[i][j]->init(v);
             }
         }
     }
@@ -428,10 +446,10 @@ void Dragon::draw(){
     drawBasePlane(50.0);
     glPopMatrix();
     
-    GLCHECK(glActiveTexture(GL_TEXTURE0));
+    /*GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_feu));
     GLCHECK(glUniform1i(texture0, 0));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
 
     //drawFire();
     drawWingR();
@@ -746,26 +764,65 @@ void Dragon::createWingR(){
             }
         }
     }
+    wingR2[0][0] = new Sphere(wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getX(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getY() + 1.0/meshStep, wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getZ(),wr);
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j= 0 ; j < nbw2 ; j++){
+            if(i != 0 || j != 0){
+                if(i == 0){
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX(),wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr);
+                }
+                else if (j == 0){
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY(),wingR2[0][0]->getZ(),wr);
+                }
+                else{
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr);
+                }
+            }
+        }
+    }
 }
 
 void Dragon::drawWingR(){
+    GLCHECK(glUseProgram(program));
+    GLCHECK(glActiveTexture(GL_TEXTURE0));
+    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_feu));
+    GLCHECK(glUniform1i(texture0, 0));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBegin(GL_QUADS);
     for(int i = 0 ; i < nbw1 - 1 ; i++){
         for(int j= 0 ; j < nbw1 - 1 ; j++){
-            glNormal3f(0,0,1);
+            //glNormal3f(0,0,1);
             glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
             glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(wingR1[i][j+1]->getX(),wingR1[i][j+1]->getY(),wingR1[i][j+1]->getZ());
             glVertexAttrib2f(texcoord0, 0, 0);
-            glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(wingR1[i+1][j+1]->getX(),wingR1[i+1][j+1]->getY(),wingR1[i+1][j+1]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
             //if(wingR1[i][j] != NULL)
               //  wingR1[i][j]->draw();
         }
     }
     glEnd();
+    glBegin(GL_QUADS);
+    for(int i = 0 ; i < nbw2 - 1 ; i++){
+        for(int j= 0 ; j < nbw2 - 1 ; j++){
+            //glNormal3f(0,0,2);
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
+            //if(wingR2[i][j] != NULL)
+              //  wingR2[i][j]->draw();
+        }
+    }
+    glEnd();
+    GLCHECK(glUseProgram( 0 ));
 }
 
 void Dragon::meshWingR(){
