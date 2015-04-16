@@ -126,7 +126,7 @@ Dragon::Dragon() {
     createWingR();
     meshWingR();
 
-    this->firesmoke = new FireSmoke(false, qglviewer::Vec(1,1,1), 50000);
+    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 50000);
 }
 
 
@@ -181,7 +181,7 @@ void Dragon::init(Viewer &v) {
             }
         }
     }
-    firesmoke->init(v);
+    //firesmoke->init(v);
 }
 
 
@@ -195,7 +195,7 @@ void Dragon::initLighting() {
     glEnable(GL_LIGHTING);
     glDisable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
-    glClearColor(119.0 / 255.0, 181.0 / 255.0, 254.0 / 255.0, 0.0f);
+    glClearColor(218.0 / 255.0, 200.0 / 255.0, 196.0 / 255.0, 1.0f);
 }
 
 
@@ -415,15 +415,15 @@ void Dragon::animate(){
     }
     tp++;
 
-
-    firesmoke->animate();
+    if (firesmoke->isActive())
+        firesmoke->animate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
 
-
-    //GLCHECK(glUseProgram( (GLint)program ));
+    /*
+    GLCHECK(glUseProgram( (GLint)program ));
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
@@ -433,7 +433,6 @@ void Dragon::draw(){
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    //drawFire();
     drawWingR();
     glPushMatrix();
     drawBody();
@@ -467,8 +466,11 @@ void Dragon::draw(){
     drawMeshWingR();
     glPopMatrix();
 
-    //GLCHECK(glUseProgram( 0 ));
-    firesmoke->draw();
+    GLCHECK(glUseProgram( 0 ));
+    */
+
+    if(firesmoke->isActive())
+        firesmoke->draw();
 
 }
 
@@ -888,13 +890,10 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
             + (toggleCollisions ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_F) && (modifiers==Qt::NoButton)) {
-        // stop the animation, and reinit the scene
-        /*viewer.stopAnimation();
-        init(viewer);
-        viewer.manipulatedFrame()->setPosition(getFixedParticlePosition());
-        toggleGravity = true;
-        toggleViscosity = true;
-        toggleCollisions = true;*/
+        if (!firesmoke->isActive())
+            firesmoke->activate();
+        else
+            firesmoke->inactivate();
     } else if ((e->key()==Qt::Key_T) && (modifiers==Qt::NoButton)) {
 
     } else if ((e->key()==Qt::Key_Y) && (modifiers==Qt::NoButton)) {
