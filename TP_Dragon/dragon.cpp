@@ -57,6 +57,7 @@ static float k = 800;
 static float amort = 500;
 static float lo;
 static float nbw1 = 10;
+static float nbw2 = 8;
 static qglviewer::Vec wing1root = qglviewer::Vec(2,2,2);
 static qglviewer::Vec wing1vel = qglviewer::Vec(0,0,0);
 static qglviewer::Vec initForces = qglviewer::Vec(0,0,0);
@@ -65,11 +66,13 @@ static float amort1 = 100;
 static float lo1;
 static float meshStep = 3.0;
 static float wr = 0.2;
-static qglviewer::Vec  wingForce = qglviewer::Vec(30,30,80);
-static qglviewer::Vec  wingForce2 = qglviewer::Vec(0,80,80);
-static qglviewer::Vec  wingForce3 = qglviewer::Vec(80,0,80);
+static qglviewer::Vec  wingForce = qglviewer::Vec(10,10,20);
+static qglviewer::Vec  wingForce2 = qglviewer::Vec(0,10,20);
+static qglviewer::Vec  wingForce3 = qglviewer::Vec(10,0,20);
+static float lo2;
 static int tp = 1;
 static int mod = 2;
+
 /*nouveau dragon*/
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,6 +84,7 @@ Dragon::Dragon() {
     R = 0.1;
     lo=R/2;
     lo1=1/meshStep;
+    lo2 = 0;
     indexBody = 0;
     indexTail = 15;
     indexNeck = 31;
@@ -102,7 +106,7 @@ Dragon::Dragon() {
     time_wing1 = 0;
     time_wing2 = 0;
     time_wing3 = 0;
-    fly_up = true;
+    fly_up = false;
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
@@ -113,6 +117,15 @@ Dragon::Dragon() {
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             wingR1[i][j] = NULL;
+        }
+    }
+    wingR2 = (Sphere***)malloc(nbw2*sizeof(Sphere**));
+    for(int i = 0 ; i < nbw2 ; i++){
+        wingR2[i] = (Sphere**)malloc(nbw2*sizeof(Sphere*));
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j = 0 ; j < nbw2 ; j++){
+            wingR2[i][j] = NULL;
         }
     }
     createBody();
@@ -178,6 +191,14 @@ void Dragon::init(Viewer &v) {
             if(wingR1[i][j] != NULL){
                 wingR1[i][j]->setTexture(tex_body);
                 wingR1[i][j]->init(v);
+            }
+        }
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j= 0 ; j < nbw2 ; j++){
+            if(wingR2[i][j] != NULL){
+                wingR2[i][j]->setTexture(tex_body);
+                wingR2[i][j]->init(v);
             }
         }
     }
@@ -328,13 +349,20 @@ void Dragon::animate(){
             forces[wingR1[i][j]] = initForces;
         }
     }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j = 0 ; j < nbw2 ; j++){
+            forces[wingR2[i][j]] = initForces;
+        }
+    }
     for(std::vector<Spring*>::iterator it = sprgSkel.begin() ; it != sprgSkel.end(); it++){
         Spring* s = *it;
         qglviewer::Vec f12 = s->getCurrentForce();
-        if(!s->getParticle1()->getFixed())
-            forces[s->getParticle1()] += f12;
-        if(!s->getParticle2()->getFixed())
-            forces[s->getParticle2()] -= f12;
+        if(fly_up){
+            if(!s->getParticle1()->getFixed())
+                forces[s->getParticle1()] += f12;
+            if(!s->getParticle2()->getFixed())
+                forces[s->getParticle2()] -= f12;
+        }
     }
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
@@ -361,13 +389,16 @@ void Dragon::animate(){
         Sphere* s = *it;
         forces[s] -= viscosity*s->getVelocity();
         forces[s] += fly_force ;
+        if(fly_up){
         s->incrVelocity(dt*s->getInvMass()*forces[s]);
         s->incrPosition(dt*s->getVelocity());
         if(s->getCollisions())
             if(collisionParticleGround(s)){
                 s->setFixed(true);
+                fly_up = false;
                 s->setVelocity(initForces);
             }
+        }
     }
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
@@ -375,6 +406,14 @@ void Dragon::animate(){
             wingR1[i][j]->incrPosition(dt*wingR1[i][j]->getVelocity());
         }
     }
+
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j = 0 ; j < nbw2 ; j++){
+            wingR2[i][j]->incrVelocity(dt*wingR2[i][j]->getInvMass()*forces[wingR2[i][j]]);
+            wingR2[i][j]->incrPosition(dt*wingR2[i][j]->getVelocity());
+        }
+    }
+
     fly_force[0] = 0;
     fly_force[1] = 0;
     fly_force[2] = 0;
@@ -423,15 +462,15 @@ void Dragon::animate(){
 void Dragon::draw(){
 
     /*
-    GLCHECK(glUseProgram( (GLint)program ));
+    GLCHECK(glUseProgram( (GLint)program ));*/
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
     
-    GLCHECK(glActiveTexture(GL_TEXTURE0));
+    /*GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_feu));
     GLCHECK(glUniform1i(texture0, 0));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
 
     drawWingR();
     glPushMatrix();
@@ -467,7 +506,7 @@ void Dragon::draw(){
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
-    */
+
 
     if(firesmoke->isActive())
         firesmoke->draw();
@@ -748,26 +787,65 @@ void Dragon::createWingR(){
             }
         }
     }
+    wingR2[0][0] = new Sphere(wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getX(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getY(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getZ(),wr);
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j= 0 ; j < nbw2 ; j++){
+            if(i != 0 || j != 0){
+                if(i == 0){
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX(),wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr);
+                }
+                else if (j == 0){
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY(),wingR2[0][0]->getZ(),wr);
+                }
+                else{
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr);
+                }
+            }
+        }
+    }
 }
 
 void Dragon::drawWingR(){
+    GLCHECK(glUseProgram(program));
+    GLCHECK(glActiveTexture(GL_TEXTURE0));
+    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_feu));
+    GLCHECK(glUniform1i(texture0, 0));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBegin(GL_QUADS);
     for(int i = 0 ; i < nbw1 - 1 ; i++){
         for(int j= 0 ; j < nbw1 - 1 ; j++){
-            glNormal3f(0,0,1);
+            //glNormal3f(0,0,1);
             glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
             glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(wingR1[i][j+1]->getX(),wingR1[i][j+1]->getY(),wingR1[i][j+1]->getZ());
             glVertexAttrib2f(texcoord0, 0, 0);
-            glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(wingR1[i+1][j+1]->getX(),wingR1[i+1][j+1]->getY(),wingR1[i+1][j+1]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
             //if(wingR1[i][j] != NULL)
               //  wingR1[i][j]->draw();
         }
     }
     glEnd();
+    glBegin(GL_QUADS);
+    for(int i = 0 ; i < nbw2 - 1 ; i++){
+        for(int j= 0 ; j < nbw2 - 1 ; j++){
+            //glNormal3f(0,0,2);
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
+            //if(wingR2[i][j] != NULL)
+              //  wingR2[i][j]->draw();
+        }
+    }
+    glEnd();
+    GLCHECK(glUseProgram( 0 ));
 }
 
 void Dragon::meshWingR(){
@@ -789,6 +867,32 @@ void Dragon::meshWingR(){
                 if(i != nbw1 - 1 && j != 0){
                     if(wingR1[i+1][j-1] != NULL)
                     sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j-1],k1,lo1,amort1));
+                }
+            }
+        }
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        if(wingR2[i][0] != NULL && wingR1[(int)nbw1 - 1 - i][(int)nbw1-1] != NULL)
+            sprgWing1R.push_back(new Spring(wingR2[i][0],wingR1[(int)nbw1- 1 - i][(int)nbw1-1],k1,lo2,amort1));
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j= 0 ; j < nbw2 ; j++){
+            if(wingR2[i][j] != NULL){
+                if(i < nbw2 - 1){
+                    if(wingR2[i+1][j] != NULL)
+                        sprgWing1R.push_back(new Spring(wingR2[i][j],wingR2[i+1][j],k1,lo1,amort1));
+                }
+                if(j < nbw2 - 1){
+                    if(wingR2[i][j+1] != NULL)
+                    sprgWing1R.push_back(new Spring(wingR2[i][j],wingR2[i][j+1],k1,lo1,amort1));
+                }
+                if(i != nbw2 - 1 && j != nbw2 - 1){
+                    if(wingR2[i+1][j+1] != NULL)
+                    sprgWing1R.push_back(new Spring(wingR2[i][j],wingR2[i+1][j+1],k1,lo1,amort1));
+                }
+                if(i != nbw2 - 1 && j != 0){
+                    if(wingR2[i+1][j-1] != NULL)
+                    sprgWing1R.push_back(new Spring(wingR2[i][j],wingR2[i+1][j-1],k1,lo1,amort1));
                 }
             }
         }
@@ -870,6 +974,7 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 
         /* Controls added for Lab Session 6 "Physicall Modeling" */
      if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
+        fly_up = true;
         fly_force -= 50*gravity;
         /*toggleGravity = !toggleGravity;
         setGravity(toggleGravity);
@@ -877,7 +982,6 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
             + (toggleGravity ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_D) && (modifiers==Qt::NoButton)) {
-                fly_force[2] -= 50;
         /*toggleViscosity = !toggleViscosity;
         setViscosity(toggleViscosity);
         viewer.displayMessage("Set viscosity to "
