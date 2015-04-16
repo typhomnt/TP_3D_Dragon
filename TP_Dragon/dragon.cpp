@@ -56,8 +56,8 @@ static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
 static float k = 800;
 static float amort = 500;
 static float lo;
-static float nbw1 = 10;
-static float nbw2 = 8;
+static float nbw1 = 11;
+static float nbw2 = 11;
 static qglviewer::Vec wing1root = qglviewer::Vec(2,2,2);
 static qglviewer::Vec wing1vel = qglviewer::Vec(0,0,0);
 static qglviewer::Vec initForces = qglviewer::Vec(0,0,0);
@@ -72,6 +72,9 @@ static qglviewer::Vec  wingForce3 = qglviewer::Vec(10,0,20);
 static float lo2;
 static int tp = 1;
 static int mod = 2;
+static int tw = 1;
+static float coeffw = -1;
+static float walkstep = 0.05;
 
 /*nouveau dragon*/
 
@@ -95,7 +98,6 @@ Dragon::Dragon() {
     mass = 3000;
     qglviewer::Vec initPos = qglviewer::Vec(0,0,15);
     qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
-    originFire = qglviewer::Vec(1,1,1);
     dragPart = new Sphere(initPos,initVec,R,mass);
     first_angle_wing = 0;
     first_angle_wing_up = true;
@@ -106,7 +108,12 @@ Dragon::Dragon() {
     time_wing1 = 0;
     time_wing2 = 0;
     time_wing3 = 0;
-    fly_up = false;
+    fly_up = true;
+    walk = false;
+    paw1w = false;
+    paw2w = false;
+    paw3w = false;
+    paw4w = false;
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
@@ -135,11 +142,10 @@ Dragon::Dragon() {
     createPawRightUp(-110);
     createPawLeftDown(-70);
     createPawRightDown(-110);
-    createFire();
     createWingR();
     meshWingR();
 
-    this->firesmoke = new FireSmoke(false, qglviewer::Vec(1,1,1), 50000);
+    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 50000);
 }
 
 
@@ -178,12 +184,6 @@ void Dragon::init(Viewer &v) {
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
         Sphere* s = *it;
         s->setTexture(tex_body);
-        s->init(v);
-    }
-    for(std::vector<Sphere*>::iterator it = fire.begin() ; it != fire.end(); it++){
-        Sphere* s = *it;
-        //s->setTexture(tex_feu);
-        s->setColor(1,0,0,1);
         s->init(v);
     }
     for(int i = 0 ; i < nbw1 ; i++){
@@ -334,21 +334,23 @@ void Dragon::animate(){
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); ++it){
         Sphere* s = *it;
         forces[s] = initForces;
-        if(!s->getFixed())
+        if(!s->getFixed() && !walk)
             forces[s] += gravity * s->getMass();
     }
     wingR1[0][0]->setFixed(true);
-    wingR1[0][1]->setFixed(true);
-    wingR1[1][0]->setFixed(true);
-    wingR1[1][1]->setFixed(true);
+    //wingR1[0][1]->setFixed(true);
+    //wingR1[1][0]->setFixed(true);
+    //wingR1[1][1]->setFixed(true);
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
-            forces[wingR1[i][j]] = initForces;
+            if(wingR1[i][j] != NULL)
+                forces[wingR1[i][j]] = initForces;
         }
     }
     for(int i = 0 ; i < nbw2 ; i++){
         for(int j = 0 ; j < nbw2 ; j++){
-            forces[wingR2[i][j]] = initForces;
+            if(wingR2[i][j] != NULL)
+                forces[wingR2[i][j]] = initForces;
         }
     }
     for(std::vector<Spring*>::iterator it = sprgSkel.begin() ; it != sprgSkel.end(); it++){
@@ -399,8 +401,10 @@ void Dragon::animate(){
     }
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
-            wingR1[i][j]->incrVelocity(dt*wingR1[i][j]->getInvMass()*forces[wingR1[i][j]]);
-            wingR1[i][j]->incrPosition(dt*wingR1[i][j]->getVelocity());
+            if(wingR1[i][j] != NULL){
+                wingR1[i][j]->incrVelocity(dt*wingR1[i][j]->getInvMass()*forces[wingR1[i][j]]);
+                wingR1[i][j]->incrPosition(dt*wingR1[i][j]->getVelocity());
+            }
         }
     }
 
@@ -414,43 +418,116 @@ void Dragon::animate(){
     fly_force[0] = 0;
     fly_force[1] = 0;
     fly_force[2] = 0;
-    for(unsigned int i = 0; i < skeleton.size(); ++i) {
-        for(unsigned int j = 0; j < i; ++j){
-                Sphere *s1 = skeleton[i];
-                Sphere *s2 = skeleton[j];
-                if(s1->getCollisions() && s2->getCollisions())
-                    collisionParticleParticle(s1,s2);
+    if(!walk){
+        for(unsigned int i = 0; i < skeleton.size(); ++i) {
+            for(unsigned int j = 0; j < i; ++j){
+                    Sphere *s1 = skeleton[i];
+                    Sphere *s2 = skeleton[j];
+                    if(s1->getCollisions() && s2->getCollisions())
+                        collisionParticleParticle(s1,s2);
 
+            }
         }
     }
     for(unsigned int i = 0; i < nbw1; ++i) {
         for(unsigned int j = 0; j < nbw1; ++j){
             for(unsigned int k = 0; k < i ; k ++){
                 for(unsigned int l = 0 ;l < j ; l++){
-                    Sphere *s1 = wingR1[i][j];
-                    Sphere *s2 = wingR1[k][l];
-                    if(s1->getCollisions() && s2->getCollisions())
-                        collisionParticleParticle(s1,s2);
+                    if(wingR1[i][j] != NULL && wingR1[k][l] != NULL){
+                        Sphere *s1 = wingR1[i][j];
+                        Sphere *s2 = wingR1[k][l];
+                        if(s1->getCollisions() && s2->getCollisions())
+                            collisionParticleParticle(s1,s2);
+                    }
                 }
             }
 
         }
     }
-    int i = 0;
-    for(std::vector<Sphere*>::iterator it = fire.begin() ; it != fire.end(); ++it){
-        Sphere* s = *it;
-        if(i != 0){
-            if(abs(s->getX() - originFire[0] + rand()/RAND_MAX - 0.5) > 0.5){
-                s->setPosition(originFire);
-            }
-            else{
-                s->incrPosition(dt*s->getVelocity());
-            }
-        }
-        i++;
-    }
     tp++;
-
+    if(walk){
+        if(paw1w){
+            if(tw%10 == 0){
+                coeffw = -coeffw;
+                if(tw%20 != 0)
+                 tw++;
+            }
+            if(tw%20 == 0){
+                //coeffw = -coeffw;
+                paw1w = false;
+                paw2w = true;
+                tw = 1;
+            }
+            for(int i = indexPawLeftDown ; i < indexPawRightDown ; i++){
+                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+            }
+            for(int i = indexBody ; i < indexPawLeftUp ; i++){
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+            }
+       }
+       else if(paw2w){
+           if(tw%10 == 0){
+               coeffw = -coeffw;
+               if(tw%20 != 0)
+                tw++;
+           }
+            if(tw%20 == 0){
+                //coeffw = -coeffw;
+                paw2w = false;
+                paw3w = true;
+                tw = 1;
+            }
+            for(int i = indexPawLeftUp ; i < indexPawRightUp; i++){
+                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+            }
+            for(int i = indexBody ; i < indexPawLeftUp ; i++){
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+            }
+       }
+       else if(paw3w){
+           if(tw%10 == 0){
+               coeffw = -coeffw;
+               if(tw%20 != 0)
+                tw++;
+           }
+            if(tw%20 == 0){
+                //coeffw = -coeffw;
+                paw3w = false;
+                paw4w = true;
+                tw = 1;
+            }
+            for(int i = indexPawRightDown ; i < 86; i++){
+                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+            }
+            for(int i = indexBody ; i < indexPawLeftUp ; i++){
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+            }
+       }
+       else if(paw4w){
+           if(tw%10 == 0){
+               coeffw = -coeffw;
+               if(tw%20 != 0)
+                tw++;
+           }
+            if(tw%20 == 0){
+                //coeffw = -coeffw;
+                paw4w = false;
+                paw1w = true;
+                tw = 1;
+            }
+            for(int i = indexPawRightUp ; i < indexPawLeftDown; i++){
+                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+            }
+            for(int i = indexBody ; i < indexPawLeftUp ; i++){
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+            }
+       }
+    }
+    tw++;
     if (firesmoke->isActive())
         firesmoke->animate();
 }
@@ -503,7 +580,6 @@ void Dragon::draw(){
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
-
 
     if(firesmoke->isActive())
         firesmoke->draw();
@@ -738,47 +814,19 @@ void Dragon::drawSprings(){
     }
 }
 
-void Dragon::drawFire(){
-    for(std::vector<Sphere*>::iterator it = fire.begin() ; it != fire.end(); it++){
-        Sphere* s = *it;
-        s->draw();
-    }
-}
-
-void Dragon::createFire(){
-    int nbrPart = 700;
-    float varx = -5;
-    qglviewer::Vec initPosF = originFire;
-    qglviewer::Vec initVecF = qglviewer::Vec(varx,50,20);
-    for(int i = 0 ; i < nbrPart ; i++){
-        fire.push_back(new Sphere(initPosF,initVecF,R,0));
-        initVecF[0] += 0.3;
-        if(i < nbrPart/2){
-            initVecF[1] += 0.2 + 10*rand()/RAND_MAX - 0.5;
-            initVecF[2] -= 0.2 + 10*rand()/RAND_MAX - 0.5;
-        }
-        else{
-            initVecF[1] -= 0.2 + 10*rand()/RAND_MAX - 0.5;
-            initVecF[2] += 0.2 + 10*rand()/(RAND_MAX  - 2)- 0.5;
-        }
-        if(initVecF[0] > 5)
-            initVecF[0] = varx;
-
-    }
-}
 
 void Dragon::createWingR(){
     wingR1[0][0] = new Sphere(wing1root,wing1vel,wr);
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j= 0 ; j < nbw1 ; j++){
             if(i != 0 || j != 0){
-                if(i == 0){
+                /*if(i == 0){
                     wingR1[i][j] = new Sphere(wingR1[0][0]->getX(),wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
-                }
-                else if (j == 0){
+                }*/
+                /*else if (j == 0){
                     wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY(),wingR1[0][0]->getZ(),wr);
-                }
-                else{
+                }*/
+               if (i <= j){
                     wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
                 }
             }
@@ -812,14 +860,22 @@ void Dragon::drawWingR(){
     for(int i = 0 ; i < nbw1 - 1 ; i++){
         for(int j= 0 ; j < nbw1 - 1 ; j++){
             //glNormal3f(0,0,1);
-            glVertexAttrib2f(texcoord0, 0, 0);
-            glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
-            glVertex3f(wingR1[i][j+1]->getX(),wingR1[i][j+1]->getY(),wingR1[i][j+1]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
-            glVertex3f(wingR1[i+1][j+1]->getX(),wingR1[i+1][j+1]->getY(),wingR1[i+1][j+1]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
-            glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
+            if(wingR1[i][j] != NULL){
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
+            }
+            if(wingR1[i][j+1]){
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR1[i][j+1]->getX(),wingR1[i][j+1]->getY(),wingR1[i][j+1]->getZ());
+            }
+            if(wingR1[i+1][j+1]){
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR1[i+1][j+1]->getX(),wingR1[i+1][j+1]->getY(),wingR1[i+1][j+1]->getZ());
+            }
+            if(wingR1[i+1][j]){
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
+            }
             //if(wingR1[i][j] != NULL)
               //  wingR1[i][j]->draw();
         }
@@ -972,7 +1028,8 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         /* Controls added for Lab Session 6 "Physicall Modeling" */
      if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
         fly_up = true;
-        fly_force -= 1000*gravity;
+        walk = false;
+        fly_force -= 500*gravity;
         /*toggleGravity = !toggleGravity;
         setGravity(toggleGravity);
         viewer.displayMessage("Set gravity to "
@@ -997,7 +1054,11 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
             firesmoke->inactivate();
     } else if ((e->key()==Qt::Key_T) && (modifiers==Qt::NoButton)) {
 
-    } else if ((e->key()==Qt::Key_Y) && (modifiers==Qt::NoButton)) {
+    } else if ((e->key()==Qt::Key_M) && (modifiers==Qt::NoButton)) {
+         if(!fly_up){
+             walk = true;
+             paw1w = true;
+         }
     }
 }
 

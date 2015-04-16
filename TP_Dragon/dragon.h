@@ -42,8 +42,6 @@ private:
     void createPawRightUp(float angle);
     void createPawLeftDown(float angle);
     void createPawRightDown(float angle);
-    void createFire();
-    void drawFire();
     void drawSkeleton();
     void drawSprings();
     void createWingR();
@@ -54,8 +52,6 @@ private:
     std::vector<Sphere*> skeleton;
     std::vector<Spring*> sprgSkel;
     std::vector<Spring*> sprgWing1R;
-    std::vector<Sphere*> fire;
-    qglviewer::Vec originFire;
     int indexBody;
     int indexTail;
     int indexNeck;
@@ -82,6 +78,11 @@ private:
     float time_wing3;
 
     bool fly_up;
+    bool walk;
+    bool paw1w;
+    bool paw2w;
+    bool paw3w;
+    bool paw4w;
     float dist_flyx;
     float dist_flyy;
     float dist_flyz;
