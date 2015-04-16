@@ -83,6 +83,7 @@ private:
     bool paw2w;
     bool paw3w;
     bool paw4w;
+    bool stopw;
     float dist_flyx;
     float dist_flyy;
     float dist_flyz;

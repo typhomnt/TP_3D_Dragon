@@ -114,6 +114,7 @@ Dragon::Dragon() {
     paw2w = false;
     paw3w = false;
     paw4w = false;
+    stopw = false;
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
@@ -1055,9 +1056,15 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     } else if ((e->key()==Qt::Key_T) && (modifiers==Qt::NoButton)) {
 
     } else if ((e->key()==Qt::Key_M) && (modifiers==Qt::NoButton)) {
-         if(!fly_up){
+         if(walk){
+             walk = false;
+             stopw = true;
+         }
+         else if(!fly_up){
              walk = true;
-             paw1w = true;
+             if(!stopw)
+                paw1w = true;
+             stopw = false;
          }
     }
 }
