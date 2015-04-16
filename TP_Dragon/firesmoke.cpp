@@ -59,6 +59,10 @@ void Particule::setColor(qglviewer::Vec color) {
 	this->color = color;
 }
 
+void Particule::incrColor(qglviewer::Vec incr) {
+	this->color += incr;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 qglviewer::Vec Particule::getPos() {
@@ -141,7 +145,7 @@ void FireSmoke::animate() {
 			Particule &p = particles[i];
 			qglviewer::Vec mov = particles[i].getMovVec();
 
-			p.incrPos(mov / 12);
+			p.incrPos(mov / 100);
 			p.incrLife(-p.getVelDis());
 
 			if (p.getLife() < 0) {
@@ -198,13 +202,12 @@ void FireSmoke::inactivate() {
 void FireSmoke::initParticle(Particule &p) {
 	p.setActive(true);
 	p.setLife(1.0);
-	p.setVelDis(alea(0.03, 0.06));
+	p.setVelDis(alea(0.01, 0.03));
 
 	if (firesmoke)
-		p.setColor(qglviewer::Vec(1, 0, 0));
+		p.setColor(qglviewer::Vec(alea(0,255),0,0));
 	else
-		p.setColor(qglviewer::Vec(127.0/255.0, 127.0/255.0, 127.0/255.0));
-
+		p.setColor(qglviewer::Vec(3, 3, 3));
 	p.setPos(origin);
 	p.setMovVec(qglviewer::Vec(alea(0.5,1), alea(0.5,1), alea(0.5,1)));
 }
