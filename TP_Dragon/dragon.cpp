@@ -341,9 +341,6 @@ void Dragon::animate(){
     wingR1[0][1]->setFixed(true);
     wingR1[1][0]->setFixed(true);
     wingR1[1][1]->setFixed(true);
-    /*wingR1[2][0]->setFixed(true);
-    wingR1[0][2]->setFixed(true);
-    wingR1[2][1]->setFixed(true);*/
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             forces[wingR1[i][j]] = initForces;
@@ -426,7 +423,7 @@ void Dragon::animate(){
 
         }
     }
-    /*for(unsigned int i = 0; i < nbw1; ++i) {
+    for(unsigned int i = 0; i < nbw1; ++i) {
         for(unsigned int j = 0; j < nbw1; ++j){
             for(unsigned int k = 0; k < i ; k ++){
                 for(unsigned int l = 0 ;l < j ; l++){
@@ -438,7 +435,7 @@ void Dragon::animate(){
             }
 
         }
-    }*/
+    }
     int i = 0;
     for(std::vector<Sphere*>::iterator it = fire.begin() ; it != fire.end(); ++it){
         Sphere* s = *it;
@@ -975,7 +972,7 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         /* Controls added for Lab Session 6 "Physicall Modeling" */
      if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
         fly_up = true;
-        fly_force -= 50*gravity;
+        fly_force -= 1000*gravity;
         /*toggleGravity = !toggleGravity;
         setGravity(toggleGravity);
         viewer.displayMessage("Set gravity to "
