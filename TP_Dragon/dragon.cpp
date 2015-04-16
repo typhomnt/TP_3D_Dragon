@@ -459,7 +459,7 @@ void Dragon::animate(){
                 tw = 1;
             }
             for(int i = indexPawLeftDown ; i < indexPawRightDown ; i++){
-                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
@@ -479,7 +479,7 @@ void Dragon::animate(){
                 tw = 1;
             }
             for(int i = indexPawLeftUp ; i < indexPawRightUp; i++){
-                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
@@ -499,7 +499,7 @@ void Dragon::animate(){
                 tw = 1;
             }
             for(int i = indexPawRightDown ; i < 86; i++){
-                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
@@ -519,15 +519,15 @@ void Dragon::animate(){
                 tw = 1;
             }
             for(int i = indexPawRightUp ; i < indexPawLeftDown; i++){
-                skeleton[i]->setZ(skeleton[i]->getZ() + walkstep/2*coeffw);
+                skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
             }
        }
-    }
     tw++;
+    }
     if (firesmoke->isActive())
         firesmoke->animate();
 }
