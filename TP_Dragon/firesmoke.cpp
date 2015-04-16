@@ -88,16 +88,6 @@ void Particule::incrMovVec(qglviewer::Vec incr) {
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-qglviewer::Vec Particule::getGravity() {
-	return gravity;
-}
-
-void Particule::setGravity(qglviewer::Vec gravity) {
-	this->gravity = gravity;
-}
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -108,6 +98,9 @@ FireSmoke::FireSmoke(bool firesmoke, qglviewer::Vec origin, int nbParticles) {
 	this->firesmoke = firesmoke;
 	this->origin = origin;
 	this->particles = std::vector<Particule>(nbParticles);
+	this->nbParticles = nbParticles;
+	this->active = false;
+	this->inactivateReq = false;
 }
 
 
@@ -147,14 +140,21 @@ void FireSmoke::animate() {
 		if (particles[i].isActive()) {
 			Particule &p = particles[i];
 			qglviewer::Vec mov = particles[i].getMovVec();
-			qglviewer::Vec g = particles[i].getGravity();
 
 			p.incrPos(mov / 12);
-			p.incrMovVec(g);
 			p.incrLife(-p.getVelDis());
 
-			if (p.getLife() < 0)
-				initParticle(particles[i]);
+			if (p.getLife() < 0) {
+				if (inactivateReq) {
+					p.setActive(false);
+					this->nbParticles--;
+					if (nbParticles == 0)
+						active = false;
+				}
+				else {
+					initParticle(particles[i]);
+				}
+			}
 		}
 	}
 }
@@ -173,6 +173,28 @@ void FireSmoke::setOrigin(qglviewer::Vec origin) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+bool FireSmoke::isActive() {
+	return active;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void FireSmoke::activate() {
+	this->active = true;
+	this->inactivateReq = false;
+	this->nbParticles = particles.size();
+	for (unsigned int i = 0; i < particles.size(); i++)
+		initParticle(particles[i]);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void FireSmoke::inactivate() {
+	this->inactivateReq = true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void FireSmoke::initParticle(Particule &p) {
 	p.setActive(true);
 	p.setLife(1.0);
@@ -181,11 +203,10 @@ void FireSmoke::initParticle(Particule &p) {
 	if (firesmoke)
 		p.setColor(qglviewer::Vec(1, 0, 0));
 	else
-		p.setColor(qglviewer::Vec(0, 0, 0));
+		p.setColor(qglviewer::Vec(127.0/255.0, 127.0/255.0, 127.0/255.0));
 
 	p.setPos(origin);
-	p.setMovVec(qglviewer::Vec(alea(0,1), alea(0,1), alea(0,1)));
-	p.setGravity(qglviewer::Vec(0, 0, 0));
+	p.setMovVec(qglviewer::Vec(alea(0.5,1), alea(0.5,1), alea(0.5,1)));
 }
 
 

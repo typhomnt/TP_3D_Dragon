@@ -28,19 +28,14 @@ class Particule {
 		void setMovVec(qglviewer::Vec movVec);
 		void incrMovVec(qglviewer::Vec incr);
 
-		qglviewer::Vec getGravity();
-		void setGravity(qglviewer::Vec gravity);
-
 
 	private:
-		bool active;
-		double life;
-		double velDis;
-		qglviewer::Vec color;
-		qglviewer::Vec pos;
-		qglviewer::Vec movVec;
-		qglviewer::Vec gravity;
-
+		bool active;			// true si la particule est active, false sinon
+		double life;			// temps de vie de la particule
+		double velDis;			// vitesse de disparition
+		qglviewer::Vec color;	// couleur de la particule
+		qglviewer::Vec pos;		// position de la particule
+		qglviewer::Vec movVec;	// vecteur de mouvement
 };
 
 
@@ -55,12 +50,26 @@ class FireSmoke : public Renderable {
 		qglviewer::Vec getOrigin();
 		void setOrigin(qglviewer::Vec origin);
 
-	private:
-		bool firesmoke;
-		qglviewer::Vec origin;
-		std::vector<Particule> particles;
+		bool isActive();
+		void activate();
+		void inactivate();
 
+	private:
+		bool firesmoke;						// true si feu; false si fumée
+		qglviewer::Vec origin;				// origine du feu/fumée
+		std::vector<Particule> particles;	// liste des particules
+		int nbParticles;					// nombre de particules
+		bool active;						// true si les particules se regénèrent
+		bool inactivateReq;					// true si on a demandé l'arrêt du feu
+
+		/**
+		 * Initialise les particules
+		 */
 		void initParticle(Particule &p);
+
+		/**
+		 * Génère un nombre aléatoire entre min et max
+		 */
 		double alea(double min, double max);
 };
 #endif
