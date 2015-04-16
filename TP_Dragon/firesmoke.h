@@ -19,6 +19,7 @@ class Particule {
 
 		qglviewer::Vec getColor();
 		void setColor(qglviewer::Vec color);
+		void incrColor(qglviewer::Vec incr);
 
 		qglviewer::Vec getPos();
 		void setPos(qglviewer::Vec pos);
