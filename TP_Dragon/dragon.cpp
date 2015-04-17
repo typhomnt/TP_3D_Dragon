@@ -149,8 +149,8 @@ Dragon::Dragon() {
     createWingR();
     meshWingR();
 
-    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 50000);
-    this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 50000,true);
+    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 20000);
+    this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 20000,true);
 }
 
 
@@ -559,18 +559,18 @@ void Dragon::animate(){
         bool contact = true;
         while(contact){
             contact = false;
-            for(int i = 0 ; i < 86 ; i++){
+            /*for(int i = 0 ; i < 86 ; i++){
                 if(abs(skeleton[i]->getZ() - groundPosition[2]) < 10*tks){
                     contact = true;
                     for(int j = 0 ; j < 86 ; j++)
                         skeleton[j]->setZ(skeleton[j]->getZ() + 10*tks);
                 }
-            }
+            }*/
         }
         take_off = false;
         stopw = true;
-        for(int i = indexBody ; i < indexPawLeftUp ; i++){
-            skeleton[i]->setFixed(true);
+        for(int i = indexBody ; i < 86 ; i++){
+            skeleton[i]->setVelocity(qglviewer::Vec(0,0,5));
         }
     }
     firesmoke->setOrigin(qglviewer::Vec(skeleton[45]->getX() - R,skeleton[45]->getY() + R,skeleton[45]->getZ() + R));
@@ -867,20 +867,19 @@ void Dragon::drawSprings(){
 
 
 void Dragon::createWingR(){
+    int r = 1;
     wingR1[0][0] = new Sphere(wing1root,wing1vel,wr);
     for(int i = 0 ; i < nbw1 ; i++){
-        for(int j= 0 ; j < nbw1 ; j++){
-            if(i != 0 || j != 0){
-                /*if(i == 0){
-                    wingR1[i][j] = new Sphere(wingR1[0][0]->getX(),wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
-                }*/
-                /*else if (j == 0){
-                    wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY(),wingR1[0][0]->getZ(),wr);
-                }*/
-               if (i <= j){
-                    wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
-                }
+        /*if(r < nbw1/2){
+            for(int j= -r ; j <= r ; j++){
+                        wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)(j+ nbw1/2)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr);
             }
+            r++;
+        }
+        else{*/
+            for(int j = 0 ; j < nbw1 ; j++){
+                        wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
+            //}
         }
     }
     wingR2[0][0] = new Sphere(wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getX(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getY(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getZ(),wr);
@@ -916,15 +915,15 @@ void Dragon::drawWingR(){
                 glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
             }
             if(wingR1[i][j+1]){
-                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertexAttrib2f(texcoord0, 0, 1);
                 glVertex3f(wingR1[i][j+1]->getX(),wingR1[i][j+1]->getY(),wingR1[i][j+1]->getZ());
             }
             if(wingR1[i+1][j+1]){
-                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertexAttrib2f(texcoord0, 1, 1);
                 glVertex3f(wingR1[i+1][j+1]->getX(),wingR1[i+1][j+1]->getY(),wingR1[i+1][j+1]->getZ());
             }
             if(wingR1[i+1][j]){
-                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertexAttrib2f(texcoord0, 1, 0);
                 glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
             }
             //if(wingR1[i][j] != NULL)
@@ -938,11 +937,11 @@ void Dragon::drawWingR(){
             //glNormal3f(0,0,2);
             glVertexAttrib2f(texcoord0, 0, 0);
             glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertexAttrib2f(texcoord0, 0, 1);
             glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertexAttrib2f(texcoord0, 1, 1);
             glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertexAttrib2f(texcoord0, 1, 0);
             glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
             //if(wingR2[i][j] != NULL)
               //  wingR2[i][j]->draw();
@@ -1082,7 +1081,7 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         fly_down = true;
         walk = false;
         take_off = false;
-        fly_force -= 500*gravity;
+        fly_force -= 800*gravity;
         /*toggleGravity = !toggleGravity;
         setGravity(toggleGravity);
         viewer.displayMessage("Set gravity to "

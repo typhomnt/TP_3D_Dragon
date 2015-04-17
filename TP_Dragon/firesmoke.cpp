@@ -215,6 +215,7 @@ void FireSmoke::initParticle(Particule &p) {
     else{
         double angle = -alea(0,2*M_PI);
         double amort = alea(0,1);
+        p.setVelDis(alea(0.07, 0.09));
         p.setMovVec(qglviewer::Vec(amort*cos(angle), amort*sin(angle), alea(0,0.5)));
     }
 }

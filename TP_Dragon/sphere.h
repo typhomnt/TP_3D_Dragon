@@ -21,6 +21,7 @@ class Sphere : public Renderable
         float getZ();
 
         void setRadius(float radius);
+        void setMass(float m);
         void setX(float x);
         void setY(float y);
         void setZ(float z);

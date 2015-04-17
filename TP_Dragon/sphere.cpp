@@ -271,3 +271,7 @@ void Sphere::incrVelocity(const qglviewer::Vec &vel)
     this->velocity += vel;
 }
 
+void Sphere::setMass(float m){
+    this->mass = m;
+    this->invMass = (mass > 0 ? 1 / mass : 0.0);
+}
