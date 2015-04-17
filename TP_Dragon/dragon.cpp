@@ -56,8 +56,8 @@ static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
 static float k = 800;
 static float amort = 500;
 static float lo;
-static float nbw1 = 11;
-static float nbw2 = 11;
+static float nbw1 = 7;
+static float nbw2 = 7;
 static qglviewer::Vec wing1root = qglviewer::Vec(2,2,2);
 static qglviewer::Vec wing1vel = qglviewer::Vec(0,0,0);
 static qglviewer::Vec initForces = qglviewer::Vec(0,0,0);
@@ -343,10 +343,6 @@ void Dragon::animate(){
         if(!s->getFixed() && !walk && !take_off)
             forces[s] += gravity * s->getMass();
     }
-    wingR1[0][0]->setFixed(true);
-    //wingR1[0][1]->setFixed(true);
-    //wingR1[1][0]->setFixed(true);
-    //wingR1[1][1]->setFixed(true);
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             if(wingR1[i][j] != NULL)
@@ -869,17 +865,19 @@ void Dragon::drawSprings(){
 void Dragon::createWingR(){
     int r = 1;
     wingR1[0][0] = new Sphere(wing1root,wing1vel,wr);
-    for(int i = 0 ; i < nbw1 ; i++){
-        /*if(r < nbw1/2){
+    wingR1[0][0]->setFixed(true);
+    wingR1[0][0]->setMass(0);
+    for(int i = 1 ; i < nbw1 ; i++){
+        if(r <= nbw1/2){
             for(int j= -r ; j <= r ; j++){
-                        wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)(j+ nbw1/2)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr);
+                        wingR1[i][j+r] = new Sphere(wingR1[0][0]->getX() + (float)(j)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr);
             }
             r++;
         }
-        else{*/
+        else{
             for(int j = 0 ; j < nbw1 ; j++){
-                        wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
-            //}
+                        wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)(j - nbw1/2 + 0.5)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr);
+            }
         }
     }
     wingR2[0][0] = new Sphere(wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getX(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getY(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getZ(),wr);
