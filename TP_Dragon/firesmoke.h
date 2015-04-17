@@ -43,7 +43,7 @@ class Particule {
 
 class FireSmoke : public Renderable {
 	public:
-		FireSmoke(bool firesmoke, qglviewer::Vec origin, int nbParticles = 1000);
+        FireSmoke(bool firesmoke, qglviewer::Vec origin, int nbParticles = 1000, bool dust=false);
 		void init(Viewer &v);
 		void draw();
 		void animate();
@@ -62,7 +62,7 @@ class FireSmoke : public Renderable {
 		int nbParticles;					// nombre de particules
 		bool active;						// true si les particules se regénèrent
 		bool inactivateReq;					// true si on a demandé l'arrêt du feu
-
+        bool dust;                          // true si on simule la poussière
 		/**
 		 * Initialise les particules
 		 */

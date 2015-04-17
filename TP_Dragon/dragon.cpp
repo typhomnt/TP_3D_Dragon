@@ -75,6 +75,7 @@ static int mod = 2;
 static int tw = 1;
 static float coeffw = -1;
 static float walkstep = 0.05;
+static float tks = 0.03;
 
 /*nouveau dragon*/
 
@@ -108,8 +109,10 @@ Dragon::Dragon() {
     time_wing1 = 0;
     time_wing2 = 0;
     time_wing3 = 0;
-    fly_up = true;
+    fly_up = false;
+    fly_down = true;
     walk = false;
+    take_off = false;
     paw1w = false;
     paw2w = false;
     paw3w = false;
@@ -147,6 +150,7 @@ Dragon::Dragon() {
     meshWingR();
 
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 50000);
+    this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 50000,true);
 }
 
 
@@ -156,6 +160,7 @@ Dragon::~Dragon() {
     delete t2;
     delete dragPart;
     delete firesmoke;
+    delete dust;
 }
 
 
@@ -335,7 +340,7 @@ void Dragon::animate(){
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); ++it){
         Sphere* s = *it;
         forces[s] = initForces;
-        if(!s->getFixed() && !walk)
+        if(!s->getFixed() && !walk && !take_off)
             forces[s] += gravity * s->getMass();
     }
     wingR1[0][0]->setFixed(true);
@@ -357,7 +362,7 @@ void Dragon::animate(){
     for(std::vector<Spring*>::iterator it = sprgSkel.begin() ; it != sprgSkel.end(); it++){
         Spring* s = *it;
         qglviewer::Vec f12 = s->getCurrentForce();
-        if(fly_up){
+        if(fly_up || fly_down){
             if(!s->getParticle1()->getFixed())
                 forces[s->getParticle1()] += f12;
             if(!s->getParticle2()->getFixed())
@@ -389,13 +394,14 @@ void Dragon::animate(){
         Sphere* s = *it;
         forces[s] -= viscosity*s->getVelocity();
         forces[s] += fly_force ;
-        if(fly_up){
+        if(fly_up||fly_down){
         s->incrVelocity(dt*s->getInvMass()*forces[s]);
         s->incrPosition(dt*s->getVelocity());
         if(s->getCollisions())
             if(collisionParticleGround(s)){
                 s->setFixed(true);
                 fly_up = false;
+                fly_down = false;
                 s->setVelocity(initForces);
             }
         }
@@ -419,7 +425,7 @@ void Dragon::animate(){
     fly_force[0] = 0;
     fly_force[1] = 0;
     fly_force[2] = 0;
-    if(!walk){
+    if(!walk && !take_off && !fly_up || fly_down){
         for(unsigned int i = 0; i < skeleton.size(); ++i) {
             for(unsigned int j = 0; j < i; ++j){
                     Sphere *s1 = skeleton[i];
@@ -448,6 +454,8 @@ void Dragon::animate(){
     tp++;
     if(walk){
         if(paw1w){
+            dust->inactivate();
+            dust->setOrigin(skeleton[indexPawRightDown -1]->getPosition());
             if(tw%10 == 0){
                 coeffw = -coeffw;
                 if(tw%20 != 0)
@@ -458,6 +466,7 @@ void Dragon::animate(){
                 paw1w = false;
                 paw2w = true;
                 tw = 1;
+                dust->activate();
             }
             for(int i = indexPawLeftDown ; i < indexPawRightDown ; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
@@ -470,6 +479,8 @@ void Dragon::animate(){
             }
        }
        else if(paw2w){
+           dust->inactivate();
+           dust->setOrigin(skeleton[indexPawRightUp -1]->getPosition());
            if(tw%10 == 0){
                coeffw = -coeffw;
                if(tw%20 != 0)
@@ -480,6 +491,7 @@ void Dragon::animate(){
                 paw2w = false;
                 paw3w = true;
                 tw = 1;
+                dust->activate();
             }
             for(int i = indexPawLeftUp ; i < indexPawRightUp; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
@@ -492,6 +504,8 @@ void Dragon::animate(){
             }
        }
        else if(paw3w){
+           dust->inactivate();
+           dust->setOrigin(skeleton[85]->getPosition());
            if(tw%10 == 0){
                coeffw = -coeffw;
                if(tw%20 != 0)
@@ -502,6 +516,7 @@ void Dragon::animate(){
                 paw3w = false;
                 paw4w = true;
                 tw = 1;
+                dust->activate();
             }
             for(int i = indexPawRightDown ; i < 86; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
@@ -514,6 +529,8 @@ void Dragon::animate(){
             }
        }
        else if(paw4w){
+           dust->inactivate();
+           dust->setOrigin(skeleton[indexPawLeftDown -1]->getPosition());
            if(tw%10 == 0){
                coeffw = -coeffw;
                if(tw%20 != 0)
@@ -524,6 +541,7 @@ void Dragon::animate(){
                 paw4w = false;
                 paw1w = true;
                 tw = 1;
+                dust->activate();
             }
             for(int i = indexPawRightUp ; i < indexPawLeftDown; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
@@ -537,9 +555,30 @@ void Dragon::animate(){
        }
     tw++;
     }
+    if(take_off){
+        bool contact = true;
+        while(contact){
+            contact = false;
+            for(int i = 0 ; i < 86 ; i++){
+                if(abs(skeleton[i]->getZ() - groundPosition[2]) < 10*tks){
+                    contact = true;
+                    for(int j = 0 ; j < 86 ; j++)
+                        skeleton[j]->setZ(skeleton[j]->getZ() + 10*tks);
+                }
+            }
+        }
+        take_off = false;
+        stopw = true;
+        for(int i = indexBody ; i < indexPawLeftUp ; i++){
+            skeleton[i]->setFixed(true);
+        }
+    }
     firesmoke->setOrigin(qglviewer::Vec(skeleton[45]->getX() - R,skeleton[45]->getY() + R,skeleton[45]->getZ() + R));
     if (firesmoke->isActive())
         firesmoke->animate();
+    if (dust->isActive())
+        dust->animate();
+    fly_up = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -593,6 +632,8 @@ void Dragon::draw(){
 
     if(firesmoke->isActive())
         firesmoke->draw();
+    if(dust->isActive())
+        dust->draw();
 
 }
 
@@ -1038,7 +1079,9 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         /* Controls added for Lab Session 6 "Physicall Modeling" */
      if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
         fly_up = true;
+        fly_down = true;
         walk = false;
+        take_off = false;
         fly_force -= 500*gravity;
         /*toggleGravity = !toggleGravity;
         setGravity(toggleGravity);
@@ -1063,6 +1106,11 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         else
             firesmoke->inactivate();
     } else if ((e->key()==Qt::Key_T) && (modifiers==Qt::NoButton)) {
+         if(walk || stopw){
+             take_off = true;
+             walk = false;
+             stopw = false;
+         }
 
     } else if ((e->key()==Qt::Key_M) && (modifiers==Qt::NoButton)) {
          if(walk){
@@ -1075,6 +1123,7 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
                 paw1w = true;
              stopw = false;
          }
+         take_off = false;
     }
 }
 

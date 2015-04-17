@@ -98,13 +98,14 @@ void Particule::incrMovVec(qglviewer::Vec incr) {
 /// CLASSE FIRESMOKE 
 ///////////////////////////////////////////////////////////////////////////////
 
-FireSmoke::FireSmoke(bool firesmoke, qglviewer::Vec origin, int nbParticles) {
+FireSmoke::FireSmoke(bool firesmoke, qglviewer::Vec origin, int nbParticles, bool dust) {
 	this->firesmoke = firesmoke;
 	this->origin = origin;
 	this->particles = std::vector<Particule>(nbParticles);
 	this->nbParticles = nbParticles;
 	this->active = false;
 	this->inactivateReq = false;
+    this->dust=dust;
 }
 
 
@@ -209,7 +210,13 @@ void FireSmoke::initParticle(Particule &p) {
 	else
 		p.setColor(qglviewer::Vec(3, 3, 3));
 	p.setPos(origin);
-    p.setMovVec(qglviewer::Vec(-alea(0.5,1), alea(0.5,1), alea(0.5,1)));
+    if(!dust)
+        p.setMovVec(qglviewer::Vec(-alea(0.5,1), alea(0.5,1), alea(0.5,1)));
+    else{
+        double angle = -alea(0,2*M_PI);
+        double amort = alea(0,1);
+        p.setMovVec(qglviewer::Vec(amort*cos(angle), amort*sin(angle), alea(0,0.5)));
+    }
 }
 
 

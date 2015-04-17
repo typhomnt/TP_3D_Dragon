@@ -78,12 +78,14 @@ private:
     float time_wing3;
 
     bool fly_up;
+    bool fly_down;
     bool walk;
     bool paw1w;
     bool paw2w;
     bool paw3w;
     bool paw4w;
     bool stopw;
+    bool take_off;
     float dist_flyx;
     float dist_flyy;
     float dist_flyz;
@@ -117,7 +119,7 @@ private:
     void initLighting();
 
     FireSmoke *firesmoke;
-
+    FireSmoke *dust;
 
 };
 
