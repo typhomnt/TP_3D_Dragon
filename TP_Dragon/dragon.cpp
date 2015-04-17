@@ -462,9 +462,11 @@ void Dragon::animate(){
             for(int i = indexPawLeftDown ; i < indexPawRightDown ; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
        }
        else if(paw2w){
@@ -482,9 +484,11 @@ void Dragon::animate(){
             for(int i = indexPawLeftUp ; i < indexPawRightUp; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
        }
        else if(paw3w){
@@ -502,9 +506,11 @@ void Dragon::animate(){
             for(int i = indexPawRightDown ; i < 86; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
        }
        else if(paw4w){
@@ -522,13 +528,16 @@ void Dragon::animate(){
             for(int i = indexPawRightUp ; i < indexPawLeftDown; i++){
                 skeleton[i]->setZ(skeleton[i]->getZ() - walkstep/2*coeffw);
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep);
             }
             for(int i = indexBody ; i < indexPawLeftUp ; i++){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
+                //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
        }
     tw++;
     }
+    firesmoke->setOrigin(qglviewer::Vec(skeleton[45]->getX() - R,skeleton[45]->getY() + R,skeleton[45]->getZ() + R));
     if (firesmoke->isActive())
         firesmoke->animate();
 }
@@ -714,7 +723,7 @@ void Dragon::drawWing(bool left){
 }
 
 void Dragon::createBody(){
-    skeleton.push_back(new Sphere(0,0,15,R,10,0));
+    skeleton.push_back(new Sphere(0,0,5,R,10,0));
     for (int i = 1; i <= 14; i++) {
         skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),0.1,10,tex_body));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
@@ -854,7 +863,7 @@ void Dragon::createWingR(){
 void Dragon::drawWingR(){
     GLCHECK(glUseProgram(program));
     GLCHECK(glActiveTexture(GL_TEXTURE0));
-    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_feu));
+    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_body));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBegin(GL_QUADS);

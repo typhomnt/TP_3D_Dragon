@@ -209,7 +209,7 @@ void FireSmoke::initParticle(Particule &p) {
 	else
 		p.setColor(qglviewer::Vec(3, 3, 3));
 	p.setPos(origin);
-	p.setMovVec(qglviewer::Vec(alea(0.5,1), alea(0.5,1), alea(0.5,1)));
+    p.setMovVec(qglviewer::Vec(-alea(0.5,1), alea(0.5,1), alea(0.5,1)));
 }
 
 
