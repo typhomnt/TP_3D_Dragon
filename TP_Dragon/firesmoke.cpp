@@ -149,12 +149,26 @@ void FireSmoke::animate() {
 			p.incrLife(-p.getVelDis());
 
 			double life = p.getLife();
-			if (life > 0.50 && life <= 0.75)
-				p.setColor(qglviewer::Vec(255,255,0));
-			else if (life > 0.25 && life <= 0.50)
-				p.setColor(qglviewer::Vec(255, 2, 0));
-			else
-				p.setColor(qglviewer::Vec(255,0,0));
+
+			if (firesmoke) {
+				if (life > 0.50 && life <= 0.75)
+					p.setColor(qglviewer::Vec(255,255,0));
+				else if (life > 0.25 && life <= 0.50)
+					p.setColor(qglviewer::Vec(255, 2, 0));
+				else
+					p.setColor(qglviewer::Vec(255,0,0));
+			}
+			else if (!dust) {
+				if (life > 0.50 && life <= 0.75)
+					p.setColor(qglviewer::Vec(0, 0, 0));
+				else if (life > 0.25 && life <= 0.50)
+					p.setColor(qglviewer::Vec(2, 2, 2));
+				else
+					p.setColor(qglviewer::Vec(255, 255, 255));
+			}
+			else {
+				p.setColor(qglviewer::Vec(2, 1, 0));
+			}
 
 			if (p.getLife() < 0) {
 				if (inactivateReq) {

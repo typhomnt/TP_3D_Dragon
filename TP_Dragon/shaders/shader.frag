@@ -9,7 +9,7 @@ varying vec4 light_color;
 
 void main()
 {
-	const float fogDensity = 0.007;
+	const float fogDensity = 0.02;
 	const float LOG2 = 1.442695;
 	const vec4 fogColor = vec4(0.5, 0.5, 0.5, 1.0);
 
