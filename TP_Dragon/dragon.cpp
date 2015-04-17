@@ -66,9 +66,9 @@ static float amort1 = 100;
 static float lo1;
 static float meshStep = 3.0;
 static float wr = 0.2;
-static qglviewer::Vec  wingForce = qglviewer::Vec(10,10,20);
-static qglviewer::Vec  wingForce2 = qglviewer::Vec(0,10,20);
-static qglviewer::Vec  wingForce3 = qglviewer::Vec(10,0,20);
+static qglviewer::Vec  wingForce = qglviewer::Vec(0,0,5);
+static qglviewer::Vec  wingForce2 = qglviewer::Vec(5,0,5);
+static qglviewer::Vec  wingForce3 = qglviewer::Vec(0,5,5);
 static float lo2;
 static int tp = 1;
 static int mod = 2;
@@ -87,7 +87,7 @@ Dragon::Dragon() {
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
     R = 0.1;
     lo=R/2;
-    lo1=1/meshStep;
+    lo1=2/meshStep;
     lo2 = 0;
     indexBody = 0;
     indexTail = 15;
@@ -864,34 +864,37 @@ void Dragon::drawSprings(){
 
 void Dragon::createWingR(){
     int r = 1;
-    wingR1[0][0] = new Sphere(wing1root,wing1vel,wr);
-    wingR1[0][0]->setFixed(true);
-    wingR1[0][0]->setMass(0);
+    wingR1[0][0] = new Sphere(wing1root,wing1vel,wr,10,0,true,false);
     for(int i = 1 ; i < nbw1 ; i++){
         if(r <= nbw1/2){
             for(int j= -r ; j <= r ; j++){
-                        wingR1[i][j+r] = new Sphere(wingR1[0][0]->getX() + (float)(j)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr);
+                        wingR1[i][j+r] = new Sphere(wingR1[0][0]->getX() + (float)(j)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr,10,0,false,false);
+                        //if(j==r)
+                            //wingR1[i][j+r]->setFixed(true);
             }
             r++;
         }
         else{
             for(int j = 0 ; j < nbw1 ; j++){
-                        wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)(j - nbw1/2 + 0.5)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr);
+                        wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)(j - nbw1/2 + 0.5)/meshStep,wingR1[0][0]->getY() + (float)i/meshStep,wingR1[0][0]->getZ(),wr,10,0,false,false);
+                        //if(j == nbw1 - 1)
+                           // wingR1[i][j]->setFixed(true);
             }
         }
     }
-    wingR2[0][0] = new Sphere(wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getX(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getY(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getZ(),wr);
+    wingR2[0][0] = new Sphere(wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getX(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getY(), wingR1[(int)nbw1 - 1][(int)nbw1 - 1]->getZ(),wr,10,0,false,false);
     for(int i = 0 ; i < nbw2 ; i++){
         for(int j= 0 ; j < nbw2 ; j++){
             if(i != 0 || j != 0){
                 if(i == 0){
-                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX(),wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr);
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX(),wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr,10,0,false,false);
+                    //wingR2[i][j]->setFixed(true);
                 }
                 else if (j == 0){
-                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY(),wingR2[0][0]->getZ(),wr);
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY(),wingR2[0][0]->getZ(),wr,10,0,false,false);
                 }
                 else{
-                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr);
+                    wingR2[i][j] = new Sphere(wingR2[0][0]->getX() - (float)i/meshStep,wingR2[0][0]->getY() + (float)j/meshStep,wingR2[0][0]->getZ(),wr,10,0,false,false);
                 }
             }
         }
@@ -904,28 +907,55 @@ void Dragon::drawWingR(){
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_body));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    int r = 1;
     glBegin(GL_QUADS);
-    for(int i = 0 ; i < nbw1 - 1 ; i++){
-        for(int j= 0 ; j < nbw1 - 1 ; j++){
-            //glNormal3f(0,0,1);
-            if(wingR1[i][j] != NULL){
-                glVertexAttrib2f(texcoord0, 0, 0);
-                glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
+    for(int i = 1 ; i < nbw1 - 1 ; i++){
+        if(r <= nbw1/2 -1){
+            for(int j= -r; j <= r-1 ; j++){
+                //glNormal3f(0,0,1);
+                if(wingR1[i][j+r] != NULL){
+                    glVertexAttrib2f(texcoord0, 0, 0);
+                    glVertex3f(wingR1[i][j+r]->getX(),wingR1[i][j+r]->getY(),wingR1[i][j+r]->getZ());
+                }
+                if(wingR1[i][j+1+r] != NULL){
+                    glVertexAttrib2f(texcoord0, 0, 1);
+                    glVertex3f(wingR1[i][j+r+1]->getX(),wingR1[i][j+r+1]->getY(),wingR1[i][j+1+r]->getZ());
+                }
+                if(wingR1[i+1][j+r+2] != NULL){
+                    glVertexAttrib2f(texcoord0, 1, 1);
+                    glVertex3f(wingR1[i+1][j+2+r]->getX(),wingR1[i+1][j+2+r]->getY(),wingR1[i+1][j+2+r]->getZ());
+                }
+                if(wingR1[i+1][j+r+1] != NULL){
+                    glVertexAttrib2f(texcoord0, 1, 0);
+                    glVertex3f(wingR1[i+1][j+r+1]->getX(),wingR1[i+1][j+r+1]->getY(),wingR1[i+1][j+r+1]->getZ());
+                }
+                //if(wingR1[i][j] != NULL)
+                  //  wingR1[i][j]->draw();
             }
-            if(wingR1[i][j+1]){
-                glVertexAttrib2f(texcoord0, 0, 1);
-                glVertex3f(wingR1[i][j+1]->getX(),wingR1[i][j+1]->getY(),wingR1[i][j+1]->getZ());
+            r++;
+        }
+        else {
+            for(int j= 0 ; j < nbw1 - 1 ; j++){
+                //glNormal3f(0,0,1);
+                if(wingR1[i][j] != NULL){
+                    glVertexAttrib2f(texcoord0, 0, 0);
+                    glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
+                }
+                if(wingR1[i][j+1] != NULL){
+                    glVertexAttrib2f(texcoord0, 0, 1);
+                    glVertex3f(wingR1[i][j+1]->getX(),wingR1[i][j+1]->getY(),wingR1[i][j+1]->getZ());
+                }
+                if(wingR1[i+1][j+1] != NULL){
+                    glVertexAttrib2f(texcoord0, 1, 1);
+                    glVertex3f(wingR1[i+1][j+1]->getX(),wingR1[i+1][j+1]->getY(),wingR1[i+1][j+1]->getZ());
+                }
+                if(wingR1[i+1][j] != NULL){
+                    glVertexAttrib2f(texcoord0, 1, 0);
+                    glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
+                }
+                //if(wingR1[i][j] != NULL)
+                  //  wingR1[i][j]->draw();
             }
-            if(wingR1[i+1][j+1]){
-                glVertexAttrib2f(texcoord0, 1, 1);
-                glVertex3f(wingR1[i+1][j+1]->getX(),wingR1[i+1][j+1]->getY(),wingR1[i+1][j+1]->getZ());
-            }
-            if(wingR1[i+1][j]){
-                glVertexAttrib2f(texcoord0, 1, 0);
-                glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
-            }
-            //if(wingR1[i][j] != NULL)
-              //  wingR1[i][j]->draw();
         }
     }
     glEnd();
@@ -950,31 +980,47 @@ void Dragon::drawWingR(){
 }
 
 void Dragon::meshWingR(){
+    int r = 0;
     for(int i = 0 ; i < nbw1 ; i++){
-        for(int j= 0 ; j < nbw1 ; j++){
-            if(wingR1[i][j] != NULL){
-                if(i < nbw1 - 1){
-                    if(wingR1[i+1][j] != NULL)
-                        sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j],k1,lo1,amort1));
+        if(r < nbw1/2-1){
+            for(int j= -r ; j <= r ; j++){
+                if(wingR1[i][j+r] != NULL){
+                    if(wingR1[i+1][j+r]!=NULL)
+                        sprgWing1R.push_back(new Spring(wingR1[i][j+r],wingR1[i+1][j+r],k1,lo1,amort1));
+                    if(wingR1[i+1][j+r+1]!=NULL)
+                        sprgWing1R.push_back(new Spring(wingR1[i][j+r],wingR1[i+1][j+r+1],k1,lo1,amort1));
+                    if(wingR1[i+1][j+r+2]!=NULL)
+                        sprgWing1R.push_back(new Spring(wingR1[i][j+r],wingR1[i+1][j+r+2],k1,lo1,amort1));
                 }
-                if(j < nbw1 - 1){
-                    if(wingR1[i][j+1] != NULL)
-                    sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i][j+1],k1,lo1,amort1));
-                }
-                if(i != nbw1 - 1 && j != nbw1 - 1){
-                    if(wingR1[i+1][j+1] != NULL)
-                    sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j+1],k1,lo1,amort1));
-                }
-                if(i != nbw1 - 1 && j != 0){
-                    if(wingR1[i+1][j-1] != NULL)
-                    sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j-1],k1,lo1,amort1));
+            }
+            r++;
+        }
+        else{
+            for(int j= 0 ; j < nbw1 ; j++){
+                if(wingR1[i][j] != NULL){
+                    if(i < nbw1 - 1){
+                        if(wingR1[i+1][j] != NULL)
+                            sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j],k1,lo1,amort1));
+                    }
+                    if(j < nbw1 - 1){
+                        if(wingR1[i][j+1] != NULL)
+                        sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i][j+1],k1,lo1,amort1));
+                    }
+                    if(i != nbw1 - 1 && j != nbw1 - 1){
+                        if(wingR1[i+1][j+1] != NULL)
+                        sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j+1],k1,lo1,amort1));
+                    }
+                    if(i != nbw1 - 1 && j != 0){
+                        if(wingR1[i+1][j-1] != NULL)
+                        sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j-1],k1,lo1,amort1));
+                    }
                 }
             }
         }
     }
     for(int i = 0 ; i < nbw2 ; i++){
-        if(wingR2[i][0] != NULL && wingR1[(int)nbw1 - 1 - i][(int)nbw1-1] != NULL)
-            sprgWing1R.push_back(new Spring(wingR2[i][0],wingR1[(int)nbw1- 1 - i][(int)nbw1-1],k1,lo2,amort1));
+        if(wingR2[i][0] != NULL && wingR1[(int)nbw1 - 1 ][(int)nbw1-1 - i] != NULL)
+            sprgWing1R.push_back(new Spring(wingR2[i][0],wingR1[(int)nbw1- 1][(int)nbw1-1 -i],k1,lo2,amort1));
     }
     for(int i = 0 ; i < nbw2 ; i++){
         for(int j= 0 ; j < nbw2 ; j++){
