@@ -21,27 +21,39 @@ public:
     void collisionParticleGround(Sphere *p);
 
 private:
-    void drawBody();//int first, int last);
-    void drawTail();//int first, int last);
-    void drawNeck();//int first, int last);
+    void drawBody(int first, int last);
+    void drawTail(int first, int last);
+    void drawNeck(int first, int last);
     // Draw the left claw of the left paw if leftPaw==true and leftClaw==true
     void drawClaw(bool leftPaw, bool leftClaw);
     // Draw the left paw if left==true else the right paw
-    void drawPawLeftUp(float angle);//, int first, int last);
-    void drawPawRightUp(float angle);//, int first, int last);
-    void drawPawLeftDown(float angle);//, int first, int last);
-    void drawPawRightDown(float angle);//, int first, int last);
+    void drawPawLeftUp(int first, int last);
+    void drawPawRightUp(int first, int last);
+    void drawPawLeftDown(int first, int last);
+    void drawPawRightDown(int first, int last);
     void drawWing(bool left);
-    void createBody();
-    void createTail();
-    void createNeck();
-    void createPawLeftUp(float angle);
-    void createPawRightUp(float angle);
-    void createPawLeftDown(float angle);
-    void createPawRightDown(float angle);
+    void createBody(int first, int last);
+    void createTail(float angle, int first, int last);
+    void createNeck(int first, int last);
+    void completePaw(std::vector<Sphere*>& paw, int first, int last);
+    void createPawLeftUp(float angle, int first, int last);
+    void createPawRightUp(float angle, int first, int last);
+    void createPawLeftDown(float angle, int first, int last);
+    void createPawRightDown(float angle, int first, int last);
     void drawSkeleton();
 
     std::vector<Sphere*> skeleton;
+    std::vector<Sphere*> body;
+    std::vector<Sphere*> tail;
+    std::vector<Sphere*> neck;
+    std::vector<Sphere*> pawLeftUp;
+    std::vector<Sphere*> pawRightUp;
+    std::vector<Sphere*> pawLeftDown;
+    std::vector<Sphere*> pawRightDown;
+    int nbSpheresBody;
+    int nbSpheresTail;
+    int nbSpheresNeck;
+    int nbSpheresPaw;
     int indexBody;
     int indexTail;
     int indexNeck;
@@ -49,6 +61,8 @@ private:
     int indexPawRightUp;
     int indexPawLeftDown;
     int indexPawRightDown;
+    int indexLastPawRightDown;
+    float thicknessBody;
     float R;
 
     TrapezeIsocele *t;
@@ -80,7 +94,7 @@ private:
     void drawBasePlane(float size);
 
     // textures used in this practical
-    GLuint tex_body,tex_field;
+    GLuint tex_body,tex_field,tex_skeleton;
 
     // texture unit shader binding
     GLint texture0;

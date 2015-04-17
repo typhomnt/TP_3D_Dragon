@@ -59,14 +59,20 @@ Dragon::Dragon() {
     t = new TrapezeIsocele(7.0,5.0,5.0,0.2);
     // Trapeze au bout des ailes
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
-    R = 0.1;
+    R = 0.5;
+    nbSpheresBody = 15;
+    nbSpheresTail = 25;
+    nbSpheresNeck = 15;
+    nbSpheresPaw = 13;
     indexBody = 0;
-    indexTail = 15;
-    indexNeck = 31;
-    indexPawLeftUp = 46;
-    indexPawRightUp = 56;
-    indexPawLeftDown = 66;
-    indexPawRightDown = 76;
+    indexTail = indexBody + nbSpheresBody;
+    indexNeck = indexTail + nbSpheresTail;
+    indexPawLeftUp = indexNeck + nbSpheresNeck;
+    indexPawRightUp = indexPawLeftUp + nbSpheresPaw;
+    indexPawLeftDown = indexPawRightUp + nbSpheresPaw;
+    indexPawRightDown = indexPawLeftDown + nbSpheresPaw;
+    indexLastPawRightDown = indexPawRightDown + nbSpheresPaw-1;
+    thicknessBody = 5*R;
     mass = 3000;
     qglviewer::Vec initPos = qglviewer::Vec(0,0,15);
     qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
@@ -84,13 +90,13 @@ Dragon::Dragon() {
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
-    createBody();
-    createTail();
-    createNeck();
-    createPawLeftUp(-70);
-    createPawRightUp(-110);
-    createPawLeftDown(-70);
-    createPawRightDown(-110);
+    createBody(indexBody, indexTail-1);
+    createTail(30.0, indexTail, indexNeck-1);
+    createNeck(indexNeck, indexPawLeftUp-1);
+    createPawLeftUp(-70, indexPawLeftUp, indexPawRightUp-1);
+    createPawRightUp(-110, indexPawRightUp, indexPawLeftDown-1);
+    createPawLeftDown(-70, indexPawLeftDown, indexPawRightDown-1);
+    createPawRightDown(-110, indexPawRightDown, indexLastPawRightDown);
     //drawSkeleton();
     //this->skeleton.push_back(dragPart);
 }
@@ -101,14 +107,47 @@ Dragon::~Dragon() {
     delete t;
     delete t2;
     delete dragPart;
+    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = tail.begin() ; it != tail.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = neck.begin() ; it != neck.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = pawLeftUp.begin() ; it != pawLeftUp.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = pawRightUp.begin() ; it != pawRightUp.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = pawLeftDown.begin() ; it != pawLeftDown.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = pawRightDown.begin() ; it != pawRightDown.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::init(Viewer &v) {
     // load textures
-    tex_body = loadTexture("images/texture_drag1.png");
+    tex_skeleton = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/field1.jpg");
+    tex_body = loadTexture("images/peau_dragon.jpeg");
 
     program.load("shaders/shader.vert", "shaders/shader.frag");
     // get the program id and use it to have access to uniforms
@@ -129,10 +168,44 @@ void Dragon::init(Viewer &v) {
     dt = 0.01;
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
         Sphere* s = *it;
+        s->setTexture(tex_skeleton);
+        s->init(v);
+    }
+    for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
+        Sphere* s = *it;
         s->setTexture(tex_body);
         s->init(v);
     }
-
+    for(std::vector<Sphere*>::iterator it = tail.begin() ; it != tail.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
+    for(std::vector<Sphere*>::iterator it = neck.begin() ; it != neck.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
+    for(std::vector<Sphere*>::iterator it = pawLeftUp.begin() ; it != pawLeftUp.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
+    for(std::vector<Sphere*>::iterator it = pawRightUp.begin() ; it != pawRightUp.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
+    for(std::vector<Sphere*>::iterator it = pawLeftDown.begin() ; it != pawLeftDown.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
+    for(std::vector<Sphere*>::iterator it = pawRightDown.begin() ; it != pawRightDown.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
 }
 
 
@@ -212,6 +285,7 @@ GLuint Dragon::loadTexture(const char *filename, bool mipmap)
     return id;
 }
 
+/////////////////////////////////////////////////////////////////////
 void Dragon::animate(){
     if(sin(time_wing1) > 0.9)
         first_angle_wing_up = false;
@@ -280,66 +354,78 @@ void Dragon::draw(){
     drawBasePlane(50.0);
     glPopMatrix();
     GLCHECK(glActiveTexture(GL_TEXTURE0));
-    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_body));
+    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_skeleton));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     glPushMatrix();
-    drawBody();
-    glPopMatrix();
-
-    /*glPushMatrix();
-    drawTail();
+    drawBody(indexBody, indexTail-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawNeck();
+    drawTail(indexTail, indexNeck-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawPawLeftUp(-70.0);
+    drawNeck(indexNeck, indexPawLeftUp-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawPawRightUp(-110.0);
+    drawPawLeftUp(indexPawLeftUp, indexPawRightUp-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawPawLeftDown(-70.0);
+    drawPawRightUp(indexPawRightUp, indexPawLeftDown-1);
     glPopMatrix();
 
     glPushMatrix();
-    drawPawRightDown(-110.0);
+    drawPawLeftDown(indexPawLeftDown, indexPawRightDown-1);
     glPopMatrix();
 
-    glPopMatrix();*/
+    glPushMatrix();
+    drawPawRightDown(indexPawRightDown, indexLastPawRightDown);
+    glPopMatrix();
+
+    glPopMatrix();
     
     GLCHECK(glUseProgram( 0 ));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawBody() {
-    skeleton[0]->draw();
-    for (int i = 1; i <= 14; i++) {
+void Dragon::drawBody(int first, int last) {
+    skeleton[first]->draw();
+    for (int i = first+1; i <= last; i++) {
         skeleton[i]->draw();
+    }
+    for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
+        Sphere* s = *it;
+        s->draw();
     }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawTail() {
-    for (int i = 15; i <= 30; i++) {
+void Dragon::drawTail(int first, int last) {
+    for (int i = first; i <= last; i++) {
         skeleton[i]->draw();
+    }
+    for(std::vector<Sphere*>::iterator it = tail.begin() ; it != tail.end(); it++){
+        Sphere* s = *it;
+        s->draw();
     }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawNeck() {
-    skeleton[31]->draw();
-    for (int i = 32; i <= 45; i++) {
+void Dragon::drawNeck(int first, int last) {
+    skeleton[first]->draw();
+    for (int i = first+1; i <= last; i++) {
         skeleton[i]->draw();
+    }
+    for(std::vector<Sphere*>::iterator it = neck.begin() ; it != neck.end(); it++){
+        Sphere* s = *it;
+        s->draw();
     }
 }
 
@@ -362,37 +448,52 @@ void Dragon::drawClaw(bool leftPaw, bool leftClaw) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawPawLeftUp(float angle) {
-    skeleton[46]->draw();
-    for (int i = 47; i <= 55; i++) {
+void Dragon::drawPawLeftUp(int first, int last) {
+    skeleton[first]->draw();
+    for (int i = first+1; i <= last; i++) {
         skeleton[i]->draw();
+    }
+    for(std::vector<Sphere*>::iterator it = pawLeftUp.begin() ; it != pawLeftUp.end(); it++){
+        Sphere* s = *it;
+        s->draw();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::drawPawRightUp(int first, int last) {
+    skeleton[first]->draw();
+    for (int i = first+1; i <= last; i++) {
+        skeleton[i]->draw();
+    }
+    for(std::vector<Sphere*>::iterator it = pawRightUp.begin() ; it != pawRightUp.end(); it++){
+        Sphere* s = *it;
+        s->draw();
     }
 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawPawRightUp(float angle) {
-    skeleton[56]->draw();
-    for (int i = 57; i <= 65; i++) {
+void Dragon::drawPawLeftDown(int first, int last) {
+    skeleton[first]->draw();
+    for (int i = first+1; i <= last; i++) {
         skeleton[i]->draw();
+    }
+    for(std::vector<Sphere*>::iterator it = pawLeftDown.begin() ; it != pawLeftDown.end(); it++){
+        Sphere* s = *it;
+        s->draw();
     }
 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawPawLeftDown(float angle) {
-    skeleton[66]->draw();
-    for (int i = 67; i <= 75; i++) {
+void Dragon::drawPawRightDown(int first, int last) {
+    skeleton[first]->draw();
+    for (int i = first+1; i <= last; i++) {
         skeleton[i]->draw();
     }
-
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawPawRightDown(float angle) {
-    skeleton[76]->draw();
-    for (int i = 77; i <= 85; i++) {
-        skeleton[i]->draw();
+    for(std::vector<Sphere*>::iterator it = pawRightDown.begin() ; it != pawRightDown.end(); it++){
+        Sphere* s = *it;
+        s->draw();
     }
 }
 
@@ -443,80 +544,326 @@ void Dragon::drawWing(bool left){
     t2->draw();
 }
 
-void Dragon::createBody(){
-    skeleton.push_back(new Sphere(0,0,15,R));
-    for (int i = 1; i <= 14; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),0.1,10,tex_body));
+/////////////////////////////////////////////////////////////////////
+void Dragon::createBody(int first, int last){
+    float height = 10;
+    skeleton.push_back(new Sphere(0,0,height,R,10,tex_skeleton));
+    for (int i = first+1; i <= last; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),R,10,tex_skeleton));
+    }
+    for (int i = first; i <= last; i++) {
+        for (int j = 0; j <= 23; j++) {
+            body.push_back(new Sphere(skeleton[i]->getX(),
+                                      skeleton[i]->getY() + thicknessBody*cos(M_PI/12*j),
+                                      skeleton[i]->getZ() + thicknessBody*sin(M_PI/12*j),
+                                      R,10,tex_body));
+            body.push_back(new Sphere(skeleton[i]->getX() + R,
+                                      skeleton[i]->getY() + thicknessBody*cos(M_PI/12*j),
+                                      skeleton[i]->getZ() + thicknessBody*sin(M_PI/12*j),
+                                      R,10,tex_body));
+        }
     }
 }
-void Dragon::createTail(){
-    for (int i = 15; i <= 30; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R*cos(-M_PI/180.0*30),
+
+////////////////////////////////////////////////////////////////////
+void Dragon::createTail(float angle, int first, int last){
+    float x0 = skeleton[first-1]->getX();
+    float z0 = skeleton[first-1]->getZ();
+    for (int i = first; i <= last; i++) {
+        float x = x0 + 2*R*(i-first+1);
+        skeleton.push_back(new Sphere(x,
                                       0,
-                                      skeleton[i-1]->getZ()+2*R*sin(-M_PI/180.0*30),
+                                      z0 + (x-x0)*(x-x0)/40.0,
+                                      R,10,tex_skeleton));
+    }
+    /*for (int i = (last+first)/2 + 1; i <= last; i++) {
+        float diff = (last-(last+first)/2+2);
+        float dx = - 2*R*cos(M_PI/diff*(last-i))*(1 + cos(M_PI/diff*(last-i)));
+        float dz = 2*R*sin(M_PI/diff*(last-i))*(1 + cos(M_PI/diff*(last-i)));
+        if (dx*dx + dz*dz > 4*R*R)
+            skeleton.push_back(new Sphere(skeleton[i-1]->getX() + dx,
+                                          skeleton[i-1]->getY(),
+                                          skeleton[i-1]->getZ() + dz,
+                                          R));
+        else
+            skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                          skeleton[i-1]->getY(),
+                                          skeleton[i-1]->getZ(),
+                                          R));
+    }*/
+
+    float thicknessTail = 5*R;
+    float x1,x2,z1,z2;
+    for (int i = first; i <= (last+first)/2; i++) {
+        x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
+        z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
+        z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
+        for (int j = 0; j <= 23; j++) {
+            tail.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessTail*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + thicknessTail*cos(M_PI/12*j)*x1,
                                       R,10,tex_body));
+            tail.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessTail*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessTail*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(M_PI/12*j)*x1,
+                                      R,10,tex_body));
+
+        }
+        thicknessTail = thicknessTail - 4*R/((last-first)/2+1);
+    }
+    for (int i = (last+first)/2 + 1; i < last; i++) {
+        x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
+        z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
+        z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
+        for (int j = 0; j <= 23; j++) {
+            tail.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessTail*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + thicknessTail*cos(M_PI/12*j)*x1,
+                                      R,10,tex_body));
+            tail.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessTail*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessTail*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(M_PI/12*j)*x1,
+                                      R,10,tex_body));
+        }
+        thicknessTail = thicknessTail-2*R/(last-first);
+    }
+    x1 = skeleton[last]->getX() - skeleton[last-1]->getX();
+    z1 = skeleton[last]->getZ() - skeleton[last-1]->getZ();
+    for (int j = 0; j <= 23; j++) {
+        tail.push_back(new Sphere(skeleton[last]->getX() + thicknessTail*cos(M_PI/12*j)*(-z1),
+                                  skeleton[last]->getY() + thicknessTail*sin(M_PI/12*j),
+                                  skeleton[last]->getZ() + thicknessTail*cos(M_PI/12*j)*x1,
+                                  R,10,tex_body));
     }
 }
 
-void Dragon::createNeck(){
-    skeleton.push_back(new Sphere(skeleton[0]->getX()-2*R, 0, skeleton[0]->getZ(), R,10,tex_body));
-    for (int i = 32; i <= 45; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()-2*R*cos(M_PI/180.0*30),
+
+/////////////////////////////////////////////////////////////////////
+void Dragon::createNeck(int first, int last){
+    skeleton.push_back(new Sphere(skeleton[indexBody]->getX()-2*R,
+                                  0,
+                                  skeleton[indexBody]->getZ(),
+                                  R,10,tex_skeleton));
+    float x0 = skeleton[indexNeck]->getX();
+    float z0 = skeleton[indexNeck]->getZ();
+    for (int i = first+1; i <= last; i++) {
+        float x = x0 - 2*R*(i-first);
+        skeleton.push_back(new Sphere(x,
                                       0,
-                                      skeleton[i-1]->getZ()+2*R*sin(M_PI/180.0*30),
+                                      z0 + (x-x0)*(x-x0)/15.0,
+                                      R,10,tex_skeleton));
+    }
+    float thicknessNeck = 5*R;
+    float x1,x2,z1,z2;
+    for (int j = 0; j <= 23; j++) {
+        neck.push_back(new Sphere(skeleton[first]->getX() - R,
+                                  skeleton[first]->getY() + thicknessNeck*cos(M_PI/12*j),
+                                  skeleton[first]->getZ() + thicknessNeck*sin(M_PI/12*j),
+                                  R,10,tex_body));
+        neck.push_back(new Sphere(skeleton[first]->getX(),
+                                  skeleton[first]->getY() + thicknessNeck*cos(M_PI/12*j),
+                                  skeleton[first]->getZ() + thicknessNeck*sin(M_PI/12*j),
+                                  R,10,tex_body));
+        neck.push_back(new Sphere(skeleton[first]->getX() + R,
+                                  skeleton[first]->getY() + thicknessNeck*cos(M_PI/12*j),
+                                  skeleton[first]->getZ() + thicknessNeck*sin(M_PI/12*j),
+                                  R,10,tex_body));
+    }
+    thicknessNeck = thicknessNeck - 3*R/((last-first)/2+1);
+    for (int i = first+1; i <= (last+first)/2; i++) {
+        x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
+        z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
+        z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
+        for (int j = 0; j <= 23; j++) {
+            neck.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessNeck*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + thicknessNeck*cos(M_PI/12*j)*x1,
                                       R,10,tex_body));
+            neck.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessNeck*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessNeck*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + z2/2.0 + thicknessNeck*cos(M_PI/12*j)*x1,
+                                      R,10,tex_body));
+
+        }
+        thicknessNeck = thicknessNeck - 3*R/((last-first)/2+1);
+    }
+    for (int i = (last+first)/2 + 1; i < last; i++) {
+        x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
+        z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
+        z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
+        for (int j = 0; j <= 23; j++) {
+            neck.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessNeck*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + thicknessNeck*cos(M_PI/12*j)*x1,
+                                      R,10,tex_body));
+            neck.push_back(new Sphere(skeleton[i]->getX() + x2/3.0 + thicknessNeck*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessNeck*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + z2/3.0 + thicknessNeck*cos(M_PI/12*j)*x1,
+                                      R,10,tex_body));
+            neck.push_back(new Sphere(skeleton[i]->getX() + 2.0*x2/3.0 + thicknessNeck*cos(M_PI/12*j)*(-z1),
+                                      skeleton[i]->getY() + thicknessNeck*sin(M_PI/12*j),
+                                      skeleton[i]->getZ() + 2.0*z2/3.0 + thicknessNeck*cos(M_PI/12*j)*x1,
+                                      R,10,tex_body));
+        }
+        thicknessNeck = thicknessNeck-2*R/(last-first);
+    }
+    x1 = skeleton[last]->getX() - skeleton[last-1]->getX();
+    z1 = skeleton[last]->getZ() - skeleton[last-1]->getZ();
+    for (int j = 0; j <= 23; j++) {
+        neck.push_back(new Sphere(skeleton[last]->getX() + thicknessNeck*cos(M_PI/12*j)*(-z1),
+                                  skeleton[last]->getY() + thicknessNeck*sin(M_PI/12*j),
+                                  skeleton[last]->getZ() + thicknessNeck*cos(M_PI/12*j)*x1,
+                                  R,10,tex_body));
     }
 }
 
-void Dragon::createPawLeftUp(float angle){
-    skeleton.push_back(new Sphere(skeleton[0]->getX(),
-                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R,10,tex_body));
-    for (int i = 47; i <= 55; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R,10,tex_body));
+void Dragon::completePaw(std::vector<Sphere*>& paw, int first, int last) {
+    float z0 = skeleton[indexBody]->getZ();
+    float x1,x2,y2,z1,z2;
+    float thicknessPaw = 2*R;
+    int start = first;
+    while (abs(skeleton[start]->getZ()-z0) < 5*R)
+        start++;
+    for (int i = start; i <= last-1; i++) {
+            x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
+            z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+            x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
+            y2 = skeleton[i+1]->getY() - skeleton[i]->getY();
+            z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
+            for (int j = 0; j <= 23; j++) {
+                paw.push_back(new Sphere(skeleton[i]->getX() + thicknessPaw*cos(M_PI/12*j)*(-z1),
+                                         skeleton[i]->getY() + thicknessPaw*sin(M_PI/12*j),
+                                         skeleton[i]->getZ() + thicknessPaw*cos(M_PI/12*j)*x1,
+                                         R,10,tex_body));
+                paw.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessPaw*cos(M_PI/12*j)*(-z1),
+                                         skeleton[i]->getY() + y2/2.0 + thicknessPaw*sin(M_PI/12*j),
+                                         skeleton[i]->getZ() + z2/2.0 + thicknessPaw*cos(M_PI/12*j)*x1,
+                                         R,10,tex_body));
+
+            }
+            thicknessPaw = thicknessPaw - 2*R/(last-first+1);
     }
-}
-void Dragon::createPawRightUp(float angle){
-    skeleton.push_back(new Sphere(skeleton[0]->getX(),
-                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R,10,tex_body));
-    for (int i = 57; i <= 65; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R,10,tex_body));
+    y2 = skeleton[last]->getY();
+    z2 = skeleton[last]->getZ();
+    paw.push_back(new Sphere(skeleton[last]->getX(),
+                             y2,
+                             z2,
+                             1.01*R, 10, tex_body));
+    float r = 0.9*R;
+    for (int i = 0; i <= 16; i++) {
+        float lastIndex = paw.size()-1;
+        paw.push_back(new Sphere(paw[lastIndex]->getX() - paw[lastIndex]->getRadius()*cos(M_PI/180.0*10.0),
+                                 paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*10.0),
+                                 z2,
+                                 r, 10, tex_body));
+        r = abs(r - 0.05*R);
     }
-}
-void Dragon::createPawLeftDown(float angle){
-    skeleton.push_back(new Sphere(skeleton[14]->getX(),
-                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R,10,tex_body));
-    for (int i = 67; i <= 75; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R,10,tex_body));
+    r = 0.9*R;
+    paw.push_back(new Sphere(skeleton[last]->getX(),
+                             y2,
+                             z2,
+                             1.01*R, 10, tex_body));
+    for (int i = 0; i <= 16; i++) {
+        float lastIndex = paw.size()-1;
+        paw.push_back(new Sphere(paw[lastIndex]->getX() - paw[lastIndex]->getRadius()*cos(M_PI/180.0*(-10.0)),
+                                 paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*(-10.0)),
+                                 z2,
+                                 r, 10, tex_body));
+        r = abs(r - 0.05*R);
     }
-}
-void Dragon::createPawRightDown(float angle){
-    skeleton.push_back(new Sphere(skeleton[14]->getX(),
-                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                  R,10,tex_body));
-    for (int i = 77; i <= 85; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
-                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
-                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
-                                      R,10,tex_body));
+    r = 0.9*R;
+    paw.push_back(new Sphere(skeleton[last]->getX(),
+                             y2,
+                             z2,
+                             1.01*R, 10, tex_body));
+    for (int i = 0; i <= 16; i++) {
+        float lastIndex = paw.size()-1;
+        paw.push_back(new Sphere(paw[lastIndex]->getX() - paw[lastIndex]->getRadius()*cos(M_PI/180.0*40.0),
+                                 paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*40.0),
+                                 z2,
+                                 r, 10, tex_body));
+        r = abs(r - 0.05*R);
+    }
+    r = 0.9*R;
+    paw.push_back(new Sphere(skeleton[last]->getX(),
+                             y2,
+                             z2,
+                             1.01*R, 10, tex_body));
+    for (int i = 0; i <= 16; i++) {
+        float lastIndex = paw.size()-1;
+        paw.push_back(new Sphere(paw[lastIndex]->getX() - paw[lastIndex]->getRadius()*cos(M_PI/180.0*(-40.0)),
+                                 paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*(-40.0)),
+                                 z2,
+                                 r, 10, tex_body));
+        r = abs(r - 0.05*R);
     }
 }
 
+////////////////////////////////////////////////////////////////////////
+void Dragon::createPawLeftUp(float angle, int first, int last){
+    skeleton.push_back(new Sphere(skeleton[indexBody]->getX(),
+                                  skeleton[indexBody]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[indexBody]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_skeleton));
+    for (int i = first+1; i <= last; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_skeleton));
+    }
+    completePaw(pawLeftUp, first, last);
+}
+
+/////////////////////////////////////////////////////////////////////////
+void Dragon::createPawRightUp(float angle, int first, int last) {
+    skeleton.push_back(new Sphere(skeleton[indexBody]->getX(),
+                                  skeleton[indexBody]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[indexBody]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_skeleton));
+    for (int i = first+1; i <= last; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_skeleton));
+    }
+    completePaw(pawRightUp, first, last);
+}
+
+/////////////////////////////////////////////////////////////////////////
+void Dragon::createPawLeftDown(float angle, int first, int last){
+    skeleton.push_back(new Sphere(skeleton[indexTail-1]->getX(),
+                                  skeleton[indexTail-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[indexTail-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_skeleton));
+    for (int i = first+1; i <= last; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_skeleton));
+    }
+    completePaw(pawLeftDown, first, last);
+}
+
+/////////////////////////////////////////////////////////////////////////
+void Dragon::createPawRightDown(float angle, int first, int last){
+    skeleton.push_back(new Sphere(skeleton[indexTail-1]->getX(),
+                                  skeleton[indexTail-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[indexTail-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_skeleton));
+    for (int i = first+1; i <= last; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_skeleton));
+    }
+    completePaw(pawRightDown, first, last);
+}
+
+/////////////////////////////////////////////////////////////////////////////
 void Dragon::drawSkeleton(){
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
         Sphere* s = *it;
@@ -545,6 +892,7 @@ void Dragon::collisionParticleGround(Sphere *p)
     p->incrVelocity(-(1 + rebound) * vPen * groundNormal);
 }
 
+///////////////////////////////////////////////////////////////////////////////////
 void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     // Get event modifiers key
     const Qt::KeyboardModifiers modifiers = e->modifiers();
