@@ -121,7 +121,6 @@ void FireSmoke::init(Viewer &v) {
 ///////////////////////////////////////////////////////////////////////////////
 void FireSmoke::draw() {
 	const double SIZE = 0.02;
-
 	for (unsigned int i = 0; i < particles.size(); i++) {
 		if (particles[i].isActive()) {
 			qglviewer::Vec color = particles[i].getColor();
@@ -148,6 +147,14 @@ void FireSmoke::animate() {
 
 			p.incrPos(mov / 100);
 			p.incrLife(-p.getVelDis());
+
+			double life = p.getLife();
+			if (life > 0.50 && life <= 0.75)
+				p.setColor(qglviewer::Vec(255,255,0));
+			else if (life > 0.25 && life <= 0.50)
+				p.setColor(qglviewer::Vec(255, 2, 0));
+			else
+				p.setColor(qglviewer::Vec(255,0,0));
 
 			if (p.getLife() < 0) {
 				if (inactivateReq) {
@@ -206,7 +213,7 @@ void FireSmoke::initParticle(Particule &p) {
 	p.setVelDis(alea(0.01, 0.03));
 
 	if (firesmoke)
-		p.setColor(qglviewer::Vec(alea(0,255),0,0));
+		p.setColor(qglviewer::Vec(255, 255, 255));
 	else
 		p.setColor(qglviewer::Vec(3, 3, 3));
 	p.setPos(origin);
