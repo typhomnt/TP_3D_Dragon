@@ -57,6 +57,10 @@ private:
     std::vector<Sphere*> pawRightUp;
     std::vector<Sphere*> pawLeftDown;
     std::vector<Sphere*> pawRightDown;
+    int nbSpheresContourBody;
+    int nbSpheresContourTail;
+    int nbSpheresContourNeck;
+    int nbSpheresContourPaw;
     int nbSpheresBody;
     int nbSpheresTail;
     int nbSpheresNeck;
