@@ -5,6 +5,8 @@
 #include "material.h"
 #include <cmath>
 #include <QKeyEvent>
+#include <stdlib.h>
+#include <time.h>
 
 #include <iostream>
 #include <cstdio>
@@ -49,21 +51,40 @@ static float viscosity;
 static float dt;
 static  qglviewer::Vec groundPosition = qglviewer::Vec(0.0, 0.0, -5.0);
 static  qglviewer::Vec groundNormal = qglviewer::Vec(0.0, 0.0, 1.0);
-static float rebound = 0.5;
+static float rebound = 0;
 static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
-
+static float k = 800;
+static float amort = 500;
+static float lo;
+static float nbw1 = 10;
+static qglviewer::Vec wing1root = qglviewer::Vec(2,2,2);
+static qglviewer::Vec wing1vel = qglviewer::Vec(0,0,0);
+static qglviewer::Vec initForces = qglviewer::Vec(0,0,0);
+static float k1 = 500;
+static float amort1 = 100;
+static float lo1;
+static float meshStep = 3.0;
+static float wr = 0.2;
+static qglviewer::Vec  wingForce = qglviewer::Vec(5,5,5);
+static qglviewer::Vec  wingForce2 = qglviewer::Vec(0,5,5);
+static qglviewer::Vec  wingForce3 = qglviewer::Vec(5,0,5);
+static int tp = 0;
 /*nouveau dragon*/
 
 ///////////////////////////////////////////////////////////////////////////////
 Dragon::Dragon() {
+    srand (time(NULL));
     t = new TrapezeIsocele(7.0,5.0,5.0,0.2);
     // Trapeze au bout des ailes
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
-    R = 0.5;
+    // R = 0.5 pour Omid
+    R = 0.1;
     nbSpheresBody = 15;
     nbSpheresTail = 25;
     nbSpheresNeck = 15;
     nbSpheresPaw = 13;
+    lo=R;
+    lo1=1/meshStep;
     indexBody = 0;
     indexTail = indexBody + nbSpheresBody;
     indexNeck = indexTail + nbSpheresTail;
@@ -76,6 +97,7 @@ Dragon::Dragon() {
     mass = 3000;
     qglviewer::Vec initPos = qglviewer::Vec(0,0,15);
     qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
+    originFire = qglviewer::Vec(1,1,1);
     dragPart = new Sphere(initPos,initVec,R,mass);
     first_angle_wing = 0;
     first_angle_wing_up = true;
@@ -99,6 +121,18 @@ Dragon::Dragon() {
     createPawRightDown(-110, indexPawRightDown, indexLastPawRightDown);
     //drawSkeleton();
     //this->skeleton.push_back(dragPart);
+    wingR1 = (Sphere***)malloc(nbw1*sizeof(Sphere**));
+    for(int i = 0 ; i < nbw1 ; i++){
+        wingR1[i] = (Sphere**)malloc(nbw1*sizeof(Sphere*));
+    }
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j = 0 ; j < nbw1 ; j++){
+            wingR1[i][j] = NULL;
+        }
+    }
+    createFire();
+    createWingR();
+    meshWingR();
 }
 
 
@@ -148,6 +182,7 @@ void Dragon::init(Viewer &v) {
     tex_skeleton = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/field1.jpg");
     tex_body = loadTexture("images/peau_dragon.jpeg");
+    tex_feu = loadTexture("images/feu1.jpg");
 
     program.load("shaders/shader.vert", "shaders/shader.frag");
     // get the program id and use it to have access to uniforms
@@ -206,6 +241,20 @@ void Dragon::init(Viewer &v) {
         s->setTexture(tex_body);
         s->init(v);
     }
+    for(std::vector<Sphere*>::iterator it = fire.begin() ; it != fire.end(); it++){
+        Sphere* s = *it;
+        //s->setTexture(tex_feu);
+        s->setColor(1,0,0,1);
+        s->init(v);
+    }
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j= 0 ; j < nbw1 ; j++){
+            if(wingR1[i][j] != NULL){
+                wingR1[i][j]->setTexture(tex_body);
+                wingR1[i][j]->init(v);
+            }
+        }
+    }
 }
 
 
@@ -227,9 +276,9 @@ void Dragon::initLighting() {
 void Dragon::drawBasePlane(float size) {
     GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_field));
+    GLCHECK(glUseProgram( (GLint)program ));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
     GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ka"), 1, &material.ka.x));
     GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.kd"), 1, &material.kd.x));
     GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ks"), 1, &material.ks.x));
@@ -253,7 +302,7 @@ void Dragon::drawBasePlane(float size) {
     glVertex3f(groundPosition[0], s + groundPosition[1], groundPosition[2]);
     glEnd();
     glPopMatrix();
-
+    GLCHECK(glUseProgram( 0 ));
 }
 
 
@@ -287,7 +336,7 @@ GLuint Dragon::loadTexture(const char *filename, bool mipmap)
 
 /////////////////////////////////////////////////////////////////////
 void Dragon::animate(){
-    if(sin(time_wing1) > 0.9)
+   /* if(sin(time_wing1) > 0.9)
         first_angle_wing_up = false;
     if(sin(time_wing1) < -0.9)
         first_angle_wing_up = true;
@@ -329,35 +378,128 @@ void Dragon::animate(){
     else{
         third_angle_wing--;
         time_wing3-=0.1;
-    }
-
+    }*/
+    if(tp%100 == 0)
+        wingForce[2] = -wingForce[2];
     std::map<const Sphere *, qglviewer::Vec> forces;
-    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
+    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); ++it){
         Sphere* s = *it;
-        forces[s] = gravity * s->getMass();
+        forces[s] = initForces;
+        if(!s->getFixed())
+            forces[s] += gravity * s->getMass();
+    }
+    wingR1[0][0]->setFixed(true);
+    wingR1[0][1]->setFixed(true);
+    wingR1[1][0]->setFixed(true);
+    wingR1[1][1]->setFixed(true);
+    wingR1[2][0]->setFixed(true);
+    wingR1[0][2]->setFixed(true);
+    wingR1[2][1]->setFixed(true);
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j = 0 ; j < nbw1 ; j++){
+            forces[wingR1[i][j]] = initForces;
+        }
+    }
+    for(std::vector<Spring*>::iterator it = sprgSkel.begin() ; it != sprgSkel.end(); it++){
+        Spring* s = *it;
+        qglviewer::Vec f12 = s->getCurrentForce();
+        if(!s->getParticle1()->getFixed())
+            forces[s->getParticle1()] += f12;
+        if(!s->getParticle2()->getFixed())
+            forces[s->getParticle2()] -= f12;
+    }
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j = 0 ; j < nbw1 ; j++){
+            if(wingR1[i][j] != NULL)
+                if(!wingR1[i][j]->getFixed()){
+                        forces[wingR1[i][j]] += wingForce;
+                    if(i == 0)
+                        forces[wingR1[i][j]] += wingForce2;
+                    else if(j == 0)
+                        forces[wingR1[i][j]] += wingForce3;
+                }
+        }
+    }
+    for(std::vector<Spring*>::iterator it = sprgWing1R.begin() ; it != sprgWing1R.end(); it++){
+        Spring* s = *it;
+        qglviewer::Vec f12 = s->getCurrentForce();
+        if(!s->getParticle1()->getFixed())
+            forces[s->getParticle1()] += f12;
+        if(!s->getParticle2()->getFixed())
+            forces[s->getParticle2()] -= f12;
+    }
+    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); ++it){
+        Sphere* s = *it;
         forces[s] -= viscosity*s->getVelocity();
         forces[s] += fly_force ;
         s->incrVelocity(dt*s->getInvMass()*forces[s]);
         s->incrPosition(dt * s->getVelocity());
-        collisionParticleGround(s);
+        if(s->getCollisions())
+            collisionParticleGround(s);
+    }
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j = 0 ; j < nbw1 ; j++){
+            wingR1[i][j]->incrVelocity(dt*wingR1[i][j]->getInvMass()*forces[wingR1[i][j]]);
+            wingR1[i][j]->incrPosition(dt*wingR1[i][j]->getVelocity());
+        }
     }
     fly_force[0] = 0;
     fly_force[1] = 0;
     fly_force[2] = 0;
+    for(unsigned int i = 0; i < skeleton.size(); ++i) {
+        for(unsigned int j = 0; j < i; ++j){
+                Sphere *s1 = skeleton[i];
+                Sphere *s2 = skeleton[j];
+                if(s1->getCollisions() && s2->getCollisions())
+                    collisionParticleParticle(s1,s2);
+
+        }
+    }
+    for(unsigned int i = 0; i < nbw1; ++i) {
+        for(unsigned int j = 0; j < nbw1; ++j){
+            for(unsigned int k = 0; k < i ; k ++){
+                for(unsigned int l = 0 ;l < j ; l++){
+                    Sphere *s1 = wingR1[i][j];
+                    Sphere *s2 = wingR1[k][l];
+                    if(s1->getCollisions() && s2->getCollisions())
+                        collisionParticleParticle(s1,s2);
+                }
+            }
+
+        }
+    }
+    int i = 0;
+    for(std::vector<Sphere*>::iterator it = fire.begin() ; it != fire.end(); ++it){
+        Sphere* s = *it;
+        if(i != 0){
+            if(abs(s->getX() - originFire[0] + rand()/RAND_MAX - 0.5) > 0.5){
+                s->setPosition(originFire);
+            }
+            else{
+                s->incrPosition(dt*s->getVelocity());
+            }
+        }
+        i++;
+    }
+    tp++;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
 
-    GLCHECK(glUseProgram( (GLint)program ));
+    //GLCHECK(glUseProgram( (GLint)program ));
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
     GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_skeleton));
+    /*GLCHECK(glActiveTexture(GL_TEXTURE0));
+    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_feu));
     GLCHECK(glUniform1i(texture0, 0));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
 
+    drawFire();
+    drawWingR();
     glPushMatrix();
     drawBody(indexBody, indexTail-1);
     glPopMatrix();
@@ -386,9 +528,11 @@ void Dragon::draw(){
     drawPawRightDown(indexPawRightDown, indexLastPawRightDown);
     glPopMatrix();
 
+    drawSprings();
+    drawMeshWingR();
     glPopMatrix();
     
-    GLCHECK(glUseProgram( 0 ));
+    //GLCHECK(glUseProgram( 0 ));
 }
 
 
@@ -544,12 +688,14 @@ void Dragon::drawWing(bool left){
     t2->draw();
 }
 
+
 /////////////////////////////////////////////////////////////////////
 void Dragon::createBody(int first, int last){
-    float height = 10;
-    skeleton.push_back(new Sphere(0,0,height,R,10,tex_skeleton));
+    float height = 15;
+    skeleton.push_back(new Sphere(0,0,height,R,10,0,true));
     for (int i = first+1; i <= last; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),R,10,tex_skeleton));
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),R,10,tex_skeleton,true));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     for (int i = first; i <= last; i++) {
         for (int j = 0; j <= 23; j++) {
@@ -575,6 +721,7 @@ void Dragon::createTail(float angle, int first, int last){
                                       0,
                                       z0 + (x-x0)*(x-x0)/40.0,
                                       R,10,tex_skeleton));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     /*for (int i = (last+first)/2 + 1; i <= last; i++) {
         float diff = (last-(last+first)/2+2);
@@ -639,13 +786,26 @@ void Dragon::createTail(float angle, int first, int last){
     }
 }
 
+/*
+=======
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
+    }
+}
 
+void Dragon::createNeck(){
+    skeleton.push_back(new Sphere(skeleton[0]->getX()-2*R, 0, skeleton[0]->getZ(), R,10,tex_body,true));
+    sprgSkel.push_back(new Spring(skeleton[31],skeleton[0],k,R,amort));
+    for (int i = 32; i <= 45; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()-2*R*cos(M_PI/180.0*30),
+>>>>>>> origin/lights
+  */
 /////////////////////////////////////////////////////////////////////
 void Dragon::createNeck(int first, int last){
     skeleton.push_back(new Sphere(skeleton[indexBody]->getX()-2*R,
                                   0,
                                   skeleton[indexBody]->getZ(),
                                   R,10,tex_skeleton));
+    sprgSkel.push_back(new Spring(skeleton[first],skeleton[0],k,R,amort));
     float x0 = skeleton[indexNeck]->getX();
     float z0 = skeleton[indexNeck]->getZ();
     for (int i = first+1; i <= last; i++) {
@@ -654,6 +814,7 @@ void Dragon::createNeck(int first, int last){
                                       0,
                                       z0 + (x-x0)*(x-x0)/15.0,
                                       R,10,tex_skeleton));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     float thicknessNeck = 5*R;
     float x1,x2,z1,z2;
@@ -803,42 +964,92 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, int first, int last) {
     }
 }
 
+/*=======
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
+    }
+}
+
+void Dragon::createPawLeftUp(float angle){
+    skeleton.push_back(new Sphere(skeleton[0]->getX(),
+                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body,true));
+    sprgSkel.push_back(new Spring(skeleton[0],skeleton[46],k,lo,amort));
+    for (int i = 47; i <= 55; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
+>>>>>>> origin/lights*/
 ////////////////////////////////////////////////////////////////////////
 void Dragon::createPawLeftUp(float angle, int first, int last){
     skeleton.push_back(new Sphere(skeleton[indexBody]->getX(),
                                   skeleton[indexBody]->getY() + 2*R*cos(M_PI/180.0*angle),
                                   skeleton[indexBody]->getZ() + 2*R*sin(M_PI/180.0*angle),
                                   R,10,tex_skeleton));
+    sprgSkel.push_back(new Spring(skeleton[indexBody],skeleton[first],k,lo,amort));
     for (int i = first+1; i <= last; i++) {
         skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
                                       skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
                                       skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
                                       R,10,tex_skeleton));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     completePaw(pawLeftUp, first, last);
 }
-
+/*=======
+void Dragon::createPawRightUp(float angle){
+    skeleton.push_back(new Sphere(skeleton[0]->getX(),
+                                  skeleton[0]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[0]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body,true));
+    sprgSkel.push_back(new Spring(skeleton[0],skeleton[56],k,lo,amort));
+    for (int i = 57; i <= 65; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
+>>>>>>> origin/lights*/
 /////////////////////////////////////////////////////////////////////////
 void Dragon::createPawRightUp(float angle, int first, int last) {
     skeleton.push_back(new Sphere(skeleton[indexBody]->getX(),
                                   skeleton[indexBody]->getY() + 2*R*cos(M_PI/180.0*angle),
                                   skeleton[indexBody]->getZ() + 2*R*sin(M_PI/180.0*angle),
                                   R,10,tex_skeleton));
+    sprgSkel.push_back(new Spring(skeleton[indexBody],skeleton[first],k,lo,amort));
     for (int i = first+1; i <= last; i++) {
         skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
                                       skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
                                       skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
                                       R,10,tex_skeleton));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     completePaw(pawRightUp, first, last);
 }
 
+/*=======
+void Dragon::createPawLeftDown(float angle){
+    skeleton.push_back(new Sphere(skeleton[14]->getX(),
+                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body,true));
+
+    for (int i = 67; i <= 75; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
+>>>>>>> origin/lights*/
 /////////////////////////////////////////////////////////////////////////
 void Dragon::createPawLeftDown(float angle, int first, int last){
     skeleton.push_back(new Sphere(skeleton[indexTail-1]->getX(),
                                   skeleton[indexTail-1]->getY() + 2*R*cos(M_PI/180.0*angle),
                                   skeleton[indexTail-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
                                   R,10,tex_skeleton));
+    sprgSkel.push_back(new Spring(skeleton[indexTail-1],skeleton[first],k,lo,amort));
     for (int i = first+1; i <= last; i++) {
         skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
                                       skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
@@ -848,17 +1059,33 @@ void Dragon::createPawLeftDown(float angle, int first, int last){
     completePaw(pawLeftDown, first, last);
 }
 
+/*=======
+void Dragon::createPawRightDown(float angle){
+    skeleton.push_back(new Sphere(skeleton[14]->getX(),
+                                  skeleton[14]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                  skeleton[14]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                  R,10,tex_body,true));
+    sprgSkel.push_back(new Spring(skeleton[14],skeleton[76],k,lo,amort));
+    for (int i = 77; i <= 85; i++) {
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
+                                      skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
+                                      skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
+                                      R,10,tex_body));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
+>>>>>>> origin/lights*/
 /////////////////////////////////////////////////////////////////////////
 void Dragon::createPawRightDown(float angle, int first, int last){
     skeleton.push_back(new Sphere(skeleton[indexTail-1]->getX(),
                                   skeleton[indexTail-1]->getY() + 2*R*cos(M_PI/180.0*angle),
                                   skeleton[indexTail-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
                                   R,10,tex_skeleton));
+    sprgSkel.push_back(new Spring(skeleton[indexTail-1],skeleton[first],k,lo,amort));
     for (int i = first+1; i <= last; i++) {
         skeleton.push_back(new Sphere(skeleton[i-1]->getX(),
                                       skeleton[i-1]->getY() + 2*R*cos(M_PI/180.0*angle),
                                       skeleton[i-1]->getZ() + 2*R*sin(M_PI/180.0*angle),
                                       R,10,tex_skeleton));
+        sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     completePaw(pawRightDown, first, last);
 }
@@ -867,6 +1094,106 @@ void Dragon::createPawRightDown(float angle, int first, int last){
 void Dragon::drawSkeleton(){
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
         Sphere* s = *it;
+        s->draw();
+    }
+}
+
+void Dragon::drawSprings(){
+    glColor3f(0.0, 0.28, 1.0);
+    glLineWidth(5.0);
+    for(std::vector<Spring*>::iterator it = sprgSkel.begin() ; it != sprgSkel.end(); it++){
+        Spring* s = *it;
+        s->draw();
+    }
+}
+
+void Dragon::drawFire(){
+    for(std::vector<Sphere*>::iterator it = fire.begin() ; it != fire.end(); it++){
+        Sphere* s = *it;
+        s->draw();
+    }
+}
+
+void Dragon::createFire(){
+    int nbrPart = 700;
+    float varx = -5;
+    qglviewer::Vec initPosF = originFire;
+    qglviewer::Vec initVecF = qglviewer::Vec(varx,50,20);
+    for(int i = 0 ; i < nbrPart ; i++){
+        fire.push_back(new Sphere(initPosF,initVecF,R,0));
+        initVecF[0] += 0.3;
+        if(i < nbrPart/2){
+            initVecF[1] += 0.2 + 10*rand()/RAND_MAX - 0.5;
+            initVecF[2] -= 0.2 + 10*rand()/RAND_MAX - 0.5;
+        }
+        else{
+            initVecF[1] -= 0.2 + 10*rand()/RAND_MAX - 0.5;
+            initVecF[2] += 0.2 + 10*rand()/(RAND_MAX  - 2)- 0.5;
+        }
+        if(initVecF[0] > 5)
+            initVecF[0] = varx;
+
+    }
+}
+
+void Dragon::createWingR(){
+    wingR1[0][0] = new Sphere(wing1root,wing1vel,wr);
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j= 0 ; j < nbw1 ; j++){
+            if(i != 0 || j != 0){
+                if(i == 0){
+                    wingR1[i][j] = new Sphere(wingR1[0][0]->getX(),wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
+                }
+                else if (j == 0){
+                    wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY(),wingR1[0][0]->getZ(),wr);
+                }
+                else{
+                    wingR1[i][j] = new Sphere(wingR1[0][0]->getX() + (float)i/meshStep,wingR1[0][0]->getY() + (float)j/meshStep,wingR1[0][0]->getZ(),wr);
+                }
+            }
+        }
+    }
+}
+
+void Dragon::drawWingR(){
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j= 0 ; j < nbw1 ; j++){
+            if(wingR1[i][j] != NULL)
+                wingR1[i][j]->draw();
+        }
+    }
+}
+
+void Dragon::meshWingR(){
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j= 0 ; j < nbw1 ; j++){
+            if(wingR1[i][j] != NULL){
+                if(i < nbw1 - 1){
+                    if(wingR1[i+1][j] != NULL)
+                        sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j],k1,lo1,amort1));
+                }
+                if(j < nbw1 - 1){
+                    if(wingR1[i][j+1] != NULL)
+                    sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i][j+1],k1,lo1,amort1));
+                }
+                if(i != nbw1 - 1 && j != nbw1 - 1){
+                    if(wingR1[i+1][j+1] != NULL)
+                    sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j+1],k1,lo1,amort1));
+                }
+                if(i != nbw1 - 1 && j != 0){
+                    if(wingR1[i+1][j-1] != NULL)
+                    sprgWing1R.push_back(new Spring(wingR1[i][j],wingR1[i+1][j-1],k1,lo1,amort1));
+                }
+            }
+        }
+    }
+}
+
+void Dragon::drawMeshWingR(){
+    glColor3f(0.0, 0.28, 1.0);
+    glLineWidth(5.0);
+    for(std::vector<Spring*>::iterator it = sprgWing1R.begin() ; it != sprgWing1R.end(); it++){
+        Spring* s = *it;
         s->draw();
     }
 }
@@ -893,6 +1220,43 @@ void Dragon::collisionParticleGround(Sphere *p)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
+void Dragon::collisionParticleParticle(Sphere *s1, Sphere *s2)
+{
+    // don't process fixed particles
+    if (s1->getMass() == 0 && s2->getMass() == 0)
+        return;
+
+    // particle-particle distance
+    qglviewer::Vec n = s1->getPosition() - s2->getPosition();
+    double penetration = sqrt(n*n);
+    penetration -= (s1->getRadius() + s2->getRadius());
+    if (penetration >= 0)
+        return;
+    n.normalize();
+    double m1 = s1->getMass(), m2 = s2->getMass();
+
+    qglviewer::Vec v1 = s1->getVelocity();
+    qglviewer::Vec v1x = (n * v1) * n;
+    qglviewer::Vec v1y = v1 - v1x;
+
+    qglviewer::Vec v2 = s2->getVelocity();
+    n = -n;
+    qglviewer::Vec v2x = (n * v2) * n;
+    qglviewer::Vec v2y = v2 - v2x;
+
+    // new velocities
+    if (m1 != 0)
+        s1->setVelocity(-v1x * (m1-m2)/(m1+m2)  + v2x * (2*m2/(m1+m2)) + v1y);
+    if (m2 != 0)
+        s2->setVelocity(v1x * (2*m1)/(m1+m2) + v2x * ((m2-m1)/(m1+m2)) + v2y);
+
+    if (m1 == 0)
+        s2->setVelocity(-(1 + rebound) * s2->getVelocity());
+    if (m2 == 0)
+        s1->setVelocity((1 + rebound) * s1->getVelocity());
+}
+
+
 void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     // Get event modifiers key
     const Qt::KeyboardModifiers modifiers = e->modifiers();

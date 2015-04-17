@@ -9,8 +9,8 @@ class Sphere : public Renderable
 {
 	public:
 		Sphere();
-        Sphere(float x, float y, float z, float radius,float mass=10.0,GLint tex=0);
-        Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass=10.0,GLint tex=0);
+        Sphere(float x, float y, float z, float radius,float mass=10.0,GLint tex=0,bool fix=false, bool col=true);
+        Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass=10.0,GLint tex=0,bool fix=false, bool col=true);
 		void init(Viewer &v);
 		void draw();
         void generate(float radius);
@@ -42,6 +42,9 @@ class Sphere : public Renderable
         void incrPosition(const qglviewer::Vec &pos);
         void incrVelocity(const qglviewer::Vec &vel);
 
+        void setColor(float r, float g, float b, float a);
+        void setFixed(bool b);
+        bool getFixed() const;
 	private:
 		float radius;
         float x;
@@ -61,6 +64,15 @@ class Sphere : public Renderable
 		void initLighting();
 
 		bool toggleCollisions;
+
+        bool colored;
+
+        bool fixed;
+
+        float r;
+        float g;
+        float b;
+        float a;
 
 };
 #endif

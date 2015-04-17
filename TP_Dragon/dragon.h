@@ -5,6 +5,7 @@
 #include "cylinder.h"
 #include "trapezeIsocele.h"
 #include "sphere.h"
+#include "spring.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -19,6 +20,7 @@ public:
     void animate();
     void keyPressEvent(QKeyEvent*e, Viewer& viewer);
     void collisionParticleGround(Sphere *p);
+    void collisionParticleParticle(Sphere *s1, Sphere *s2);
 
 private:
     void drawBody(int first, int last);
@@ -40,7 +42,14 @@ private:
     void createPawRightUp(float angle, int first, int last);
     void createPawLeftDown(float angle, int first, int last);
     void createPawRightDown(float angle, int first, int last);
+    void createFire();
+    void drawFire();
     void drawSkeleton();
+    void drawSprings();
+    void createWingR();
+    void drawWingR();
+    void meshWingR();
+    void drawMeshWingR();
 
     std::vector<Sphere*> skeleton;
     std::vector<Sphere*> body;
@@ -54,6 +63,10 @@ private:
     int nbSpheresTail;
     int nbSpheresNeck;
     int nbSpheresPaw;
+    std::vector<Spring*> sprgSkel;
+    std::vector<Spring*> sprgWing1R;
+    std::vector<Sphere*> fire;
+    qglviewer::Vec originFire;
     int indexBody;
     int indexTail;
     int indexNeck;
@@ -88,13 +101,15 @@ private:
 
     double mass;
 
+    Sphere*** wingR1;
+
     Sphere* dragPart;
 
     //std::vector<Renderable> component_list;
     void drawBasePlane(float size);
 
     // textures used in this practical
-    GLuint tex_body,tex_field,tex_skeleton;
+    GLuint tex_body,tex_field,tex_feu,tex_skeleton;
 
     // texture unit shader binding
     GLint texture0;
