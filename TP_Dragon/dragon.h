@@ -35,6 +35,7 @@ private:
     void drawPawRightDown(int first, int last);
     void drawWing(bool left);
     void createBody(int first, int last);
+    void completeTail(int first, int last, bool dessus);
     void createTail(float angle, int first, int last);
     void createNeck(int first, int last);
     void completePaw(std::vector<Sphere*>& paw, int first, int last);
@@ -81,6 +82,7 @@ private:
     int indexLastPawRightDown;
     float thicknessBody;
     float R;
+    float height;
 
     TrapezeIsocele *t;
     TrapezeIsocele *t2;
