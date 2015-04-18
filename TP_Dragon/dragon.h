@@ -43,8 +43,6 @@ private:
     void createPawRightUp(float angle, int first, int last);
     void createPawLeftDown(float angle, int first, int last);
     void createPawRightDown(float angle, int first, int last);
-    void createFire();
-    void drawFire();
     void drawSkeleton();
     void drawSprings();
     void createWingR();
@@ -70,8 +68,6 @@ private:
     int nbSpheresPaw;
     std::vector<Spring*> sprgSkel;
     std::vector<Spring*> sprgWing1R;
-    std::vector<Sphere*> fire;
-    qglviewer::Vec originFire;
     int indexBody;
     int indexTail;
     int indexNeck;
