@@ -49,6 +49,11 @@ private:
     void drawWingR();
     void meshWingR();
     void drawMeshWingR();
+    void createWingL();
+    void drawWingL();
+    void meshWingL();
+    void drawMeshWingL();
+    void updateWingPos();
 
     std::vector<Sphere*> skeleton;
     std::vector<Spring*> sprgSkel;
@@ -95,6 +100,8 @@ private:
 
     Sphere*** wingR1;
     Sphere*** wingR2;
+    Sphere*** wingL1;
+    Sphere*** wingL2;
 
     Sphere* dragPart;
 
@@ -102,7 +109,7 @@ private:
     void drawBasePlane(float size);
 
     // textures used in this practical
-    GLuint tex_body,tex_field,tex_feu;
+    GLuint tex_body,tex_field,tex_feu,tex_ail;
 
     // texture unit shader binding
     GLint texture0;
@@ -121,6 +128,7 @@ private:
 
     FireSmoke *firesmoke;
     FireSmoke *dust;
+    Grass *grass;
 
     Grass *grass;
 
