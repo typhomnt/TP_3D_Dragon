@@ -61,21 +61,21 @@ static float nbw2 = 7;
 static qglviewer::Vec wing1root = qglviewer::Vec(2,2,2);
 static qglviewer::Vec wing1vel = qglviewer::Vec(0,0,0);
 static qglviewer::Vec initForces = qglviewer::Vec(0,0,0);
-static float k1 = 500;
-static float amort1 = 100;
+static float k1 = 200;
+static float amort1 = 0;
 static float lo1;
 static float meshStep = 3.0;
 static float wr = 0.2;
-static qglviewer::Vec  wingForce = qglviewer::Vec(0,0,5);
-static qglviewer::Vec  wingForce2 = qglviewer::Vec(5,0,5);
-static qglviewer::Vec  wingForce3 = qglviewer::Vec(0,5,5);
+static float flyStep = M_PI/2;
+static qglviewer::Vec  wingForce = qglviewer::Vec(0,0,0);
 static float lo2;
 static int tp = 1;
-static int mod = 2;
+static int mod = 25;
 static int tw = 1;
 static float coeffw = -1;
 static float walkstep = 0.05;
 static float tks = 0.03;
+static float fact = 1;
 
 /*nouveau dragon*/
 
@@ -87,7 +87,7 @@ Dragon::Dragon() {
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
     R = 0.1;
     lo=R/2;
-    lo1=2/meshStep;
+    lo1=1/meshStep;
     lo2 = 0;
     indexBody = 0;
     indexTail = 15;
@@ -332,9 +332,21 @@ void Dragon::animate(){
         third_angle_wing--;
         time_wing3-=0.1;
     }*/
-    if(tp%mod == 0){
-        wingForce[2] = -wingForce[2];
-        mod = 5;
+    for(int i = 1 ; i < nbw1 ; i++){
+        for(int j = 0 ; j < nbw1 ; j++){
+            if(wingR1[i][j] != NULL){
+                wingR1[i][j]->setZ(wingR1[i][j]->getZ() + 1.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
+                wingR1[i][j]->setFixed(true);
+            }
+        }
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j = 0 ; j < nbw2 ; j++){
+            if(wingR2[j][i] != NULL){
+                wingR2[j][i]->setZ(wingR2[j][i]->getZ() + 1.0*(sin((float)(i+nbw1 -0.99)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.99)*0.1 + 0.1*(fact - 0.5))));
+                wingR2[j][i]->setFixed(true);
+            }
+        }
     }
     std::map<const Sphere *, qglviewer::Vec> forces;
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); ++it){
@@ -365,19 +377,6 @@ void Dragon::animate(){
                 forces[s->getParticle2()] -= f12;
         }
     }
-    for(int i = 0 ; i < nbw1 ; i++){
-        for(int j = 0 ; j < nbw1 ; j++){
-            if(wingR1[i][j] != NULL)
-                if(!wingR1[i][j]->getFixed()){
-                    if(i <= j )
-                        forces[wingR1[i][j]] += wingForce2;
-                    else if(j <= i)
-                        forces[wingR1[i][j]] += wingForce3;
-                    else
-                        forces[wingR1[i][j]] += wingForce;
-                }
-        }
-    }
     for(std::vector<Spring*>::iterator it = sprgWing1R.begin() ; it != sprgWing1R.end(); it++){
         Spring* s = *it;
         qglviewer::Vec f12 = s->getCurrentForce();
@@ -402,21 +401,6 @@ void Dragon::animate(){
             }
         }
     }
-    for(int i = 0 ; i < nbw1 ; i++){
-        for(int j = 0 ; j < nbw1 ; j++){
-            if(wingR1[i][j] != NULL){
-                wingR1[i][j]->incrVelocity(dt*wingR1[i][j]->getInvMass()*forces[wingR1[i][j]]);
-                wingR1[i][j]->incrPosition(dt*wingR1[i][j]->getVelocity());
-            }
-        }
-    }
-
-    for(int i = 0 ; i < nbw2 ; i++){
-        for(int j = 0 ; j < nbw2 ; j++){
-            wingR2[i][j]->incrVelocity(dt*wingR2[i][j]->getInvMass()*forces[wingR2[i][j]]);
-            wingR2[i][j]->incrPosition(dt*wingR2[i][j]->getVelocity());
-        }
-    }
 
     fly_force[0] = 0;
     fly_force[1] = 0;
@@ -432,21 +416,7 @@ void Dragon::animate(){
             }
         }
     }
-    for(unsigned int i = 0; i < nbw1; ++i) {
-        for(unsigned int j = 0; j < nbw1; ++j){
-            for(unsigned int k = 0; k < i ; k ++){
-                for(unsigned int l = 0 ;l < j ; l++){
-                    if(wingR1[i][j] != NULL && wingR1[k][l] != NULL){
-                        Sphere *s1 = wingR1[i][j];
-                        Sphere *s2 = wingR1[k][l];
-                        if(s1->getCollisions() && s2->getCollisions())
-                            collisionParticleParticle(s1,s2);
-                    }
-                }
-            }
 
-        }
-    }
     tp++;
     if(walk){
         if(paw1w){
@@ -575,6 +545,7 @@ void Dragon::animate(){
     if (dust->isActive())
         dust->animate();
     fly_up = false;
+    fact+=1.5;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -620,8 +591,8 @@ void Dragon::draw(){
     drawPawRightDown(-110.0);
     glPopMatrix();
 
-    drawSprings();
-    drawMeshWingR();
+    //drawSprings();
+    //drawMeshWingR();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
@@ -907,12 +878,45 @@ void Dragon::drawWingR(){
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_body));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBegin(GL_TRIANGLES);
+    for(int i = 0 ; i < nbw1/2; i++){
+        if(wingR1[i][0] != NULL){
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR1[i][0]->getX(),wingR1[i][0]->getY(),wingR1[i][0]->getZ());
+        }
+        if(wingR1[i+1][0] != NULL){
+            glVertexAttrib2f(texcoord0, 1, 1);
+            glVertex3f(wingR1[i+1][0]->getX(),wingR1[i+1][0]->getY(),wingR1[i+1][0]->getZ());
+        }
+        if(wingR1[i+1][1] != NULL){
+            glVertexAttrib2f(texcoord0, 1, 0);
+            glVertex3f(wingR1[i+1][1]->getX(),wingR1[i+1][1]->getY(),wingR1[i+1][1]->getZ());
+        }
+
+    }
+    glEnd();
+    glBegin(GL_TRIANGLES);
+    for(int i = 1 ; i <= nbw1/2 ; i++){
+        if(wingR1[i][2*i-1] != NULL){
+            glVertexAttrib2f(texcoord0, 0, 1);
+            glVertex3f(wingR1[i][2*i-1]->getX(),wingR1[i][2*i-1]->getY(),wingR1[i][2*i-1]->getZ());
+        }
+        if(wingR1[i-1][2*i-2] != NULL){
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR1[i-1][2*i-2]->getX(),wingR1[i-1][2*i-2]->getY(),wingR1[i-1][2*i-2]->getZ());
+        }
+        if(wingR1[i][2*i] != NULL){
+            glVertexAttrib2f(texcoord0, 1, 1);
+            glVertex3f(wingR1[i][2*i]->getX(),wingR1[i][2*i]->getY(),wingR1[i][2*i]->getZ());
+        }
+
+    }
+    glEnd();
     int r = 1;
     glBegin(GL_QUADS);
     for(int i = 1 ; i < nbw1 - 1 ; i++){
         if(r <= nbw1/2 -1){
             for(int j= -r; j <= r-1 ; j++){
-                //glNormal3f(0,0,1);
                 if(wingR1[i][j+r] != NULL){
                     glVertexAttrib2f(texcoord0, 0, 0);
                     glVertex3f(wingR1[i][j+r]->getX(),wingR1[i][j+r]->getY(),wingR1[i][j+r]->getZ());
@@ -929,14 +933,11 @@ void Dragon::drawWingR(){
                     glVertexAttrib2f(texcoord0, 1, 0);
                     glVertex3f(wingR1[i+1][j+r+1]->getX(),wingR1[i+1][j+r+1]->getY(),wingR1[i+1][j+r+1]->getZ());
                 }
-                //if(wingR1[i][j] != NULL)
-                  //  wingR1[i][j]->draw();
             }
             r++;
         }
         else {
             for(int j= 0 ; j < nbw1 - 1 ; j++){
-                //glNormal3f(0,0,1);
                 if(wingR1[i][j] != NULL){
                     glVertexAttrib2f(texcoord0, 0, 0);
                     glVertex3f(wingR1[i][j]->getX(),wingR1[i][j]->getY(),wingR1[i][j]->getZ());
@@ -953,26 +954,47 @@ void Dragon::drawWingR(){
                     glVertexAttrib2f(texcoord0, 1, 0);
                     glVertex3f(wingR1[i+1][j]->getX(),wingR1[i+1][j]->getY(),wingR1[i+1][j]->getZ());
                 }
-                //if(wingR1[i][j] != NULL)
-                  //  wingR1[i][j]->draw();
             }
         }
     }
     glEnd();
     glBegin(GL_QUADS);
     for(int i = 0 ; i < nbw2 - 1 ; i++){
-        for(int j= 0 ; j < nbw2 - 1 ; j++){
-            //glNormal3f(0,0,2);
-            glVertexAttrib2f(texcoord0, 0, 0);
-            glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
-            glVertexAttrib2f(texcoord0, 0, 1);
-            glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
-            glVertexAttrib2f(texcoord0, 1, 1);
-            glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
-            glVertexAttrib2f(texcoord0, 1, 0);
-            glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
-            //if(wingR2[i][j] != NULL)
-              //  wingR2[i][j]->draw();
+        if(i ==0){
+            for(int j= 0 ; j < nbw2 - 3 ; j++){
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 1);
+                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 1);
+                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 0);
+                glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
+            }
+        }
+        else if (i== nbw1 -2){
+            for(int j= 0 ; j < nbw2 - 3 ; j++){
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 1);
+                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 1);
+                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 0);
+                glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
+            }
+        }
+        else{
+            for(int j= 0 ; j < nbw2 - 2 ; j++){
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 1);
+                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 1);
+                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 0);
+                glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
+            }
         }
     }
     glEnd();
