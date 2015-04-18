@@ -57,8 +57,8 @@ void Grass::draw() {
 
 		glPushMatrix();
 		glTranslatef(pos[0], pos[1], pos[2] - 5.0);
-		//glutSolidSphere(radius, 5, 5);
-		glutSolidCube(radius);
+        //glutSolidSphere(radius, 5, 5);
+        glutSolidCube(radius);
 		glPopMatrix();
 		
 		if (i % base.size() == 0 && i != 0)

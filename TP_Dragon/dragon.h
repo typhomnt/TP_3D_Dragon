@@ -7,6 +7,7 @@
 #include "sphere.h"
 #include "spring.h"
 #include "firesmoke.h"
+#include "grass.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -48,6 +49,10 @@ private:
     void drawWingR();
     void meshWingR();
     void drawMeshWingR();
+    void createWingL();
+    void drawWingL();
+    void meshWingL();
+    void drawMeshWingL();
     void updateWingPos();
 
     std::vector<Sphere*> skeleton;
@@ -95,6 +100,8 @@ private:
 
     Sphere*** wingR1;
     Sphere*** wingR2;
+    Sphere*** wingL1;
+    Sphere*** wingL2;
 
     Sphere* dragPart;
 
@@ -121,6 +128,7 @@ private:
 
     FireSmoke *firesmoke;
     FireSmoke *dust;
+    Grass *grass;
 
 };
 
