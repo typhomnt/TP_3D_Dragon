@@ -78,7 +78,7 @@ Dragon::Dragon() {
     // Trapeze au bout des ailes
     t2 = new TrapezeIsocele(25.0/7.0,0.1,5.0,0.2);
     // R = 0.5 pour Omid
-    R = 0.01;
+    R = 0.1;
     nbSpheresBody = 15;
     nbSpheresTail = 25;
     nbSpheresNeck = 15;
@@ -699,7 +699,7 @@ void Dragon::drawWing(bool left){
 
 /////////////////////////////////////////////////////////////////////
 void Dragon::createBody(int first, int last){
-    height = 15;
+    height = 30*R;
     skeleton.push_back(new Sphere(0,0,height,R,10,0,true));
     for (int i = first+1; i <= last; i++) {
         skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),R,0,10,tex_skeleton,true));
@@ -732,15 +732,18 @@ void Dragon::createTail(float angle, int first, int last){
         float x = x0 + 2*R*(i-first+1);
         skeleton.push_back(new Sphere(x,
                                       0,
-                                      z0 + (x-x0)*(x-x0)/40.0,
+                                      z0 + (x-x0)*(x-x0)/(80.0*R),
                                       R,10,tex_skeleton));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     float thicknessTail = 5*R;
-    float x1,x2,z1,z2;
+    float x1,x2,z1,z2,norme;
     for (int i = first; i <= (last+first)/2; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
         z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        norme = sqrt(x1*x1+z1*z1);
+        x1 = x1/norme;
+        z1 = z1/norme;
         x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
         z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
         nbSpheresContourTail = (int)floor(M_PI*thicknessTail/R)+1;
@@ -765,6 +768,9 @@ void Dragon::createTail(float angle, int first, int last){
     for (int i = (last+first)/2 + 1; i < last; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
         z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        norme = sqrt(x1*x1+z1*z1);
+        x1 = x1/norme;
+        z1 = z1/norme;
         x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
         z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
         nbSpheresContourTail = (int)floor(M_PI*thicknessTail/R)+1;
@@ -788,6 +794,9 @@ void Dragon::createTail(float angle, int first, int last){
     }
     x1 = skeleton[last]->getX() - skeleton[last-1]->getX();
     z1 = skeleton[last]->getZ() - skeleton[last-1]->getZ();
+    norme = sqrt(x1*x1+z1*z1);
+    x1 = x1/norme;
+    z1 = z1/norme;
     nbSpheresContourTail = (int)floor(M_PI*thicknessTail/R)+1;
     if (nbSpheresContourTail < 4)
         nbSpheresContourTail = 4;
@@ -828,12 +837,12 @@ void Dragon::createNeck(int first, int last){
         float x = x0 - 2*R*(i-first);
         skeleton.push_back(new Sphere(x,
                                       0,
-                                      z0 + (x-x0)*(x-x0)/15.0,
+                                      z0 + (x-x0)*(x-x0)/(30.0*R),
                                       R,10,tex_skeleton));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     float thicknessNeck = 5*R;
-    float x1,x2,z1,z2;
+    float x1,x2,z1,z2,norme;
     nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+3;
     if (nbSpheresContourNeck < 4)
         nbSpheresContourNeck = 4;
@@ -860,6 +869,9 @@ void Dragon::createNeck(int first, int last){
     for (int i = first+1; i <= (last+first)/2; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
         z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        norme = sqrt(x1*x1+z1*z1);
+        x1 = x1/norme;
+        z1 = z1/norme;
         x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
         z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
         nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+2;
@@ -882,6 +894,9 @@ void Dragon::createNeck(int first, int last){
     for (int i = (last+first)/2 + 1; i < last; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
         z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+        norme = sqrt(x1*x1+z1*z1);
+        x1 = x1/norme;
+        z1 = z1/norme;
         x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
         z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
         nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+4;
@@ -908,6 +923,9 @@ void Dragon::createNeck(int first, int last){
     }
     x1 = skeleton[last]->getX() - skeleton[last-1]->getX();
     z1 = skeleton[last]->getZ() - skeleton[last-1]->getZ();
+    norme = sqrt(x1*x1+z1*z1);
+    x1 = x1/norme;
+    z1 = z1/norme;
     nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+4;
     for (int j = 0; j <= nbSpheresContourNeck-1; j++) {
         neck.push_back(new Sphere(skeleton[last]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
