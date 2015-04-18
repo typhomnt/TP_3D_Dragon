@@ -128,7 +128,6 @@ private:
 
     FireSmoke *firesmoke;
     FireSmoke *dust;
-    Grass *grass;
 
     Grass *grass;
 
