@@ -146,9 +146,9 @@ Dragon::Dragon() {
     createPawRightUp(-110);
     createPawLeftDown(-70);
     createPawRightDown(-110);
+    wing1root = skeleton[7]->getPosition() + qglviewer::Vec (2*R,0,2*R);
     createWingR();
     meshWingR();
-
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 20000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 20000,true);
 }
@@ -170,6 +170,7 @@ void Dragon::init(Viewer &v) {
     tex_body = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/field1.jpg");
     tex_feu = loadTexture("images/feu1.jpg");
+    tex_ail = loadTexture("images/texture_aile1.png");
     program.load("shaders/shader.vert", "shaders/shader.frag");
     // get the program id and use it to have access to uniforms
     GLint program_id = (GLint)program;
@@ -546,6 +547,7 @@ void Dragon::animate(){
         dust->animate();
     fly_up = false;
     fact+=1.5;
+    updateWingPos();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -875,7 +877,7 @@ void Dragon::createWingR(){
 void Dragon::drawWingR(){
     GLCHECK(glUseProgram(program));
     GLCHECK(glActiveTexture(GL_TEXTURE0));
-    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_body));
+    GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_ail));
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBegin(GL_TRIANGLES);
@@ -962,41 +964,55 @@ void Dragon::drawWingR(){
     for(int i = 0 ; i < nbw2 - 1 ; i++){
         if(i ==0){
             for(int j= 0 ; j < nbw2 - 3 ; j++){
-                glVertexAttrib2f(texcoord0, 0, 0);
-                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
-                glVertexAttrib2f(texcoord0, 0, 1);
-                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
-                glVertexAttrib2f(texcoord0, 1, 1);
-                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
                 glVertexAttrib2f(texcoord0, 1, 0);
+                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 1);
+                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 1);
                 glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
             }
         }
-        else if (i== nbw1 -2){
+        else if (i== nbw2 -2){
             for(int j= 0 ; j < nbw2 - 3 ; j++){
-                glVertexAttrib2f(texcoord0, 0, 0);
-                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
-                glVertexAttrib2f(texcoord0, 0, 1);
-                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
-                glVertexAttrib2f(texcoord0, 1, 1);
-                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
                 glVertexAttrib2f(texcoord0, 1, 0);
+                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 1);
+                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 1, 1);
                 glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
             }
         }
         else{
             for(int j= 0 ; j < nbw2 - 2 ; j++){
-                glVertexAttrib2f(texcoord0, 0, 0);
-                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
-                glVertexAttrib2f(texcoord0, 0, 1);
-                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
-                glVertexAttrib2f(texcoord0, 1, 1);
-                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
                 glVertexAttrib2f(texcoord0, 1, 0);
+                glVertex3f(wingR2[i][j]->getX(),wingR2[i][j]->getY(),wingR2[i][j]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 0);
+                glVertex3f(wingR2[i][j+1]->getX(),wingR2[i][j+1]->getY(),wingR2[i][j+1]->getZ());
+                glVertexAttrib2f(texcoord0, 0, 1);
+                glVertex3f(wingR2[i+1][j+1]->getX(),wingR2[i+1][j+1]->getY(),wingR2[i+1][j+1]->getZ());
+                glVertexAttrib2f(texcoord0,1, 1);
                 glVertex3f(wingR2[i+1][j]->getX(),wingR2[i+1][j]->getY(),wingR2[i+1][j]->getZ());
             }
         }
     }
+    glEnd();
+    glBegin(GL_TRIANGLES);
+        if(wingR2[(int)nbw2-2][(int)nbw2-2] != NULL){
+            glVertexAttrib2f(texcoord0, 0, 1);
+            glVertex3f(wingR2[(int)nbw2-2][(int)nbw2-2]->getX(),wingR2[(int)nbw2-2][(int)nbw2-2]->getY(),wingR2[(int)nbw2-2][(int)nbw2-2]->getZ());
+        }
+        if(wingR2[(int)nbw2-1][(int)nbw2-3] != NULL){
+            glVertexAttrib2f(texcoord0, 0, 0);
+            glVertex3f(wingR2[(int)nbw2-1][(int)nbw2-3]->getX(),wingR2[(int)nbw2-1][(int)nbw2-3]->getY(),wingR2[(int)nbw2-1][(int)nbw2-3]->getZ());
+        }
+        if(wingR2[(int)nbw2-2][(int)nbw2-3] != NULL){
+            glVertexAttrib2f(texcoord0, 1, 1);
+            glVertex3f(wingR2[(int)nbw2-2][(int)nbw2-3]->getX(),wingR2[(int)nbw2-2][(int)nbw2-3]->getY(),wingR2[(int)nbw2-2][(int)nbw2-3]->getZ());
+        }
     glEnd();
     GLCHECK(glUseProgram( 0 ));
 }
@@ -1135,7 +1151,25 @@ void Dragon::collisionParticleParticle(Sphere *s1, Sphere *s2)
         s1->setVelocity((1 + rebound) * s1->getVelocity());
 }
 
-
+void Dragon::updateWingPos(){
+    qglviewer::Vec diff = wingR1[0][0]->getPosition();
+    wing1root = skeleton[7]->getPosition() + qglviewer::Vec (2*R,0,2*R);
+    wingR1[0][0]->setPosition(wing1root);
+    diff = diff - wingR1[0][0]->getPosition();
+    for(int i = 0 ; i < nbw1 ; i++){
+        for(int j = 0 ; j < nbw1 ; j++){
+            if(i !=0 || j !=0)
+                if(wingR1[i][j] != NULL)
+                    wingR1[i][j]->incrPosition(-diff);
+        }
+    }
+    for(int i = 0 ; i < nbw2 ; i++){
+        for(int j = 0 ; j < nbw2 ; j++){
+                if(wingR2[i][j] != NULL)
+                    wingR2[i][j]->incrPosition(-diff);
+        }
+    }
+}
 
 void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     // Get event modifiers key
