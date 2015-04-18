@@ -9,7 +9,7 @@ class Sphere : public Renderable
 {
 	public:
 		Sphere();
-        Sphere(float x, float y, float z, float radius,float mass=10.0,GLint tex=0,bool fix=false, bool col=true);
+        Sphere(float x, float y, float z, float radius, bool texturee=true, float mass=10.0,GLint tex=0,bool fix=false, bool col=true);
         Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass=10.0,GLint tex=0,bool fix=false, bool col=true);
 		void init(Viewer &v);
 		void draw();
@@ -19,12 +19,14 @@ class Sphere : public Renderable
         float getX();
         float getY();
         float getZ();
+        bool estTexturee();
 
         void setRadius(float radius);
         void setMass(float m);
         void setX(float x);
         void setY(float y);
         void setZ(float z);
+        void doitEtreTexturee(bool t);
 
         void operator=(const Sphere& s);
 
@@ -51,6 +53,7 @@ class Sphere : public Renderable
         float x;
         float y;
         float z;
+        bool texturee;
 
         qglviewer::Vec position;
         qglviewer::Vec velocity;

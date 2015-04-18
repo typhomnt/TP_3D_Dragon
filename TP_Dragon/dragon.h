@@ -25,24 +25,27 @@ public:
     void collisionParticleParticle(Sphere *s1, Sphere *s2);
 
 private:
-    void drawBody();//int first, int last);
-    void drawTail();//int first, int last);
-    void drawNeck();//int first, int last);
+    void drawBody(int first, int last);
+    void drawTail(int first, int last);
+    void drawNeck(int first, int last);
     // Draw the left claw of the left paw if leftPaw==true and leftClaw==true
     void drawClaw(bool leftPaw, bool leftClaw);
     // Draw the left paw if left==true else the right paw
-    void drawPawLeftUp(float angle);//, int first, int last);
-    void drawPawRightUp(float angle);//, int first, int last);
-    void drawPawLeftDown(float angle);//, int first, int last);
-    void drawPawRightDown(float angle);//, int first, int last);
+    void drawPawLeftUp(int first, int last);
+    void drawPawRightUp(int first, int last);
+    void drawPawLeftDown(int first, int last);
+    void drawPawRightDown(int first, int last);
     void drawWing(bool left);
-    void createBody();
-    void createTail();
-    void createNeck();
-    void createPawLeftUp(float angle);
-    void createPawRightUp(float angle);
-    void createPawLeftDown(float angle);
-    void createPawRightDown(float angle);
+
+    void createBody(int first, int last);
+    void completeTail(int first, int last, bool dessus);
+    void createTail(float angle, int first, int last);
+    void createNeck(int first, int last);
+    void completePaw(std::vector<Sphere*>& paw, int first, int last);
+    void createPawLeftUp(float angle, int first, int last);
+    void createPawRightUp(float angle, int first, int last);
+    void createPawLeftDown(float angle, int first, int last);
+    void createPawRightDown(float angle, int first, int last);
     void drawSkeleton();
     void drawSprings();
     void createWingR();
@@ -54,8 +57,24 @@ private:
     void meshWingL();
     void drawMeshWingL();
     void updateWingPos();
+    void updateDrag();
 
     std::vector<Sphere*> skeleton;
+    std::vector<Sphere*> body;
+    std::vector<Sphere*> tail;
+    std::vector<Sphere*> neck;
+    std::vector<Sphere*> pawLeftUp;
+    std::vector<Sphere*> pawRightUp;
+    std::vector<Sphere*> pawLeftDown;
+    std::vector<Sphere*> pawRightDown;
+    int nbSpheresContourBody;
+    int nbSpheresContourTail;
+    int nbSpheresContourNeck;
+    int nbSpheresContourPaw;
+    int nbSpheresBody;
+    int nbSpheresTail;
+    int nbSpheresNeck;
+    int nbSpheresPaw;
     std::vector<Spring*> sprgSkel;
     std::vector<Spring*> sprgWing1R;
     int indexBody;
@@ -65,7 +84,10 @@ private:
     int indexPawRightUp;
     int indexPawLeftDown;
     int indexPawRightDown;
+    int indexLastPawRightDown;
+    float thicknessBody;
     float R;
+    float height;
 
     TrapezeIsocele *t;
     TrapezeIsocele *t2;
@@ -109,7 +131,10 @@ private:
     void drawBasePlane(float size);
 
     // textures used in this practical
-    GLuint tex_body,tex_field,tex_feu,tex_ail;
+
+    GLuint tex_body,tex_field,tex_feu,tex_ail,tex_skeleton;
+
+
 
     // texture unit shader binding
     GLint texture0;

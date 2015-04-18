@@ -37,13 +37,14 @@ static const Material material(mat_ambient_color, mat_diffuse, white, 5.0);
 Sphere::Sphere() : toggleCollisions(true),colored(false),fixed(false) {}
 
 ///////////////////////////////////////////////////////////////////////////////
-Sphere::Sphere(float x, float y, float z, float radius,float mass,GLint tex,bool fix, bool col) :colored(false) {
+Sphere::Sphere(float x, float y, float z, float radius, bool texturee, float mass,GLint tex,bool fix, bool col) :colored(false) {
     this->x = x;
     this->y = y;
     this->z = z;
     if (radius < 0)
         std::invalid_argument("Radius must not be negative");
     this->radius = radius;
+    this->texturee = texturee;
     if (mass < 0)
         std::invalid_argument("Mass must not be negative");
     this->mass = mass;
@@ -166,6 +167,11 @@ float Sphere::getZ() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+bool Sphere::estTexturee() {
+    return this->texturee;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void Sphere::setRadius(float radius) {
     if (radius < 0)
         std::invalid_argument("Radius must not be negative");
@@ -188,6 +194,11 @@ void Sphere::setY(float y) {
 void Sphere::setZ(float z) {
     this->z = z;
     this->position[2] = z;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::doitEtreTexturee(bool t) {
+    this->texturee = t;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
