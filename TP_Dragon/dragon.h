@@ -7,6 +7,7 @@
 #include "sphere.h"
 #include "spring.h"
 #include "firesmoke.h"
+#include "grass.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -120,6 +121,8 @@ private:
 
     FireSmoke *firesmoke;
     FireSmoke *dust;
+
+    Grass *grass;
 
 };
 

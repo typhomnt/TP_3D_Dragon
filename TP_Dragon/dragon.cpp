@@ -151,6 +151,8 @@ Dragon::Dragon() {
 
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 20000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 20000,true);
+
+    this->grass = new Grass(0.8, 1000, 20);
 }
 
 
@@ -161,6 +163,7 @@ Dragon::~Dragon() {
     delete dragPart;
     delete firesmoke;
     delete dust;
+    delete grass;
 }
 
 
@@ -209,6 +212,7 @@ void Dragon::init(Viewer &v) {
         }
     }
     //firesmoke->init(v);
+    grass->init(v);
 }
 
 
@@ -601,6 +605,8 @@ void Dragon::draw(){
         firesmoke->draw();
     if(dust->isActive())
         dust->draw();
+
+    grass->draw();
 
 }
 
