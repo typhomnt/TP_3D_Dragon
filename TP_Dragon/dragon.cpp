@@ -183,7 +183,7 @@ void Dragon::init(Viewer &v) {
     // load textures
     tex_skeleton = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/field1.jpg");
-    tex_body = loadTexture("images/peau_dragon.jpeg");
+    tex_body = loadTexture("images/peau1.jpeg");
     tex_feu = loadTexture("images/feu1.jpg");
 
     program.load("shaders/shader.vert", "shaders/shader.frag");
@@ -209,57 +209,57 @@ void Dragon::init(Viewer &v) {
     }
     for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
         Sphere* s = *it;
-        if (s->estTexturee())
+        /*if (s->estTexturee())
             s->setTexture(tex_body);
-        else
+        else*/
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = tail.begin() ; it != tail.end(); it++){
         Sphere* s = *it;
-        if (s->estTexturee())
+        /*if (s->estTexturee())
             s->setTexture(tex_body);
-        else
+        else*/
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = neck.begin() ; it != neck.end(); it++){
         Sphere* s = *it;
-        if (s->estTexturee())
+        /*if (s->estTexturee())
             s->setTexture(tex_body);
-        else
+        else*/
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = pawLeftUp.begin() ; it != pawLeftUp.end(); it++){
         Sphere* s = *it;
-        if (s->estTexturee())
+        /*if (s->estTexturee())
             s->setTexture(tex_body);
-        else
+        else*/
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = pawRightUp.begin() ; it != pawRightUp.end(); it++){
         Sphere* s = *it;
-        if (s->estTexturee())
+        /*if (s->estTexturee())
             s->setTexture(tex_body);
-        else
+        else*/
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = pawLeftDown.begin() ; it != pawLeftDown.end(); it++){
         Sphere* s = *it;
-        if (s->estTexturee())
+        /*if (s->estTexturee())
             s->setTexture(tex_body);
-        else
+        else*/
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = pawRightDown.begin() ; it != pawRightDown.end(); it++){
         Sphere* s = *it;
-        if (s->estTexturee())
+        /*if (s->estTexturee())
             s->setTexture(tex_body);
-        else
+        else*/
             s->setColor(0,0,20,0);
         s->init(v);
     }
