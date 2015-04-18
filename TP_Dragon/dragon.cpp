@@ -196,7 +196,7 @@ void Dragon::init(Viewer &v) {
     tex_body = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/field1.jpg");
     tex_feu = loadTexture("images/feu1.jpg");
-    tex_ail = loadTexture("images/texture_aile1.png");
+    tex_ail = loadTexture("images/peau1.jpeg");
     program.load("shaders/shader.vert", "shaders/shader.frag");
     // get the program id and use it to have access to uniforms
     GLint program_id = (GLint)program;
@@ -665,7 +665,7 @@ void Dragon::draw(){
     if(dust->isActive())
         dust->draw();
 
-    grass->draw();
+    //grass->draw();
 
 }
 
