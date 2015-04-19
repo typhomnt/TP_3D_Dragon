@@ -56,8 +56,8 @@ static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
 static float k = 800;
 static float amort = 500;
 static float lo;
-static float nbw1 = 7;
-static float nbw2 = 7;
+static float nbw1 = 11;
+static float nbw2 = 11;
 static qglviewer::Vec wing1root;
 static qglviewer::Vec wing1vel = qglviewer::Vec(0,0,0);
 static qglviewer::Vec wing2root;
@@ -190,8 +190,8 @@ Dragon::Dragon() {
     meshWingR();
     createWingL();
     meshWingL();
-    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 20000);
-    this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 20000,true);
+    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
+    this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(1,200,20);
 }
 
@@ -298,9 +298,9 @@ void Dragon::init(Viewer &v) {
     }
     for(std::vector<Sphere*>::iterator it = pawLeftUp.begin() ; it != pawLeftUp.end(); it++){
         Sphere* s = *it;
-        /*if (s->estTexturee())
+        if (s->estTexturee())
             s->setTexture(tex_body);
-        else*/
+        else
             s->setColor(0,0,20,0);
         s->init(v);
     }
