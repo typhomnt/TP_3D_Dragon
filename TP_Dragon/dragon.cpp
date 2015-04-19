@@ -806,7 +806,7 @@ void Dragon::draw(){
 
     //drawSprings();
     //drawMeshWingR();
-    grass->draw();
+    //grass->draw();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
@@ -1630,6 +1630,15 @@ void Dragon::drawWingR(){
             glVertex3f(wingR2[(int)nbw2-2][(int)nbw2-3]->getX(),wingR2[(int)nbw2-2][(int)nbw2-3]->getY(),wingR2[(int)nbw2-2][(int)nbw2-3]->getZ());
         }
     glEnd();
+    for(int i = 0 ; i < nbw1 ; i++){
+        if(wingR1[i][0]!= NULL)
+            wingR1[i][0]->draw();
+    }
+    for(int i = 0 ; i < nbw2 -2 ; i++){
+        if(wingR2[(int)nbw2-1][i]!= NULL){
+            wingR2[(int)nbw2-1][i]->draw();
+        }
+    }
     GLCHECK(glUseProgram( 0 ));
 }
 
@@ -1883,6 +1892,22 @@ void Dragon::drawWingL(){
             glVertex3f(wingL2[0][(int)nbw2-3]->getX(),wingL2[0][(int)nbw2-3]->getY(),wingL2[0][(int)nbw2-3]->getZ());
         }
     glEnd();
+    for(int i = 0 ; i < nbw1 ; i++){
+        if(i < nbw1/2){
+            if(wingL1[i][2*i]!= NULL)
+                wingL1[i][2*i]->draw();
+        }
+        else{
+            if(wingL1[i][(int)nbw1-1]!= NULL)
+                wingL1[i][(int)nbw1-1]->draw();
+        }
+
+    }
+    for(int i = 0 ; i < nbw2 -2 ; i++){
+        if(wingL2[0][i]!= NULL){
+            wingL2[0][i]->draw();
+        }
+    }
     GLCHECK(glUseProgram( 0 ));
 }
 
