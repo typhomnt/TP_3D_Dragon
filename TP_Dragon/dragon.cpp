@@ -806,7 +806,7 @@ void Dragon::draw(){
 
     //drawSprings();
     //drawMeshWingR();
-    //grass->draw();
+    grass->draw();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));

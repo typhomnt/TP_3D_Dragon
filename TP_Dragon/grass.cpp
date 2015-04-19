@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cmath>
+#include <cassert>
 #ifndef __APPLE__
 	#include <GL/glew.h>
 	#include <GL/glut.h>
@@ -12,8 +13,8 @@
 #include "grass.h"
 
 
-// Couleur vert gazon
-static qglviewer::Vec gazon(58.0/255.0, 157.0/255.0, 35.0/255.0);
+// Couleur vert herbe
+static qglviewer::Vec gazon(0.0, 105.0/255.0, 25.0/255.0);
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -22,6 +23,10 @@ Grass::Grass(double size, int nbParticles, int iter) {
 	this->iter = iter;
 	this->base = std::vector<Particule>(nbParticles);
 	this->elements = std::vector<Particule>();
+
+	this->radius = 0.02;
+	this->radiusStep = this->radius / this->iter;
+	this->zg = -0.1;
 }
 
 
@@ -38,8 +43,9 @@ void Grass::init(Viewer &v) {
 	for (int j = 0; j < this->iter; j++) {
 		for (unsigned int i = 0; i < base.size(); i++) {
 			Particule &p = base[i];
-			p.incrPos(p.getMovVec() / 200);
+			p.incrPos(p.getMovVec() / 50);
 			p.incrLife(-p.getVelDis());
+			p.incrMovVec(p.getGravity());
 
 			elements.push_back(Particule(p));
 		}
@@ -49,7 +55,7 @@ void Grass::init(Viewer &v) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Grass::draw() {
-	double radius = 0.02;
+	double actRadius = this->radius;
 
 	glColor3f(gazon[0], gazon[1], gazon[2]);
 	for (unsigned int i = 0; i < elements.size(); i++) {
@@ -58,12 +64,26 @@ void Grass::draw() {
 		glPushMatrix();
 		glTranslatef(pos[0], pos[1], pos[2] - 5.0);
         //glutSolidSphere(radius, 5, 5);
-        glutSolidCube(radius);
+        glutSolidCube(actRadius);
 		glPopMatrix();
 		
 		if (i % base.size() == 0 && i != 0)
-			radius -= 0.001;
+			actRadius -= radiusStep;
 	}
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Grass::setRadius(double radius) {
+	assert(radius > 0.0);
+	this->radius = radius;
+	this->radiusStep = this->radius / this->iter;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Grass::setZg(double zg) {
+	this->zg = zg;
 }
 
 
@@ -89,11 +109,11 @@ void Grass::initParticles() {
 		p.setPos(qglviewer::Vec(x, y, 0));
 
 		// L'angle du vecteur de mouvement ne doit pas être trop fort
-		double vx = alea(-M_PI/4.0, M_PI/4.0);
-		double vy = alea(-M_PI/4.0, M_PI/4.0);
+		double vx = alea(-M_PI/12.0, M_PI/12.0);
+		double vy = alea(-M_PI/12.0, M_PI/12.0);
 		p.setMovVec(qglviewer::Vec(vx, vy, 1));
 
-		p.setGravity(qglviewer::Vec());
+		p.setGravity(qglviewer::Vec(0.0, 0.0, zg));
 	}
 } 
 
