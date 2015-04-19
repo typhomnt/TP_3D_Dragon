@@ -192,7 +192,7 @@ Dragon::Dragon() {
     meshWingL();
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 20000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 20000,true);
-    this->grass = new Grass(1,200,20);
+    this->grass = new Grass(1.0, 200, 15);
 }
 
 
@@ -806,7 +806,7 @@ void Dragon::draw(){
 
     //drawSprings();
     //drawMeshWingR();
-    //grass->draw();
+    grass->draw();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));

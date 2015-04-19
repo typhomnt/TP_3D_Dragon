@@ -12,11 +12,19 @@ class Grass : public Renderable {
 		void init(Viewer &v);
 		void draw();
 
+		void setRadius(double radius);
+		void setZg(double zg);
+
 	private:
 		double size;						// taille
 		int iter;							// nb d'itérations pour générer les brins
 		std::vector<Particule> base; 		// particules initiales
 		std::vector<Particule> elements;	// particules à dessiner
+
+		double radius;						// Rayon des particules de base
+		double radiusStep;					// Diminution du rayon à chaque étape
+		double zg;							// Composante selon z du poids
+
 
 		void initParticles();
 
