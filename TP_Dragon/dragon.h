@@ -57,6 +57,7 @@ private:
     void meshWingL();
     void drawMeshWingL();
     void updateWingPos();
+    void moveTail();
     void updateDrag();
 
     std::vector<Sphere*> skeleton;

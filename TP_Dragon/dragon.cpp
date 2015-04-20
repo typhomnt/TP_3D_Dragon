@@ -78,6 +78,7 @@ static float coeffw = -1;
 static float walkstep = 0.05;
 static float tks = 0.03;
 static float fact = 1;
+static float tailAngle = M_PI/4;
 static qglviewer::Vec diffBody ;
 static qglviewer::Vec diffNeck ;
 static qglviewer::Vec diffTail ;
@@ -192,7 +193,7 @@ Dragon::Dragon() {
     meshWingL();
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
-    this->grass = new Grass(1,200,20);
+    this->grass = new Grass(2,100,20);
 }
 
 
@@ -274,25 +275,25 @@ void Dragon::init(Viewer &v) {
     }
     for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
         Sphere* s = *it;
-        /*if (s->estTexturee())
+        if (s->estTexturee())
             s->setTexture(tex_body);
-        else*/
+         else
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = tail.begin() ; it != tail.end(); it++){
         Sphere* s = *it;
-        /*if (s->estTexturee())
+        if (s->estTexturee())
             s->setTexture(tex_body);
-        else*/
+        else
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = neck.begin() ; it != neck.end(); it++){
         Sphere* s = *it;
-        /*if (s->estTexturee())
+        if (s->estTexturee())
             s->setTexture(tex_body);
-        else*/
+        else
             s->setColor(0,0,20,0);
         s->init(v);
     }
@@ -306,25 +307,25 @@ void Dragon::init(Viewer &v) {
     }
     for(std::vector<Sphere*>::iterator it = pawRightUp.begin() ; it != pawRightUp.end(); it++){
         Sphere* s = *it;
-        /*if (s->estTexturee())
+        if (s->estTexturee())
             s->setTexture(tex_body);
-        else*/
+       else
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = pawLeftDown.begin() ; it != pawLeftDown.end(); it++){
         Sphere* s = *it;
-        /*if (s->estTexturee())
+       if (s->estTexturee())
             s->setTexture(tex_body);
-        else*/
+        else
             s->setColor(0,0,20,0);
         s->init(v);
     }
     for(std::vector<Sphere*>::iterator it = pawRightDown.begin() ; it != pawRightDown.end(); it++){
         Sphere* s = *it;
-        /*if (s->estTexturee())
+        if (s->estTexturee())
             s->setTexture(tex_body);
-        else*/
+        else
             s->setColor(0,0,20,0);
         s->init(v);
     }
@@ -501,7 +502,7 @@ void Dragon::animate(){
     for(int i = 1 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             if(wingR1[i][j] != NULL){
-                wingR1[i][j]->setZ(wingR1[i][j]->getZ() + 1.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
+                wingR1[i][j]->setZ(wingR1[i][j]->getZ() + 3.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
                 wingR1[i][j]->setFixed(true);
             }
         }
@@ -509,7 +510,7 @@ void Dragon::animate(){
     for(int i = 0 ; i < nbw2 ; i++){
         for(int j = 0 ; j < nbw2 ; j++){
             if(wingR2[j][i] != NULL){
-                wingR2[j][i]->setZ(wingR2[j][i]->getZ() + 1.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
+                wingR2[j][i]->setZ(wingR2[j][i]->getZ() + 3.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
                 wingR2[j][i]->setFixed(true);
             }
         }
@@ -517,7 +518,7 @@ void Dragon::animate(){
     for(int i = 1 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             if(wingL1[i][j] != NULL){
-                wingL1[i][j]->setZ(wingL1[i][j]->getZ() + 1.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
+                wingL1[i][j]->setZ(wingL1[i][j]->getZ() + 3.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
                 wingL1[i][j]->setFixed(true);
             }
         }
@@ -525,7 +526,7 @@ void Dragon::animate(){
     for(int i = 0 ; i < nbw2 ; i++){
         for(int j = 0 ; j < nbw2 ; j++){
             if(wingL2[j][i] != NULL){
-                wingL2[j][i]->setZ(wingL2[j][i]->getZ() + 1.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
+                wingL2[j][i]->setZ(wingL2[j][i]->getZ() + 3.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
                 wingL2[j][i]->setFixed(true);
             }
         }
@@ -716,6 +717,10 @@ void Dragon::animate(){
         dust->animate();
     fly_up = false;
     fact+=1.5;
+    //Roation de la queue
+
+
+    //
     updateWingPos();
     diffBody -= skeleton[indexBody]->getPosition();
     diffNeck -= skeleton[indexNeck]->getPosition();
@@ -806,16 +811,17 @@ void Dragon::draw(){
 
     //drawSprings();
     //drawMeshWingR();
-    //grass->draw();
+    grass->draw();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
-
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
     if(firesmoke->isActive())
         firesmoke->draw();
     if(dust->isActive())
         dust->draw();
-
+     glDisable(GL_BLEND);
 }
 
 
