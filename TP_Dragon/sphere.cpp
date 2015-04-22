@@ -172,6 +172,11 @@ bool Sphere::estTexturee() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+std::vector<Sphere*>& Sphere::getContour() {
+    return this->contour;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void Sphere::setRadius(float radius) {
     if (radius < 0)
         std::invalid_argument("Radius must not be negative");
