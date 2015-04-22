@@ -49,7 +49,7 @@ static qglviewer::Vec defaultGravity;
 static qglviewer::Vec gravity;
 static float viscosity;
 static float dt;
-static  qglviewer::Vec groundPosition = qglviewer::Vec(0.0, 0.0, -5.0);
+static  qglviewer::Vec groundPosition = qglviewer::Vec(0.0, 0.0, 0.0);
 static  qglviewer::Vec groundNormal = qglviewer::Vec(0.0, 0.0, 1.0);
 static float rebound = 0;
 static qglviewer::Vec fly_force = qglviewer::Vec(0,0,0);
@@ -194,6 +194,8 @@ Dragon::Dragon() {
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
+
+    this->skybox = new Skybox(50.0, texture0, texcoord0);
 }
 
 
@@ -206,6 +208,7 @@ Dragon::~Dragon() {
     delete firesmoke;
     delete dust;
     delete grass;
+    delete skybox;
 
     for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
         Sphere* s = *it;
@@ -367,6 +370,9 @@ void Dragon::init(Viewer &v) {
         }
     }
     grass->init(v);
+
+    skybox->setProgram(program);
+    skybox->init(v);
 }
 
 
@@ -502,7 +508,7 @@ void Dragon::animate(){
     for(int i = 1 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             if(wingR1[i][j] != NULL){
-                wingR1[i][j]->setZ(wingR1[i][j]->getZ() + 3.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
+                wingR1[i][j]->setZ(wingR1[i][j]->getZ() + 1.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
                 wingR1[i][j]->setFixed(true);
             }
         }
@@ -510,7 +516,7 @@ void Dragon::animate(){
     for(int i = 0 ; i < nbw2 ; i++){
         for(int j = 0 ; j < nbw2 ; j++){
             if(wingR2[j][i] != NULL){
-                wingR2[j][i]->setZ(wingR2[j][i]->getZ() + 3.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
+                wingR2[j][i]->setZ(wingR2[j][i]->getZ() + 1.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
                 wingR2[j][i]->setFixed(true);
             }
         }
@@ -518,7 +524,7 @@ void Dragon::animate(){
     for(int i = 1 ; i < nbw1 ; i++){
         for(int j = 0 ; j < nbw1 ; j++){
             if(wingL1[i][j] != NULL){
-                wingL1[i][j]->setZ(wingL1[i][j]->getZ() + 3.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
+                wingL1[i][j]->setZ(wingL1[i][j]->getZ() + 1.0*(sin(0.1*fact + (float)i*0.1)  - sin(0.1*(fact - 0.5) + (float)i*0.1)));
                 wingL1[i][j]->setFixed(true);
             }
         }
@@ -526,7 +532,7 @@ void Dragon::animate(){
     for(int i = 0 ; i < nbw2 ; i++){
         for(int j = 0 ; j < nbw2 ; j++){
             if(wingL2[j][i] != NULL){
-                wingL2[j][i]->setZ(wingL2[j][i]->getZ() + 3.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
+                wingL2[j][i]->setZ(wingL2[j][i]->getZ() + 1.0*(sin((float)(i+nbw1 -0.97)*0.1 + 0.1*fact)  - sin((float)(i+nbw1-0.97)*0.1 + 0.1*(fact - 0.5))));
                 wingL2[j][i]->setFixed(true);
             }
         }
@@ -766,8 +772,9 @@ void Dragon::updateDrag(){
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
 
-    /*
-    GLCHECK(glUseProgram( (GLint)program ));*/
+
+    GLCHECK(glUseProgram( (GLint)program ));
+    skybox->draw();
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
@@ -813,6 +820,7 @@ void Dragon::draw(){
     //drawMeshWingR();
     grass->draw();
     glPopMatrix();
+
 
     GLCHECK(glUseProgram( 0 ));
     glEnable(GL_BLEND);
