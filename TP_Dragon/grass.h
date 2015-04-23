@@ -1,3 +1,8 @@
+/**
+ * @brief Classe permettant de gérer l'herbe
+ * @author Julien Daval - Maxime Garcia - Omid Ghorreshi
+ */
+
 #ifndef DEF_GRASS
 #define DEF_GRASS
 
@@ -26,10 +31,14 @@ class Grass : public Renderable {
 		double zg;							// Composante selon z du poids
 
 
+        /**
+         * @brief Initialise les particules
+         */
 		void initParticles();
 
+        /**
+         * @brief Tire un nombre aléatoire entre min et max
+         */
 		double alea(double min, double max);
-
-		void drawBasePlane(double size);
 };
 #endif

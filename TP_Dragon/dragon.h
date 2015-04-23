@@ -9,6 +9,8 @@
 #include "firesmoke.h"
 #include "grass.h"
 #include "mountain.h"
+#include "skybox.h"
+
 #include <vector>
 #include <string>
 #include <QImage>
@@ -42,7 +44,7 @@ private:
     void completeTail(int first, int last, bool dessus);
     void createTail(float angle, int first, int last);
     void createNeck(int first, int last);
-    void completePaw(std::vector<Sphere*>& paw, int first, int last);
+    void completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, int first, int last);
     void createPawLeftUp(float angle, int first, int last);
     void createPawRightUp(float angle, int first, int last);
     void createPawLeftDown(float angle, int first, int last);
@@ -69,6 +71,10 @@ private:
     std::vector<Sphere*> pawRightUp;
     std::vector<Sphere*> pawLeftDown;
     std::vector<Sphere*> pawRightDown;
+    std::vector<Sphere*> footLeftUp;
+    std::vector<Sphere*> footRightUp;
+    std::vector<Sphere*> footLeftDown;
+    std::vector<Sphere*> footRightDown;
     int nbSpheresContourBody;
     int nbSpheresContourTail;
     int nbSpheresContourNeck;
@@ -159,6 +165,14 @@ private:
     Grass *grass;
     Mountain *mount;
 
+
+    Skybox *skybox;     // Skybox
+
+    bool moveQueue;     // true si on veut bouger la queue; false sinon
+
+    // Permet de générer les points de controle de la courbe d'Hermite
+    std::vector<qglviewer::Vec> generateCtlPts(int i, double angle, int xyz,
+                                                    int nbPts);
 
 };
 

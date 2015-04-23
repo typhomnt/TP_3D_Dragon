@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 
     // Instantiate the viewer.
     Viewer viewer( format );
-    viewer.setSceneRadius(50.0f);
+    viewer.setSceneRadius(80.0f);
 	// build your scene here
     viewer.addRenderable(new Dragon());
 

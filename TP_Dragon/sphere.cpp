@@ -29,7 +29,7 @@ static const vec4 ld(0.5f, 0.5f, 0.5f, 1.0f);
 static const vec4 ls(0.5f, 0.5f, 0.5f, 1.0f);
 static Light light(vec4(0, 100, 100, 1), la, ld, ls);
 
-static const Material material(mat_ambient_color, mat_diffuse, white, 5.0);
+static const Material material(mat_ambient_color, mat_diffuse, white, 5);
 
 
 
@@ -169,6 +169,11 @@ float Sphere::getZ() {
 ///////////////////////////////////////////////////////////////////////////////
 bool Sphere::estTexturee() {
     return this->texturee;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+std::vector<Sphere*>& Sphere::getContour() {
+    return this->contour;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -20,6 +20,7 @@ class Sphere : public Renderable
         float getY();
         float getZ();
         bool estTexturee();
+        std::vector<Sphere*>& getContour();
 
         void setRadius(float radius);
         void setMass(float m);
@@ -59,6 +60,8 @@ class Sphere : public Renderable
         qglviewer::Vec velocity;
         float mass;
         float invMass; // the inverse of the mass is also stored
+
+        std::vector<Sphere*> contour;
 
 		ShaderProgram program;
 
