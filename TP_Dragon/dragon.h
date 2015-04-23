@@ -37,6 +37,7 @@ private:
     void drawPawLeftDown(int first, int last);
     void drawPawRightDown(int first, int last);
     void drawWing(bool left);
+    void drawHead(int first, int last);
 
     void createBody(int first, int last);
     void completeTail(int first, int last, bool dessus);
@@ -47,6 +48,7 @@ private:
     void createPawRightUp(float angle, int first, int last);
     void createPawLeftDown(float angle, int first, int last);
     void createPawRightDown(float angle, int first, int last);
+    void createHead(int first, int last);
     void drawSkeleton();
     void drawSprings();
     void createWingR();
@@ -81,6 +83,7 @@ private:
     int nbSpheresTail;
     int nbSpheresNeck;
     int nbSpheresPaw;
+    int nbSpheresJaw;
     std::vector<Spring*> sprgSkel;
     std::vector<Spring*> sprgWing1R;
     int indexBody;
@@ -91,6 +94,9 @@ private:
     int indexPawLeftDown;
     int indexPawRightDown;
     int indexLastPawRightDown;
+    int indexHead;
+    int indexJawUp;
+    int indexJawDown;
     float thicknessBody;
     float R;
     float height;

@@ -105,6 +105,7 @@ Dragon::Dragon() {
     nbSpheresContourTail = 16;
     nbSpheresContourNeck = 12;
     nbSpheresContourPaw = 12;
+    nbSpheresJaw = 12;
     lo1=1/meshStep;
     lo2 = 0;
     indexBody = 0;
@@ -115,7 +116,8 @@ Dragon::Dragon() {
     indexPawLeftDown = indexPawRightUp + nbSpheresPaw;
     indexPawRightDown = indexPawLeftDown + nbSpheresPaw;
     indexLastPawRightDown = indexPawRightDown + nbSpheresPaw-1;
-    thicknessBody = 5*R;
+    indexHead = indexPawRightDown + nbSpheresPaw;
+    thicknessBody = 8*R;
     mass = 3000;
     qglviewer::Vec initPos = qglviewer::Vec(0,0,15);
     qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
@@ -148,6 +150,7 @@ Dragon::Dragon() {
     createPawRightUp(-110, indexPawRightUp, indexPawLeftDown-1);
     createPawLeftDown(-70, indexPawLeftDown, indexPawRightDown-1);
     createPawRightDown(-110, indexPawRightDown, indexLastPawRightDown);
+    createHead(indexHead, indexHead+12);
     wingR1 = (Sphere***)malloc(nbw1*sizeof(Sphere**));
     for(int i = 0 ; i < nbw1 ; i++){
         wingR1[i] = (Sphere**)malloc(nbw1*sizeof(Sphere*));
@@ -292,79 +295,17 @@ void Dragon::init(Viewer &v) {
     gravity = defaultGravity;
     viscosity = 1.0;
     dt = 0.01;
-    for(std::vector<Sphere*>::iterator it = skeleton.begin() ; it != skeleton.end(); it++){
-        Sphere* s = *it;
+    for(int i = 0; i < (int)skeleton.size(); i++){
+        Sphere* s = skeleton[i];
+        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
+            Sphere* s = *it;
+            if (s->estTexturee())
+                s->setTexture(tex_body);
+             else
+                s->setColor(0,0,20,0);
+            s->init(v);
+        }
         s->init(v);
-    }
-    for(int i = indexBody; i < indexTail; i++) {
-        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
-            Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
-                s->setColor(0,0,20,0);
-            s->init(v);
-        }
-    }
-    for(int i = indexTail; i < indexNeck; i++) {
-        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
-            Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
-                s->setColor(0,0,20,0);
-            s->init(v);
-        }
-    }
-    for(int i = indexNeck; i < indexPawLeftUp; i++) {
-        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
-            Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
-                s->setColor(0,0,20,0);
-            s->init(v);
-        }
-    }
-    for(int i = indexPawLeftUp; i < indexPawRightUp-1; i++) {
-        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
-            Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
-                s->setColor(0,0,20,0);
-            s->init(v);
-        }
-    }
-    for(int i = indexPawRightUp; i < indexPawLeftDown-1; i++) {
-        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
-            Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
-                s->setColor(0,0,20,0);
-            s->init(v);
-        }
-    }
-    for(int i = indexPawLeftDown; i < indexPawRightDown-1; i++) {
-        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
-            Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
-                s->setColor(0,0,20,0);
-            s->init(v);
-        }
-    }
-    for(int i = indexPawRightDown; i <= indexLastPawRightDown; i++) {
-        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
-            Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
-                s->setColor(0,0,20,0);
-            s->init(v);
-        }
     }
     for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
         Sphere* s = *it;
@@ -896,7 +837,7 @@ void Dragon::draw(){
 
 
     GLCHECK(glUseProgram( (GLint)program ));
-    skybox->draw();
+    //skybox->draw();
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
@@ -935,6 +876,10 @@ void Dragon::draw(){
 
     glPushMatrix();
     drawPawRightDown(indexPawRightDown, indexLastPawRightDown);
+    glPopMatrix();
+
+    glPushMatrix();
+    drawHead(indexHead, indexHead+12);
     glPopMatrix();
 
 
@@ -1098,6 +1043,16 @@ void Dragon::drawPawRightDown(int first, int last) {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::drawHead(int first, int last) {
+    for (int i = first; i < (int)skeleton.size(); i++) {
+        skeleton[i]->draw();
+        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
+            Sphere* s = *it;
+            s->draw();
+        }
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::drawWing(bool left){
@@ -1158,14 +1113,14 @@ void Dragon::createBody(int first, int last){
     for (int i = first; i <= last; i++) {
         std::vector<Sphere*> &contour = skeleton[i]->getContour();
         for (int j = 0; j <= nbSpheresContourBody-1; j++) {
-            body.push_back(new Sphere(skeleton[i]->getX(),
-                                      skeleton[i]->getY() + thicknessBody*cos(2*M_PI/nbSpheresContourBody*j),
-                                      skeleton[i]->getZ() + thicknessBody*sin(2*M_PI/nbSpheresContourBody*j),
-                                      R));
-            body.push_back(new Sphere(skeleton[i]->getX() + R,
-                                      skeleton[i]->getY() + thicknessBody*cos(2*M_PI/nbSpheresContourBody*j),
-                                      skeleton[i]->getZ() + thicknessBody*sin(2*M_PI/nbSpheresContourBody*j),
-                                      R));
+//            body.push_back(new Sphere(skeleton[i]->getX(),
+//                                      skeleton[i]->getY() + thicknessBody*cos(2*M_PI/nbSpheresContourBody*j),
+//                                      skeleton[i]->getZ() + thicknessBody*sin(2*M_PI/nbSpheresContourBody*j),
+//                                      R));
+//            body.push_back(new Sphere(skeleton[i]->getX() + R,
+//                                      skeleton[i]->getY() + thicknessBody*cos(2*M_PI/nbSpheresContourBody*j),
+//                                      skeleton[i]->getZ() + thicknessBody*sin(2*M_PI/nbSpheresContourBody*j),
+//                                      R));
             contour.push_back(new Sphere(skeleton[i]->getX(),
                                       skeleton[i]->getY() + thicknessBody*cos(2*M_PI/nbSpheresContourBody*j),
                                       skeleton[i]->getZ() + thicknessBody*sin(2*M_PI/nbSpheresContourBody*j),
@@ -1175,8 +1130,8 @@ void Dragon::createBody(int first, int last){
                                       skeleton[i]->getZ() + thicknessBody*sin(2*M_PI/nbSpheresContourBody*j),
                                       R));
             if ((2*M_PI/nbSpheresContourBody*j > 13*M_PI/12.0) && (2*M_PI/nbSpheresContourBody*j < 23*M_PI/12.0)){
-                body[body.size()-2]->doitEtreTexturee(false);
-                body[body.size()-1]->doitEtreTexturee(false);
+//                body[body.size()-2]->doitEtreTexturee(false);
+//                body[body.size()-1]->doitEtreTexturee(false);
                 contour[contour.size()-2]->doitEtreTexturee(false);
                 contour[contour.size()-1]->doitEtreTexturee(false);
             }
@@ -1196,7 +1151,7 @@ void Dragon::createTail(float angle, int first, int last){
                                       R,10,tex_skeleton));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
-    float thicknessTail = 5*R;
+    float thicknessTail = thicknessBody;
     float x1,x2,z1,z2,norme;
     for (int i = first; i <= (last+first)/2; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
@@ -1211,14 +1166,14 @@ void Dragon::createTail(float angle, int first, int last){
             nbSpheresContourTail = 4;
         std::vector<Sphere*> &contour = skeleton[i]->getContour();
         for (int j = 0; j <= nbSpheresContourTail-1; j++) {
-                tail.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
-                                          skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
-                                          skeleton[i]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
-                                          R));
-                tail.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
-                                          skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
-                                          skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
-                                          R));
+//                tail.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
+//                                          skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
+//                                          skeleton[i]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
+//                                          R));
+//                tail.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
+//                                          skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
+//                                          skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
+//                                          R));
                 contour.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
                                           skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
                                           skeleton[i]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
@@ -1228,8 +1183,8 @@ void Dragon::createTail(float angle, int first, int last){
                                           skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
                                           R));
                 if ((2*M_PI/nbSpheresContourTail*j > 2*M_PI/3.0) && (2*M_PI/nbSpheresContourTail*j < 4*M_PI/3.0)){
-                    tail[tail.size()-2]->doitEtreTexturee(false);
-                    tail[tail.size()-1]->doitEtreTexturee(false);
+//                    tail[tail.size()-2]->doitEtreTexturee(false);
+//                    tail[tail.size()-1]->doitEtreTexturee(false);
                     contour[contour.size()-2]->doitEtreTexturee(false);
                     contour[contour.size()-1]->doitEtreTexturee(false);
                 }
@@ -1249,14 +1204,14 @@ void Dragon::createTail(float angle, int first, int last){
             nbSpheresContourTail = 4;
         std::vector<Sphere*> &contour = skeleton[i]->getContour();
         for (int j = 0; j <= nbSpheresContourTail-1; j++) {
-            tail.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
-                                      skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
-                                      skeleton[i]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
-                                      R));
-            tail.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
-                                      skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
-                                      skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
-                                      R));
+//            tail.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
+//                                      skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
+//                                      skeleton[i]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
+//                                      R));
+//            tail.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
+//                                      skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
+//                                      skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
+//                                      R));
             contour.push_back(new Sphere(skeleton[i]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
                                       skeleton[i]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
                                       skeleton[i]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
@@ -1266,8 +1221,8 @@ void Dragon::createTail(float angle, int first, int last){
                                       skeleton[i]->getZ() + z2/2.0 + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
                                       R));
             if ((2*M_PI/nbSpheresContourTail*j > 2.0*M_PI/3.0) && (2*M_PI/nbSpheresContourTail*j < 4.0*M_PI/3.0)){
-                tail[tail.size()-2]->doitEtreTexturee(false);
-                tail[tail.size()-1]->doitEtreTexturee(false);
+//                tail[tail.size()-2]->doitEtreTexturee(false);
+//                tail[tail.size()-1]->doitEtreTexturee(false);
                 contour[contour.size()-2]->doitEtreTexturee(false);
                 contour[contour.size()-1]->doitEtreTexturee(false);
             }
@@ -1284,16 +1239,16 @@ void Dragon::createTail(float angle, int first, int last){
         nbSpheresContourTail = 4;
     std::vector<Sphere*> &contour = skeleton[last]->getContour();
     for (int j = 0; j <= nbSpheresContourTail-1; j++) {
-        tail.push_back(new Sphere(skeleton[last]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
-                                  skeleton[last]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
-                                  skeleton[last]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
-                                  R));
+//        tail.push_back(new Sphere(skeleton[last]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
+//                                  skeleton[last]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
+//                                  skeleton[last]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
+//                                  R));
         contour.push_back(new Sphere(skeleton[last]->getX() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*(-z1),
                                   skeleton[last]->getY() + thicknessTail*sin(2*M_PI/nbSpheresContourTail*j),
                                   skeleton[last]->getZ() + thicknessTail*cos(2*M_PI/nbSpheresContourTail*j)*x1,
                                   R));
         if ((2*M_PI/nbSpheresContourTail*j > 2*M_PI/3.0) && (2*M_PI/nbSpheresContourTail*j < 4.0*M_PI/3.0)){
-            tail[tail.size()-1]->doitEtreTexturee(false);
+//            tail[tail.size()-1]->doitEtreTexturee(false);
             contour[contour.size()-1]->doitEtreTexturee(false);
         }
     }
@@ -1329,25 +1284,25 @@ void Dragon::createNeck(int first, int last){
                                       R,10,tex_skeleton));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
-    float thicknessNeck = 5*R;
+    float thicknessNeck = thicknessBody;
     float x1,x2,z1,z2,norme;
     nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+3;
     if (nbSpheresContourNeck < 4)
         nbSpheresContourNeck = 4;
     std::vector<Sphere*> &contour = skeleton[first]->getContour();
     for (int j = 0; j <= nbSpheresContourNeck-1; j++) {
-        neck.push_back(new Sphere(skeleton[first]->getX() - R,
-                                  skeleton[first]->getY() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j),
-                                  skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                  R));
-        neck.push_back(new Sphere(skeleton[first]->getX(),
-                                  skeleton[first]->getY() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j),
-                                  skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                  R));
-        neck.push_back(new Sphere(skeleton[first]->getX() + R,
-                                  skeleton[first]->getY() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j),
-                                  skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                  R));
+//        neck.push_back(new Sphere(skeleton[first]->getX() - R,
+//                                  skeleton[first]->getY() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j),
+//                                  skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                  R));
+//        neck.push_back(new Sphere(skeleton[first]->getX(),
+//                                  skeleton[first]->getY() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j),
+//                                  skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                  R));
+//        neck.push_back(new Sphere(skeleton[first]->getX() + R,
+//                                  skeleton[first]->getY() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j),
+//                                  skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                  R));
         contour.push_back(new Sphere(skeleton[first]->getX() - R,
                                   skeleton[first]->getY() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j),
                                   skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
@@ -1361,15 +1316,15 @@ void Dragon::createNeck(int first, int last){
                                   skeleton[first]->getZ() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
                                   R));
         if ((2*M_PI/nbSpheresContourNeck*j > 13*M_PI/12.0) && (2*M_PI/nbSpheresContourNeck*j < 23*M_PI/12.0)){
-            neck[neck.size()-3]->doitEtreTexturee(false);
-            neck[neck.size()-2]->doitEtreTexturee(false);
-            neck[neck.size()-1]->doitEtreTexturee(false);
+//            neck[neck.size()-3]->doitEtreTexturee(false);
+//            neck[neck.size()-2]->doitEtreTexturee(false);
+//            neck[neck.size()-1]->doitEtreTexturee(false);
             contour[contour.size()-3]->doitEtreTexturee(false);
             contour[contour.size()-2]->doitEtreTexturee(false);
             contour[contour.size()-1]->doitEtreTexturee(false);
         }
     }
-    thicknessNeck = thicknessNeck - 3*R/((last-first)/2+1);
+    thicknessNeck = thicknessNeck - 2*R/((last-first)/2+1);
     for (int i = first+1; i <= (last+first)/2; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
         z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
@@ -1381,14 +1336,14 @@ void Dragon::createNeck(int first, int last){
         nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+2;
         std::vector<Sphere*> &contour = skeleton[i]->getContour();
         for (int j = 0; j <= nbSpheresContourNeck-1; j++) {
-            neck.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
-                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                      skeleton[i]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
-                                      R));
-            neck.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
-                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                      skeleton[i]->getZ() + z2/2.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
-                                      R));
+//            neck.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
+//                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                      skeleton[i]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
+//                                      R));
+//            neck.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
+//                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                      skeleton[i]->getZ() + z2/2.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
+//                                      R));
             contour.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
                                       skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
                                       skeleton[i]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
@@ -1398,13 +1353,13 @@ void Dragon::createNeck(int first, int last){
                                       skeleton[i]->getZ() + z2/2.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
                                       R));
             if ((2*M_PI/nbSpheresContourNeck*j <= M_PI/3.0) || (2*M_PI/nbSpheresContourNeck*j >= 5.0*M_PI/3.0)){
-                neck[neck.size()-2]->doitEtreTexturee(false);
-                neck[neck.size()-1]->doitEtreTexturee(false);
+//                neck[neck.size()-2]->doitEtreTexturee(false);
+//                neck[neck.size()-1]->doitEtreTexturee(false);
                 contour[contour.size()-2]->doitEtreTexturee(false);
                 contour[contour.size()-1]->doitEtreTexturee(false);
             }
         }
-        thicknessNeck = thicknessNeck - 3*R/((last-first)/2+1);
+        thicknessNeck = thicknessNeck - 2*R/((last-first)/2+1);
     }
     for (int i = (last+first)/2 + 1; i < last; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
@@ -1417,18 +1372,18 @@ void Dragon::createNeck(int first, int last){
         nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+4;
         std::vector<Sphere*> &contour = skeleton[i]->getContour();
         for (int j = 0; j <= nbSpheresContourNeck-1; j++) {
-            neck.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
-                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                      skeleton[i]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
-                                      R));
-            neck.push_back(new Sphere(skeleton[i]->getX() + x2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
-                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                      skeleton[i]->getZ() + z2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
-                                      R));
-            neck.push_back(new Sphere(skeleton[i]->getX() + 2.0*x2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
-                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                      skeleton[i]->getZ() + 2.0*z2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
-                                      R));
+//            neck.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
+//                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                      skeleton[i]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
+//                                      R));
+//            neck.push_back(new Sphere(skeleton[i]->getX() + x2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
+//                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                      skeleton[i]->getZ() + z2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
+//                                      R));
+//            neck.push_back(new Sphere(skeleton[i]->getX() + 2.0*x2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
+//                                      skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                      skeleton[i]->getZ() + 2.0*z2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
+//                                      R));
             contour.push_back(new Sphere(skeleton[i]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
                                       skeleton[i]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
                                       skeleton[i]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
@@ -1442,15 +1397,15 @@ void Dragon::createNeck(int first, int last){
                                       skeleton[i]->getZ() + 2.0*z2/3.0 + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
                                       R));
             if ((2*M_PI/nbSpheresContourNeck*j <= M_PI/3.0) || (2*M_PI/nbSpheresContourNeck*j >= 5.0*M_PI/3.0)){
-                neck[neck.size()-3]->doitEtreTexturee(false);
-                neck[neck.size()-2]->doitEtreTexturee(false);
-                neck[neck.size()-1]->doitEtreTexturee(false);
+//                neck[neck.size()-3]->doitEtreTexturee(false);
+//                neck[neck.size()-2]->doitEtreTexturee(false);
+//                neck[neck.size()-1]->doitEtreTexturee(false);
                 contour[contour.size()-3]->doitEtreTexturee(false);
                 contour[contour.size()-2]->doitEtreTexturee(false);
                 contour[contour.size()-1]->doitEtreTexturee(false);
             }
         }
-        thicknessNeck = thicknessNeck-2*R/(last-first);
+        thicknessNeck = thicknessNeck-R/(last-first);
     }
     x1 = skeleton[last]->getX() - skeleton[last-1]->getX();
     z1 = skeleton[last]->getZ() - skeleton[last-1]->getZ();
@@ -1460,16 +1415,16 @@ void Dragon::createNeck(int first, int last){
     nbSpheresContourNeck = (int)floor(M_PI*thicknessNeck/R)+4;
     std::vector<Sphere*> &contour2 = skeleton[last]->getContour();
     for (int j = 0; j <= nbSpheresContourNeck-1; j++) {
-        neck.push_back(new Sphere(skeleton[last]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
-                                  skeleton[last]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
-                                  skeleton[last]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
-                                  R));
+//        neck.push_back(new Sphere(skeleton[last]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
+//                                  skeleton[last]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
+//                                  skeleton[last]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
+//                                  R));
         contour2.push_back(new Sphere(skeleton[last]->getX() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*(-z1),
                                   skeleton[last]->getY() + thicknessNeck*sin(2*M_PI/nbSpheresContourNeck*j),
                                   skeleton[last]->getZ() + thicknessNeck*cos(2*M_PI/nbSpheresContourNeck*j)*x1,
                                   R));
         if ((2*M_PI/nbSpheresContourNeck*j <= M_PI/3.0) || (2*M_PI/nbSpheresContourNeck*j >= 5.0*M_PI/3.0)){
-            neck[neck.size()-1]->doitEtreTexturee(false);
+//            neck[neck.size()-1]->doitEtreTexturee(false);
             contour2[contour2.size()-1]->doitEtreTexturee(false);
         }
     }
@@ -1477,14 +1432,17 @@ void Dragon::createNeck(int first, int last){
 
 void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, int first, int last) {
     float z0 = skeleton[indexBody]->getZ();
-    float x1,x2,y2,z1,z2;
-    float thicknessPaw = 2*R;
+    float x1,x2,y2,z1,z2,norme;
+    float thicknessPaw = 0.4*thicknessBody;
     int start = first;
-    while (abs(skeleton[start]->getZ()-z0) < 5*R)
+    while (abs(skeleton[start]->getZ()-z0) < thicknessBody-R)
         start++;
     for (int i = start; i <= last-1; i++) {
             x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
             z1 = skeleton[i]->getZ() - skeleton[i-1]->getZ();
+            norme = sqrt(x1*x1+z1*z1);
+            x1 = x1/norme;
+            z1 = z1/norme;
             x2 = skeleton[i+1]->getX() - skeleton[i]->getX();
             y2 = skeleton[i+1]->getY() - skeleton[i]->getY();
             z2 = skeleton[i+1]->getZ() - skeleton[i]->getZ();
@@ -1493,14 +1451,14 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                 nbSpheresContourPaw = 4;
             std::vector<Sphere*> &contour = skeleton[i]->getContour();
             for (int j = 0; j <= nbSpheresContourPaw-1; j++) {
-                paw.push_back(new Sphere(skeleton[i]->getX() + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*(-z1),
-                                         skeleton[i]->getY() + thicknessPaw*sin(2*M_PI/nbSpheresContourPaw*j),
-                                         skeleton[i]->getZ() + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*x1,
-                                         R,i));
-                paw.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*(-z1),
-                                         skeleton[i]->getY() + y2/2.0 + thicknessPaw*sin(2*M_PI/nbSpheresContourPaw*j),
-                                         skeleton[i]->getZ() + z2/2.0 + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*x1,
-                                         R,i));
+//                paw.push_back(new Sphere(skeleton[i]->getX() + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*(-z1),
+//                                         skeleton[i]->getY() + thicknessPaw*sin(2*M_PI/nbSpheresContourPaw*j),
+//                                         skeleton[i]->getZ() + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*x1,
+//                                         R,i));
+//                paw.push_back(new Sphere(skeleton[i]->getX() + x2/2.0 + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*(-z1),
+//                                         skeleton[i]->getY() + y2/2.0 + thicknessPaw*sin(2*M_PI/nbSpheresContourPaw*j),
+//                                         skeleton[i]->getZ() + z2/2.0 + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*x1,
+//                                         R,i));
                 contour.push_back(new Sphere(skeleton[i]->getX() + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*(-z1),
                                          skeleton[i]->getY() + thicknessPaw*sin(2*M_PI/nbSpheresContourPaw*j),
                                          skeleton[i]->getZ() + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*x1,
@@ -1510,8 +1468,8 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                                          skeleton[i]->getZ() + z2/2.0 + thicknessPaw*cos(2*M_PI/nbSpheresContourPaw*j)*x1,
                                          R,i));
             if ((2*M_PI/nbSpheresContourPaw*j <= M_PI/3.0) || (2*M_PI/nbSpheresContourPaw*j >= 5.0*M_PI/3.0)){
-                    paw[paw.size()-2]->doitEtreTexturee(false);
-                    paw[paw.size()-1]->doitEtreTexturee(false);
+//                    paw[paw.size()-2]->doitEtreTexturee(false);
+//                    paw[paw.size()-1]->doitEtreTexturee(false);
                     contour[contour.size()-2]->doitEtreTexturee(false);
                     contour[contour.size()-1]->doitEtreTexturee(false);
                 }
@@ -1759,7 +1717,80 @@ void Dragon::drawSprings(){
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+void Dragon::createHead(int first, int last){
+    float x0 = skeleton[indexPawLeftUp-1]->getX();
+    float y0 = skeleton[indexPawLeftUp-1]->getY();
+    float z0 = skeleton[indexPawLeftUp-1]->getZ();
+    float dx = x0 - skeleton[indexPawLeftUp-2]->getX();
+    float dz = z0 - skeleton[indexPawLeftUp-2]->getZ();
+    float norme = sqrt(dx*dx + dz*dz);
+    dx = dx/norme;
+    dz = dz/norme;
+    nbSpheresJaw = 11;
+    indexJawUp = first;
+    //fin du cou;
+    for (int i = 1; i <= 4; i++) {
+        skeleton.push_back(new Sphere(x0 + 2*R*i*dx,
+                                      y0,
+                                      z0 + 2*R*i*dz,
+                                      R));
+        indexJawUp++;
+    }
+    indexJawDown = indexJawUp;
+    x0 = skeleton[skeleton.size()-1]->getX();
+    z0 = skeleton[skeleton.size()-1]->getZ();
+    //machoire haute
+    for (int i = 1; i <= 3; i++) {
+        skeleton.push_back(new Sphere(x0 + 2*R*i*dz,
+                                      y0,
+                                      z0 - 2*R*i*dx,
+                                      R));
+    }
+    skeleton.push_back(new Sphere(skeleton[indexJawUp]->getX(),
+                                  skeleton[indexJawUp]->getY(),
+                                  skeleton[indexJawUp]->getZ(),
+                                  R));
+    indexJawDown++;
+    float x1 = skeleton[skeleton.size()-2]->getX();
+    float z1 = skeleton[skeleton.size()-2]->getZ();
+    for (int i = 1; i <= 3; i++) {
+        skeleton.push_back(new Sphere(x0 - 2*R*i*dz,
+                                      y0,
+                                      z0 + 2*R*i*dx,
+                                      R));
+    }
+    float x2 = skeleton[skeleton.size()-1]->getX();
+    float z2 = skeleton[skeleton.size()-1]->getZ();
+    for (int i = 1; i <= 6; i++) {
+        skeleton.push_back(new Sphere(x1 + 2*R*i*dx,
+                                      y0,
+                                      z1 + 2*R*i*dz,
+                                      R));
+    }
+    for (int i = 1; i <= 6; i++) {
+        skeleton.push_back(new Sphere(x2 + 2*R*i*dx,
+                                      y0,
+                                      z2 + 2*R*i*dz,
+                                      R));
+    }
+    float x,y,z,dy;
+    for (int i = indexJawUp; i < (int)skeleton.size(); i++) {
+        x = skeleton[i]->getX();
+        y = skeleton[i]->getY();
+        z = skeleton[i]->getZ();
+        dy = dx*dx + dz*dz;
+        std::vector<Sphere*> &contour = skeleton[i]->getContour();
+        for (int j = -3; j <= 3; j++) {
+            contour.push_back(new Sphere(x,
+                                         y + 2*R*j*dy,
+                                         z,
+                                         R));
+        }
+    }
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////
 void Dragon::createWingR(){
     int r = 1;
     wingR1[0][0] = new Sphere(wing1root,wing1vel,wr,10,0,true,false);
