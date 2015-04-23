@@ -3,6 +3,7 @@
 #include "vec.h"
 #include "light.h"
 #include "material.h"
+#include "hermite.h"
 #include <cmath>
 #include <QKeyEvent>
 #include <stdlib.h>
@@ -10,6 +11,7 @@
 
 #include <iostream>
 #include <cstdio>
+#include <stdexcept>
 #ifndef __APPLE__
     #include <GL/glut.h>
 #else
@@ -86,6 +88,14 @@ static qglviewer::Vec diffPawLU;
 static qglviewer::Vec diffPawRU;
 static qglviewer::Vec diffPawLD;
 static qglviewer::Vec diffPawRD;
+
+// Tableau permettant de calculer le mouvement de chaque sphère de la queue
+static std::vector< std::vector<qglviewer::Vec> > hermiteQueue;
+
+static int dtQueue = 0;
+
+
+
 /*nouveau dragon*/
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -196,6 +206,9 @@ Dragon::Dragon() {
     this->grass = new Grass(2,100,20);
 
     this->skybox = new Skybox(50.0, texture0, texcoord0);
+
+    hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
+    this->moveQueue = false;
 }
 
 
@@ -845,8 +858,11 @@ void Dragon::animate(){
         dust->animate();
     fly_up = false;
     fact+=1.5;
-    //Roation de la queue
 
+
+    //Roation de la queue
+    if (moveQueue)
+        moveTail();
 
     //
     updateWingPos();
@@ -907,6 +923,7 @@ void Dragon::draw(){
     GLCHECK(glUniform1i(texture0, 0));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
 
+
     drawWingR();
     drawWingL();
     glPushMatrix();
@@ -938,7 +955,8 @@ void Dragon::draw(){
     glPopMatrix();
 
 
-    //drawSprings();
+    drawSprings();
+    drawSkeleton();
     //drawMeshWingR();
     grass->draw();
     glPopMatrix();
@@ -2407,12 +2425,19 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
             + (toggleViscosity ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_Q) && (modifiers==Qt::NoButton)) {
-        /*toggleCollisions = !toggleCollisions;
-        setCollisionsDetection(toggleCollisions);
-        viewer.displayMessage("Detects collisions "
-            + (toggleCollisions ? QString("true") : QString("false")));*/
+        // On met à jour le vecteur indiquant la position des sphères de la queue
+        if (!this->moveQueue) {
+            this->moveQueue = true;
+            for (int i = indexTail; i < indexNeck; i++) {
+                std::vector<qglviewer::Vec> tmp = generateCtlPts(i, M_PI/6, 1, 4);
+                hermiteQueue[i-indexTail] = Hermite::generate(tmp, 0.1);
+            }
+        }
+        else
+            this->moveQueue = false;
 
     } else if ((e->key()==Qt::Key_F) && (modifiers==Qt::NoButton)) {
+        // On active ou non le feu/fumée
         if (!firesmoke->isActive())
             firesmoke->activate();
         else
@@ -2437,5 +2462,56 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
          }
          take_off = false;
     }
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
+                                                        int xyz, int nbPts) {
+    // On récupère la sphère correspondant à l'indice i
+    qglviewer::Vec v = tail[i]->getPosition();
+
+    // On crée le vecteur résultat
+    std::vector<qglviewer::Vec> res(nbPts);
+    res[0] = v;
+
+    // A chaque itéation, on calcule la rotation du pt
+    for (int i = 1; i < nbPts; i++) {
+        qglviewer::Vec tmp;
+        switch (xyz) {
+            case 0:     // Rotation axe X
+                tmp[0] = res[i-1][0];
+                tmp[1] = res[i-1][1]*cos(angle) - res[i-1][2]*sin(angle);
+                tmp[1] = res[i-1][1]*sin(angle) + res[i-1][2]*cos(angle);
+            break;
+            case 1:     // Rotation axe Y
+                tmp[0] =  res[i-1][0]*cos(angle) - res[i-1][2]*sin(angle);
+                tmp[1] =  res[i-1][1];
+                tmp[2] = res[i-1][0]*sin(angle) + res[i-1][2]*cos(angle);
+            break;
+            case 2:     // Rotation axe Z
+                tmp[0] = res[i-1][0]*cos(angle) - res[i-1][1]*sin(angle);
+                tmp[0] = res[i-1][0]*sin(angle) + res[i-1][1]*cos(angle);
+                tmp[2] = res[i-1][2];
+            break;
+            default:
+                throw std::invalid_argument("generateCtlPts: saisie invalide");
+            break;
+        }
+        res.push_back(tmp);
+    }
+
+    return res;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::moveTail() {
+    for (int i = indexTail; i < indexNeck; i++) {
+        skeleton[i]->setPosition(hermiteQueue[i-indexTail][dtQueue]);
+    }
+    dtQueue = (dtQueue + 1) % hermiteQueue[0].size();
 }
 

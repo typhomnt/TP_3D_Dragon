@@ -164,6 +164,12 @@ private:
 
     Skybox *skybox;     // Skybox
 
+    bool moveQueue;     // true si on veut bouger la queue; false sinon
+
+    // Permet de générer les points de controle de la courbe d'Hermite
+    std::vector<qglviewer::Vec> generateCtlPts(int i, double angle, int xyz,
+                                                    int nbPts);
+
 };
 
 #endif // DRAGON_H
