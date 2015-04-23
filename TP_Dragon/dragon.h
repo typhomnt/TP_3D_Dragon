@@ -8,6 +8,7 @@
 #include "spring.h"
 #include "firesmoke.h"
 #include "grass.h"
+#include "mountain.h"
 #include <vector>
 #include <string>
 #include <QImage>
@@ -156,6 +157,8 @@ private:
     FireSmoke *dust;
 
     Grass *grass;
+    Mountain *mount;
+
 
 };
 
