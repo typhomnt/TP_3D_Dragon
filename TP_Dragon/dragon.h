@@ -8,7 +8,9 @@
 #include "spring.h"
 #include "firesmoke.h"
 #include "grass.h"
+#include "mountain.h"
 #include "skybox.h"
+
 #include <vector>
 #include <string>
 #include <QImage>
@@ -167,8 +169,16 @@ private:
     FireSmoke *dust;
 
     Grass *grass;
+    Mountain *mount;
+
 
     Skybox *skybox;     // Skybox
+
+    bool moveQueue;     // true si on veut bouger la queue; false sinon
+
+    // Permet de générer les points de controle de la courbe d'Hermite
+    std::vector<qglviewer::Vec> generateCtlPts(int i, double angle, int xyz,
+                                                    int nbPts);
 
 };
 

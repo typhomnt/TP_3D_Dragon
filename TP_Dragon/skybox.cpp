@@ -30,6 +30,7 @@ void Skybox::init(Viewer &v) {
     this->skyTex[4] = loadTexture("images/skybox_left.jpg");
     this->skyTex[5] = loadTexture("images/skybox_right.jpg");
 
+    // On récupère les identifiants associés aux vadiables des shaders
     GLCHECK(glUseProgram(program));
     GLCHECK(texture0 = glGetUniformLocation(program, "texture0"));
     GLCHECK(texcoord0 = glGetAttribLocation(program, "texcoord0"));

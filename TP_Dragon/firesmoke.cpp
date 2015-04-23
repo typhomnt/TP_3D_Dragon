@@ -40,6 +40,7 @@ void FireSmoke::draw() {
 			qglviewer::Vec pos = particles[i].getPos();
 
 			glColor4d(color[0], color[1], color[2], particles[i].getLife());
+            // Dessiner deux triangles est plus optimisé que dessiner un carré
 			glBegin(GL_TRIANGLE_STRIP);
               	glVertex3d(pos[0] + SIZE, pos[1], pos[2] + SIZE);
               	glVertex3d(pos[0] - SIZE, pos[1], pos[2] + SIZE);
@@ -63,6 +64,11 @@ void FireSmoke::animate() {
 
 			double life = p.getLife();
 
+            /**
+             * On change la couleur de la particule en fonction de sa durée de vie
+             * Cela permet de faire des "dégradés" de couleur, ce qui est plus
+             * résliste. La durée de vie de la particule définit sa couleur
+             */
 			if (firesmoke) {
 				if (life > 0.50 && life <= 0.75)
 					p.setColor(qglviewer::Vec(255,255,0));
@@ -80,9 +86,18 @@ void FireSmoke::animate() {
 					p.setColor(qglviewer::Vec(255, 255, 255));
 			}
 			else {
+                // Poussière de couleur marron
 				p.setColor(qglviewer::Vec(2, 1, 0));
 			}
 
+
+            /**
+             * Si la particule meurt:
+             *   - soit on a demandé l'arrêt du feu, auquel cas on la désactive
+             *     et on diminue le nombre de particules restantes
+             *   - soit on la regénère, ce qui permet de faire un feu/fumée de
+             *     manière "réaliste" et peu coûteuse
+             */
 			if (p.getLife() < 0) {
 				if (inactivateReq) {
 					p.setActive(false);
@@ -139,10 +154,13 @@ void FireSmoke::initParticle(Particule &p) {
 	p.setLife(1.0);
 	p.setVelDis(alea(0.01, 0.03));
 
+    // On définit la couleur de base selon si on veut faire un feu ou une fumée
 	if (firesmoke)
 		p.setColor(qglviewer::Vec(255, 255, 255));
 	else
 		p.setColor(qglviewer::Vec(3, 3, 3));
+
+    // Initialisation de la position et de la vitesse des particules
 	p.setPos(origin);
     if(!dust)
         p.setMovVec(qglviewer::Vec(-alea(0.5,1), alea(0.5,1), alea(0.5,1)));

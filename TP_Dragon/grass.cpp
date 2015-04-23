@@ -40,6 +40,10 @@ void Grass::init(Viewer &v) {
 	for (unsigned int i = 0; i < base.size(); i++)
 		elements.push_back(Particule(base[i]));
 
+    /**
+     * On génère toutes les particules dans l'initialisation
+     * On les dessine après; ce qui fait que l'herbe ne bouge pas dans notre cas
+     */
 	for (int j = 0; j < this->iter; j++) {
 		for (unsigned int i = 0; i < base.size(); i++) {
 			Particule &p = base[i];
@@ -63,10 +67,10 @@ void Grass::draw() {
 
 		glPushMatrix();
 		glTranslatef(pos[0], pos[1], pos[2] - 5.0);
-        //glutSolidSphere(radius, 5, 5);
         glutSolidCube(actRadius);
 		glPopMatrix();
 		
+        // On diminue le rayon des cubes à chaque étape de génération
 		if (i % base.size() == 0 && i != 0)
 			actRadius -= radiusStep;
 	}
