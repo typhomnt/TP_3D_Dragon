@@ -18,7 +18,7 @@ Mountain::Mountain(float size, float slice, qglviewer::Vec pos)
     for(int i = 0 ;  i < this->slice ; i++){
         for(int j = 0 ; j < this->slice ; j++){
             (ground[i][j])[0] = (this->pos)[0] + float(i)*size/this->slice;
-            (ground[i][j])[1] = (this->pos)[1] + float(j)*size/this->slice;
+            (ground[i][j])[1] = (this->pos)[1] - float(j)*size/this->slice;
             (ground[i][j])[2] = (this->pos)[2];
         }
     }

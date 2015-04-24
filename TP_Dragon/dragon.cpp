@@ -854,7 +854,7 @@ void Dragon::draw(){
 
 
     GLCHECK(glUseProgram( (GLint)program ));
-    //skybox->draw();
+    skybox->draw();
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
