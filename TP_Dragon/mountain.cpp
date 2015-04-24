@@ -10,16 +10,26 @@
 Mountain::Mountain(float size, float slice, qglviewer::Vec pos)
 {
     this->size = size;
-    this->slice = slice;
+    this->slice = pow(2,ceil(log2(slice)));;
     this->pos = pos;
-    ground = (qglviewer::Vec**)malloc(slice*sizeof(qglviewer::Vec*));
-    for(int i = 0 ; i < slice ; i++)
-        ground[i] = (qglviewer::Vec*)malloc(slice*sizeof(qglviewer::Vec));
-    for(int i = 0 ;  i < slice ; i++){
-        for(int j = 0 ; j < slice ; j++){
-            (ground[i][j])[0] = (this->pos)[0] + float(i)*size/slice;
-            (ground[i][j])[1] = (this->pos)[1] + float(j)*size/slice;
+    ground = (qglviewer::Vec**)malloc(this->slice*sizeof(qglviewer::Vec*));
+    for(int i = 0 ; i < this->slice ; i++)
+        ground[i] = (qglviewer::Vec*)malloc(this->slice*sizeof(qglviewer::Vec));
+    for(int i = 0 ;  i < this->slice ; i++){
+        for(int j = 0 ; j < this->slice ; j++){
+            (ground[i][j])[0] = (this->pos)[0] + float(i)*size/this->slice;
+            (ground[i][j])[1] = (this->pos)[1] + float(j)*size/this->slice;
             (ground[i][j])[2] = (this->pos)[2];
+        }
+    }
+
+
+    colArr = (float**)malloc(this->slice*sizeof(float*));
+    for(int i = 0 ; i < this->slice ; i++)
+        colArr[i] = (float*)malloc(this->slice*sizeof(float));
+    for(int i = 0 ;  i < this->slice ; i++){
+        for(int j = 0 ; j < this->slice ; j++){
+            colArr[i][j] = 0;
         }
     }
 }
@@ -30,84 +40,42 @@ void Mountain::build(){
     for(int i = 0 ; i < size ; i++)
         for(int j = 0 ; j < size ; j++)
             map[i][j] = 0;
-    for(int n = ceil(log2(slice)) ; n > 1 ; n--){
+    for(int n = ceil(log2(slice)) - 1 ; n >  1 ; n--){
         int stp = pow(2,n);
         for(int i = 0 ; i < size ; i+= stp){
             for(int j = 0 ; j < size ; j+= stp){
-                map[i][j] += (2*(float)rand()/(float)RAND_MAX -1)*stp;
+                map[i][j] += ((float)rand()/(float)RAND_MAX)*stp/6;
             }
         }
         for(int i = 0 ; i < size ; i++){
             for(int j = 0 ; j < size ; j++){
-                int index1 = 1;
-                if(i != 0){
-                    while((i/index1) %(stp) >= 1 ){
-                        index1 += stp;
-                        if((i/index1) %(stp) == 0){
-                            index1 -= stp;
-                            break;
-                        }
-                    }
-                }
-                /*if(j != 0){
-                    while((j/index2) %(stp) >= 1 ){
-                        index2 += stp;
-                        if((j/index2) %(stp) == 0){
-                            index2 -= stp;
-                            break;
-                        }
-                    }
-                }*/
-                if(i%stp !=0 || j%stp != 0)
-                    map[i][j] = interpol(interpol((map[index1-1][0]),(map[index1 + stp -1][0]),index1 - i,stp),
-                        interpol((map[index1-1][size - 1]),(map[index1 + stp -1][size - 1]),index1 - i,stp),j,size);
+                int index1 = floor(i/stp)*stp;
+                int index2 = floor(j/stp)*stp;
+                map[i][j] = interpol(interpol((map[index1][index2]),(map[index1 + stp ][index2]),i - index1,stp),
+                        interpol((map[index1][index2 + stp]),(map[index1 + stp][index2 + stp]),i - index1,stp),j - index2,stp);
             }
         }
     }
     for(int i = 0 ; i < slice ; i++)
-        for(int j = 0 ; j < slice ; j++)
+        for(int j = 0 ; j < slice ; j++){
             (ground[i][j])[2] =  map[i][j];
+            colArr[i][j] = 255 - 255*4*float(((ground[i][j])[2]))/float(slice);
+        }
 }
 
 float Mountain::interpol(float beg, float end, float diff, int step){
-    std::cout << end*diff/step << std::endl;
-    return beg*(1 - (float)diff/(float)step) + end*(float)diff/(float)step;
+    return beg + (float)diff*(end -beg)/(float)step;
 }
-
-
-void Mountain::initNoise(int size, int step, int oct){
-     this->oct2D= oct;
-     this->slice = size;
-     this->step2D = step;
-     this->max_size = (int)pow(ceil(this->slice * pow(2, nombre_octaves2D  - 1)  / pas2D),2);
-     ground = (qglviewer::Vec*)malloc(sizeof(qglviewer::Vec)*max_size);
-     for(int i = 0; i < max_size; i++)
-         (ground[i])[2] = (float)rand()/ RAND_MAX;
-}
-
-float Mountain::noise2D(int i, int j){
-
-}
-
-float Mountain::interpol_cos2D(float a, float b, float c, float d, float x, float y){
-
-}
-
-float Mountain::noise2D_function(float x, float y){
-
-}
-
-float Mountain::perlin(float x, float y, float rough){
-
-}
-
 
 
 void Mountain::draw(){
     glBegin(GL_QUADS);
+    float max = 0;
     for(int i = 0 ; i < slice - 1 ; i++){
         for(int j = 0 ; j < slice - 1 ; j++){
-            glColor3f((ground[i][j])[2],255/((ground[i][j])[2]),(ground[i][j])[2]);
+            if((ground[i][j])[2] > max)
+                max = (ground[i][j])[2];
+            glColor3f(0,colArr[i][j],0);
             glVertex3f((ground[i][j])[0],(ground[i][j])[1],(ground[i][j])[2]);
             glVertex3f((ground[i][j+1])[0],(ground[i][j+1])[1],(ground[i][j+1])[2]);
             glVertex3f((ground[i+1][j+1])[0],(ground[i+1][j+1])[1],(ground[i+1][j+1])[2]);
@@ -115,4 +83,6 @@ void Mountain::draw(){
         }
     }
     glEnd();
+    /*std::cout << max << std::endl;
+    std::cout << slice << std::endl;*/
 }

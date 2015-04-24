@@ -207,7 +207,7 @@ Dragon::Dragon() {
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
-    this->mount = new Mountain(51,100,qglviewer::Vec(0,0,0));
+    this->mount = new Mountain(51,200,qglviewer::Vec(0,0,0));
 
     this->skybox = new Skybox(50.0, texture0, texcoord0);
 
