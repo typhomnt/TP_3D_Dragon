@@ -1790,14 +1790,80 @@ void Dragon::createHead(int first, int last){
                                       z1 + 2*R*i*dz,
                                       R));
     }
+    float x_boutMachHaute = skeleton[skeleton.size()-1]->getX();
+    float y_boutMachHaute = skeleton[skeleton.size()-1]->getY();
+    float z_boutMachHaute = skeleton[skeleton.size()-1]->getZ();
     for (int i = 1; i <= 6; i++) {
         skeleton.push_back(new Sphere(x2 + 2*R*i*dx,
                                       y0,
                                       z2 + 2*R*i*dz,
                                       R));
     }
+    float x_boutMachBasse = skeleton[skeleton.size()-1]->getX();
+    float y_boutMachBasse = skeleton[skeleton.size()-1]->getY();
+    float z_boutMachBasse = skeleton[skeleton.size()-1]->getZ();
     float x,y,z,dy;
-    for (int i = indexJawUp; i < (int)skeleton.size(); i++) {
+    skeleton.push_back(new Sphere(x_boutMachHaute + 2*R*(dx*cos(-3.0*M_PI/4.0)-dz*sin(-3.0*M_PI/4.0)),
+                                  y_boutMachHaute,
+                                  z_boutMachHaute + 2*R*(dz*cos(-3.0*M_PI/4.0)+dx*sin(-3.0*M_PI/4.0)),
+                                  R));
+    for (int i = 2; i <= 4; i++) {
+        x = skeleton[skeleton.size()-1]->getX();
+        y = skeleton[skeleton.size()-1]->getY();
+        z = skeleton[skeleton.size()-1]->getZ();
+        skeleton.push_back(new Sphere(x + 2*R*(dx*cos(-3.0*M_PI/4.0)-dz*sin(-3.0*M_PI/4.0)),
+                                      y,
+                                      z + 2*R*(dz*cos(-3.0*M_PI/4.0)+dx*sin(-3.0*M_PI/4.0)),
+                                      R));
+
+    }
+    //float x_endNeck = skeleton[first]->getX();
+    x = skeleton[skeleton.size()-1]->getX() - 2*R*dx;
+    z = skeleton[skeleton.size()-1]->getZ() - 2*R*dz;
+    for (int i = 1; i <= 6; i++)  {
+        skeleton.push_back(new Sphere(x,
+                                      y,
+                                      z,
+                                      R));
+        x = x - 2*R*dx;
+        z = z - 2*R*dz;
+    }
+    x = skeleton[skeleton.size()-1]->getX() - 2*R*dz;
+    z = skeleton[skeleton.size()-1]->getZ() + 2*R*dx;
+    for (int i = 1; i <= 5; i++)  {
+        skeleton.push_back(new Sphere(x,
+                                      y,
+                                      z,
+                                      R));
+        x = x - 2*R*dz;
+        z = z + 2*R*dx;
+    }
+    x = x_boutMachBasse - 2*R*dz;
+    z = z_boutMachBasse + 2*R*dx;
+    skeleton.push_back(new Sphere(x,
+                                  y,
+                                  z,
+                                  R));
+
+    for (int i = 1; i <= 9; i++)  {
+        x = x - 2*R*dx;
+        z = z - 2*R*dz;
+        skeleton.push_back(new Sphere(x,
+                                      y,
+                                      z,
+                                      R));
+    }
+    x = skeleton[skeleton.size()-1]->getX() + 2*R*dz;
+    z = skeleton[skeleton.size()-1]->getZ() - 2*R*dx;
+    for (int i = 1; i <= 3; i++)  {
+        skeleton.push_back(new Sphere(x,
+                                      y,
+                                      z,
+                                      R));
+        x = x + 2*R*dz;
+        z = z - 2*R*dx;
+    }
+    for (int i = first; i < (int)skeleton.size(); i++) {
         x = skeleton[i]->getX();
         y = skeleton[i]->getY();
         z = skeleton[i]->getZ();
