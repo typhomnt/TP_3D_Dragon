@@ -153,15 +153,15 @@ Dragon::Dragon() {
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
-    createBody(indexBody, indexTail-1);
+    /*createBody(indexBody, indexTail-1);
     createTail(30.0, indexTail, indexNeck-1);
     createNeck(indexNeck, indexPawLeftUp-1);
     createPawLeftUp(-70, indexPawLeftUp, indexPawRightUp-1);
     createPawRightUp(-110, indexPawRightUp, indexPawLeftDown-1);
     createPawLeftDown(-70, indexPawLeftDown, indexPawRightDown-1);
     createPawRightDown(-110, indexPawRightDown, indexLastPawRightDown);
-    createHead(indexHead, indexHead+12);
-    wingR1 = (Sphere***)malloc(nbw1*sizeof(Sphere**));
+    createHead(indexHead, indexHead+12);*/
+    /*wingR1 = (Sphere***)malloc(nbw1*sizeof(Sphere**));
     for(int i = 0 ; i < nbw1 ; i++){
         wingR1[i] = (Sphere**)malloc(nbw1*sizeof(Sphere*));
     }
@@ -197,17 +197,17 @@ Dragon::Dragon() {
         for(int j = 0 ; j < nbw2 ; j++){
             wingL2[i][j] = NULL;
         }
-    }
-    wing1root = skeleton[7]->getPosition() + qglviewer::Vec (0,5*R,5*R);
+    }*/
+    /*wing1root = skeleton[7]->getPosition() + qglviewer::Vec (0,5*R,5*R);
     wing2root = skeleton[7]->getPosition() + qglviewer::Vec (0,-5*R,5*R);
     createWingR();
     meshWingR();
     createWingL();
-    meshWingL();
+    meshWingL();*/
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
-    this->mount = new Mountain(51,200,qglviewer::Vec(0,0,0));
+    this->mount = new Mountain(51,70,qglviewer::Vec(0,0,0));
 
     this->skybox = new Skybox(50.0, texture0, texcoord0);
 
@@ -309,7 +309,7 @@ void Dragon::init(Viewer &v) {
     gravity = defaultGravity;
     viscosity = 1.0;
     dt = 0.01;
-    for(int i = 0; i < (int)skeleton.size(); i++){
+    /*for(int i = 0; i < (int)skeleton.size(); i++){
         Sphere* s = skeleton[i];
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
             Sphere* s = *it;
@@ -445,7 +445,7 @@ void Dragon::init(Viewer &v) {
                 wingL2[i][j]->init(v);
             }
         }
-    }
+    }*/
     grass->init(v);
     mount->build();
     skybox->setProgram(program);
@@ -866,7 +866,7 @@ void Dragon::draw(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
 
 
-    drawWingR();
+    /*drawWingR();
     drawWingL();
     glPushMatrix();
     drawBody(indexBody, indexTail-1);
@@ -905,7 +905,7 @@ void Dragon::draw(){
     drawSkeleton();
     //drawMeshWingR();
     grass->draw();
-    glPopMatrix();
+    glPopMatrix();*/
 
     glPushMatrix();
     mount->draw();

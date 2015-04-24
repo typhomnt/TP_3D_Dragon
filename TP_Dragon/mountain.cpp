@@ -40,11 +40,11 @@ void Mountain::build(){
     for(int i = 0 ; i < size ; i++)
         for(int j = 0 ; j < size ; j++)
             map[i][j] = 0;
-    for(int n = ceil(log2(slice)) - 1 ; n >  1 ; n--){
+    for(int n = ceil(log2(slice)) - 1; n >  1 ; n--){
         int stp = pow(2,n);
         for(int i = 0 ; i < size ; i+= stp){
             for(int j = 0 ; j < size ; j+= stp){
-                map[i][j] += ((float)rand()/(float)RAND_MAX)*stp/6;
+                map[i][j] += ((float)rand()/(float)RAND_MAX)*stp;
             }
         }
         for(int i = 0 ; i < size ; i++){
@@ -59,12 +59,13 @@ void Mountain::build(){
     for(int i = 0 ; i < slice ; i++)
         for(int j = 0 ; j < slice ; j++){
             (ground[i][j])[2] =  map[i][j];
-            colArr[i][j] = 255 - 255*4*float(((ground[i][j])[2]))/float(slice);
+            colArr[i][j] = float(10*((ground[i][j])[2]))/float(slice);
         }
 }
 
 float Mountain::interpol(float beg, float end, float diff, int step){
-    return beg + (float)diff*(end -beg)/(float)step;
+    //return beg + (float)diff*(end -beg)/(float)step;
+    return beg + (end - beg)*sin(float(M_PI*diff)/float(step*2));
 }
 
 
