@@ -2541,7 +2541,7 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
             for (int i = indexTail; i < indexNeck; i++) {
                 std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angleRot, 1, 4);
                 hermiteQueue[i-indexTail] = Hermite::generate(tmp, 0.1);
-                angleRot *= 1.5;
+                angleRot *= 1.1;
             }
         }
         else
@@ -2582,6 +2582,7 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
                                                         int xyz, int nbPts) {
     // On récupère la sphère correspondant à l'indice i
     qglviewer::Vec v = skeleton[i]->getPosition();
+    qglviewer::Vec origin = skeleton[indexTail]->getPosition();
 
     // On crée le vecteur résultat
     std::vector<qglviewer::Vec> res;
@@ -2589,27 +2590,28 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
 
     // A chaque itéation, on calcule la rotation du pt
     for (int i = 1; i < nbPts; i++) {
-        qglviewer::Vec tmp;
+        qglviewer::Vec tmp = res[i-1] - origin;
         switch (xyz) {
             case 0:     // Rotation axe X
-                tmp[0] = res[i-1][0];
-                tmp[1] = res[i-1][1]*cos(angle) - res[i-1][2]*sin(angle);
-                tmp[2] = res[i-1][1]*sin(angle) + res[i-1][2]*cos(angle);
+                tmp[0] = tmp[0];
+                tmp[1] = tmp[1]*cos(angle) - tmp[2]*sin(angle);
+                tmp[2] = tmp[1]*sin(angle) + tmp[2]*cos(angle);
             break;
             case 1:     // Rotation axe Y
-                tmp[0] =  res[i-1][0]*cos(angle) - res[i-1][2]*sin(angle);
-                tmp[1] =  res[i-1][1];
-                tmp[2] = res[i-1][0]*sin(angle) + res[i-1][2]*cos(angle);
+                tmp[0] =  tmp[0]*cos(angle) - tmp[2]*sin(angle);
+                tmp[1] =  tmp[1];
+                tmp[2] = tmp[0]*sin(angle) + tmp[2]*cos(angle);
             break;
             case 2:     // Rotation axe Z
-                tmp[0] = res[i-1][0]*cos(angle) - res[i-1][1]*sin(angle);
-                tmp[1] = res[i-1][0]*sin(angle) + res[i-1][1]*cos(angle);
-                tmp[2] = res[i-1][2];
+                tmp[0] = tmp[0]*cos(angle) - tmp[1]*sin(angle);
+                tmp[1] = tmp[0]*sin(angle) + tmp[1]*cos(angle);
+                tmp[2] = tmp[2];
             break;
             default:
                 throw std::invalid_argument("generateCtlPts: saisie invalide");
             break;
         }
+        tmp += origin;
         res.push_back(tmp);
     }
 
