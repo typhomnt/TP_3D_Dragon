@@ -153,15 +153,16 @@ Dragon::Dragon() {
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
-    /*createBody(indexBody, indexTail-1);
-    createTail(30.0, indexTail, indexNeck-1)
+
+    createBody(indexBody, indexTail-1);
+    createTail(30.0, indexTail, indexNeck-1);
     createNeck(indexNeck, indexPawLeftUp-1);
     createPawLeftUp(-70, indexPawLeftUp, indexPawRightUp-1);
     createPawRightUp(-110, indexPawRightUp, indexPawLeftDown-1);
     createPawLeftDown(-70, indexPawLeftDown, indexPawRightDown-1);
     createPawRightDown(-110, indexPawRightDown, indexLastPawRightDown);
-    createHead(indexHead, indexHead+12);*/
-    /*wingR1 = (Sphere***)malloc(nbw1*sizeof(Sphere**));
+    createHead(indexHead, indexHead+12);
+    wingR1 = (Sphere***)malloc(nbw1*sizeof(Sphere**));
     for(int i = 0 ; i < nbw1 ; i++){
         wingR1[i] = (Sphere**)malloc(nbw1*sizeof(Sphere*));
     }
@@ -197,13 +198,13 @@ Dragon::Dragon() {
         for(int j = 0 ; j < nbw2 ; j++){
             wingL2[i][j] = NULL;
         }
-    }*/
-    /*wing1root = skeleton[7]->getPosition() + qglviewer::Vec (0,5*R,5*R);
+    }
+    wing1root = skeleton[7]->getPosition() + qglviewer::Vec (0,5*R,5*R);
     wing2root = skeleton[7]->getPosition() + qglviewer::Vec (0,-5*R,5*R);
     createWingR();
     meshWingR();
     createWingL();
-    meshWingL();*/
+    meshWingL();
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
@@ -309,7 +310,7 @@ void Dragon::init(Viewer &v) {
     gravity = defaultGravity;
     viscosity = 1.0;
     dt = 0.01;
-    /*for(int i = 0; i < (int)skeleton.size(); i++){
+    for(int i = 0; i < (int)skeleton.size(); i++){
         Sphere* s = skeleton[i];
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
             Sphere* s = *it;
@@ -321,6 +322,8 @@ void Dragon::init(Viewer &v) {
         }
         s->init(v);
     }
+
+        
     for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
         Sphere* s = *it;
         if (s->estTexturee())
@@ -445,7 +448,7 @@ void Dragon::init(Viewer &v) {
                 wingL2[i][j]->init(v);
             }
         }
-    }*/
+    }
     grass->init(v);
     mount->build();
     skybox->setProgram(program);
@@ -574,6 +577,8 @@ void Dragon::animate(){
         third_angle_wing--;
         time_wing3-=0.1;
     }*/
+
+    /*
     diffBody = skeleton[indexBody]->getPosition();
     diffNeck = skeleton[indexNeck]->getPosition();
     diffTail = skeleton[indexTail]->getPosition();
@@ -682,6 +687,7 @@ void Dragon::animate(){
             }
         }
     }*/
+        /*
     tp++;
     if(walk){
         if(paw1w){
@@ -801,11 +807,11 @@ void Dragon::animate(){
     fly_up = false;
     fact+=1.5;
 
-
+    */
     //Roation de la queue
     if (moveQueue)
         moveTail();
-
+    /*
     //
     updateWingPos();
     diffBody -= skeleton[indexBody]->getPosition();
@@ -815,7 +821,8 @@ void Dragon::animate(){
     diffPawLU -= skeleton[indexPawLeftUp]->getPosition();
     diffPawRD -= skeleton[indexPawRightDown]->getPosition();
     diffPawRU -= skeleton[indexPawRightUp]->getPosition();
-    updateDrag();
+    //updateDrag();
+    */
 }
 
 void Dragon::updateDrag(){
@@ -899,13 +906,13 @@ void Dragon::draw(){
     glPushMatrix();
     drawHead(indexHead, indexHead+12);
     glPopMatrix();
+    */
 
-
-    drawSprings();
+    //drawSprings();
     drawSkeleton();
     //drawMeshWingR();
-    grass->draw();
-    glPopMatrix();*/
+    //grass->draw();
+    glPopMatrix();
 
     glPushMatrix();
     mount->draw();
@@ -2520,6 +2527,8 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
             + (toggleGravity ? QString("true") : QString("false")));*/
 
     } else if ((e->key()==Qt::Key_D) && (modifiers==Qt::NoButton)) {
+        for(int i = 0; i < hermiteQueue[0].size(); i++)
+        std::cout << hermiteQueue[0][i] << std::endl;
         /*toggleViscosity = !toggleViscosity;
         setViscosity(toggleViscosity);
         viewer.displayMessage("Set viscosity to "
@@ -2529,9 +2538,11 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         // On met à jour le vecteur indiquant la position des sphères de la queue
         if (!this->moveQueue) {
             this->moveQueue = true;
+            double angleRot = M_PI / 16;
             for (int i = indexTail; i < indexNeck; i++) {
-                std::vector<qglviewer::Vec> tmp = generateCtlPts(i, M_PI/6, 1, 4);
+                std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angleRot, 1, 4);
                 hermiteQueue[i-indexTail] = Hermite::generate(tmp, 0.1);
+                angleRot *= 1.1;
             }
         }
         else
@@ -2571,11 +2582,11 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
                                                         int xyz, int nbPts) {
     // On récupère la sphère correspondant à l'indice i
-    qglviewer::Vec v = tail[i]->getPosition();
+    qglviewer::Vec v = skeleton[i]->getPosition();
 
     // On crée le vecteur résultat
-    std::vector<qglviewer::Vec> res(nbPts);
-    res[0] = v;
+    std::vector<qglviewer::Vec> res;
+    res.push_back(v);
 
     // A chaque itéation, on calcule la rotation du pt
     for (int i = 1; i < nbPts; i++) {
@@ -2584,7 +2595,7 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
             case 0:     // Rotation axe X
                 tmp[0] = res[i-1][0];
                 tmp[1] = res[i-1][1]*cos(angle) - res[i-1][2]*sin(angle);
-                tmp[1] = res[i-1][1]*sin(angle) + res[i-1][2]*cos(angle);
+                tmp[2] = res[i-1][1]*sin(angle) + res[i-1][2]*cos(angle);
             break;
             case 1:     // Rotation axe Y
                 tmp[0] =  res[i-1][0]*cos(angle) - res[i-1][2]*sin(angle);
@@ -2593,7 +2604,7 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
             break;
             case 2:     // Rotation axe Z
                 tmp[0] = res[i-1][0]*cos(angle) - res[i-1][1]*sin(angle);
-                tmp[0] = res[i-1][0]*sin(angle) + res[i-1][1]*cos(angle);
+                tmp[1] = res[i-1][0]*sin(angle) + res[i-1][1]*cos(angle);
                 tmp[2] = res[i-1][2];
             break;
             default:
