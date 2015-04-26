@@ -441,8 +441,8 @@ void Dragon::animate(){
 
     firesmoke->setOrigin(qglviewer::Vec(skeleton[indexJawUp]->getX() - R,skeleton[indexJawUp]->getY() + R,skeleton[indexJawUp]->getZ() + R));
 
-    smoke1->setOrigin(qglviewer::Vec(1,1,1));
-    smoke2->setOrigin(qglviewer::Vec(-1,-1,-1));
+    smoke1->setOrigin(skeleton[indexNoseLeft]->getPosition());
+    smoke2->setOrigin(skeleton[indexNoseRight]->getPosition());
 
 
     if (firesmoke->isActive())
