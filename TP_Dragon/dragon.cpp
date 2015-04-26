@@ -81,7 +81,7 @@ static float walkstep = 0.05;
 static float tks = 0.03;
 static float fact = 1;
 static float tailAngle = M_PI/16;
-static float neckAngle = -M_PI/16;
+static float neckAngle = M_PI/16;
 static qglviewer::Vec diffBody ;
 static qglviewer::Vec diffNeck ;
 static qglviewer::Vec diffTail ;
@@ -219,8 +219,8 @@ Dragon::Dragon() {
 
     hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
     this->moveQueue = false;
-    hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead-1);
-    this->moveQueue = false;
+    hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead);
+    this->moveNeck = false;
 }
 
 
@@ -726,7 +726,7 @@ void Dragon::animate(){
         moveTail();
     //Rotation du cou
     if (moveNeck)
-        ;
+        moveNeckHead();
     /*
     //
     updateWingPos();
@@ -2556,8 +2556,14 @@ void Dragon::computeTail(float angle){
 void Dragon::computeNeck(float angle){
     for (int i = indexNeck; i < indexPawLeftUp; i++) {
         std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4,indexNeck);
-        hermiteQueue[i-indexNeck] = Hermite::generate(tmp, 0.05);
+        hermiteTete[i-indexNeck] = Hermite::generate(tmp, 0.05);
         angle *= 1.01;
+    }
+    int beginHeadHermite = indexPawLeftUp - indexNeck;
+    for (int i = beginHeadHermite; i < skeleton.size() - indexHead + beginHeadHermite; i++) {
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i - beginHeadHermite + indexHead , angle, 1, 4,indexNeck);
+        hermiteTete[i] = Hermite::generate(tmp, 0.05);
+        //angle *= 1.01;
     }
 }
 
@@ -2690,10 +2696,13 @@ void Dragon::moveTail() {
 void Dragon::moveNeckHead() {
     if(walk)
         walk = false;
-    for (int i = indexNeck; i < indexPawLeftUp; i++) {
+    for (int i = indexNeck; i < indexPawLeftUp; i++)
         skeleton[i]->setPosition(hermiteTete[i-indexNeck][dtTete]);
-    }
-
+   for(int i = indexHead ; i < skeleton.size() ; i++)
+        skeleton[i]->setPosition(hermiteTete[i + (indexPawLeftUp - indexNeck) - indexHead][dtTete]);
+    if ((dtTete + 1) % hermiteTete[0].size() == 0)
+        moveNeck = false;
+    dtTete++;
     /*// Si on arrive à la fin du mouvement, on le fait dans l'autre sens
     if ((dtQueue + 1) % hermiteQueue[0].size() == 0)
         retourQueue = true;
