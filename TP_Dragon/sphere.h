@@ -46,7 +46,7 @@ class Sphere : public Renderable
         void incrPosition(const qglviewer::Vec &pos);
         void incrVelocity(const qglviewer::Vec &vel);
 
-        void setColor(float r, float g, float b, float a);
+        void setColor(GLubyte r, GLubyte g, GLubyte b, GLubyte a);
         void setFixed(bool b);
         bool getFixed() const;
 	private:
@@ -76,10 +76,10 @@ class Sphere : public Renderable
 
         bool fixed;
 
-        float r;
-        float g;
-        float b;
-        float a;
+        GLubyte r;
+        GLubyte g;
+        GLubyte b;
+        GLubyte a;
 
 };
 #endif

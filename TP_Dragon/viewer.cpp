@@ -32,6 +32,7 @@ void Viewer::addRenderable(Renderable *r)
 void Viewer::init()
 {
 	// glut initialisation (mandatory)
+    toggleRecord = false;
 	int dum = 0;
 	glutInit(&dum, NULL);
 
@@ -72,6 +73,8 @@ void Viewer::draw()
 			end = renderableList.end(); it != end; ++ it ) {
 		(*it)->draw();
 	}
+    if (toggleRecord)
+        saveSnapshot();
 }
 
 
@@ -128,7 +131,9 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 			glDisable(GL_LIGHTING);       
 	// ... and so on with all events to handle here!
 
-	} else {
+    } else if (e->key() == Qt::Key_R) {
+        toggleRecord = !toggleRecord;
+    } else {
 		// if the event is not handled here, process it as default
 		QGLViewer::keyPressEvent(e);
 	}

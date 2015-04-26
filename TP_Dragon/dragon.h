@@ -3,7 +3,6 @@
 #include "renderable.h"
 #include "shader.h"
 #include "cylinder.h"
-#include "trapezeIsocele.h"
 #include "sphere.h"
 #include "spring.h"
 #include "firesmoke.h"
@@ -29,30 +28,19 @@ public:
     void collisionParticleParticle(Sphere *s1, Sphere *s2);
 
 private:
-    void drawBody(int first, int last);
-    void drawTail(int first, int last);
-    void drawNeck(int first, int last);
-    // Draw the left claw of the left paw if leftPaw==true and leftClaw==true
-    void drawClaw(bool leftPaw, bool leftClaw);
-    // Draw the left paw if left==true else the right paw
-    void drawPawLeftUp(int first, int last);
-    void drawPawRightUp(int first, int last);
-    void drawPawLeftDown(int first, int last);
-    void drawPawRightDown(int first, int last);
-    void drawWing(bool left);
     void drawHead(int first);
+    void drawPart(int first, int last);
 
     void createBody(int first, int last);
     void completeTail(int first, int last, bool dessus);
     void createTail(int first, int last);
     void createNeck(int first, int last);
-    void completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, int first, int last);
+    void completePaw(int first, int last);
     void createPawLeftUp(float angle, int first, int last);
     void createPawRightUp(float angle, int first, int last);
     void createPawLeftDown(float angle, int first, int last);
     void createPawRightDown(float angle, int first, int last);
     void createHead(int first);
-    void drawSkeleton();
     void drawSprings();
     void createWingR();
     void drawWingR();
@@ -72,17 +60,6 @@ private:
     void updateHermit(std::vector<qglviewer::Vec> diff);
 
     std::vector<Sphere*> skeleton;
-    std::vector<Sphere*> body;
-    std::vector<Sphere*> tail;
-    std::vector<Sphere*> neck;
-    std::vector<Sphere*> pawLeftUp;
-    std::vector<Sphere*> pawRightUp;
-    std::vector<Sphere*> pawLeftDown;
-    std::vector<Sphere*> pawRightDown;
-    std::vector<Sphere*> footLeftUp;
-    std::vector<Sphere*> footRightUp;
-    std::vector<Sphere*> footLeftDown;
-    std::vector<Sphere*> footRightDown;
     int nbSpheresContourBody;
     int nbSpheresContourTail;
     int nbSpheresContourNeck;
@@ -123,8 +100,6 @@ private:
     int indexWing4;
     int indexWing5;
     int indexWing6;
-    TrapezeIsocele *t;
-    TrapezeIsocele *t2;
 
     float first_angle_wing;
     bool first_angle_wing_up;
@@ -154,11 +129,6 @@ private:
 
     double mass;
 
-    Sphere*** wingR1;
-    Sphere*** wingR2;
-    Sphere*** wingL1;
-    Sphere*** wingL2;
-
     Sphere* dragPart;
 
     //std::vector<Renderable> component_list;
@@ -166,7 +136,7 @@ private:
 
     // textures used in this practical
 
-    GLuint tex_body,tex_field,tex_feu,tex_ail,tex_skeleton;
+    GLuint tex_body,tex_field,tex_feu,tex_aile,tex_skeleton,tex_eye;
 
 
 
