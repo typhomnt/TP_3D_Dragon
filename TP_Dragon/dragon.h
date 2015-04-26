@@ -72,6 +72,7 @@ private:
     void computeWings(float angle);
     void walking();
     void updateHermit(std::vector<qglviewer::Vec> diff);
+    void fly(float z);
 
     std::vector<Sphere*> skeleton;
     std::vector<Sphere*> body;
