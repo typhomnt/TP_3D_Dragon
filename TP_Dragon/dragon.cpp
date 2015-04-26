@@ -81,7 +81,7 @@ static float walkstep = 0.05;
 static float tks = 0.03;
 static float fact = 1;
 static float tailAngle = M_PI/16;
-static float neckAngle = -M_PI/16;
+static float neckAngle = M_PI/16;
 static qglviewer::Vec diffBody ;
 static qglviewer::Vec diffNeck ;
 static qglviewer::Vec diffTail ;
@@ -113,14 +113,13 @@ Dragon::Dragon() {
     R = 0.1;
     lo=R/2;
     nbSpheresBody = 15;
-    nbSpheresTail = 25;
+    nbSpheresTail = 30;
     nbSpheresNeck = 15;
     nbSpheresPaw = 13;
     nbSpheresContourBody = 16;
     nbSpheresContourTail = 16;
     nbSpheresContourNeck = 12;
     nbSpheresContourPaw = 12;
-    nbSpheresJaw = 12;
     lo1=1/meshStep;
     lo2 = 0;
     indexBody = 0;
@@ -132,7 +131,7 @@ Dragon::Dragon() {
     indexPawRightDown = indexPawLeftDown + nbSpheresPaw;
     indexLastPawRightDown = indexPawRightDown + nbSpheresPaw-1;
     indexHead = indexPawRightDown + nbSpheresPaw;
-    thicknessBody = 8*R;
+    thicknessBody = 4*R;
     mass = 3000;
     qglviewer::Vec initPos = qglviewer::Vec(0,0,15);
     qglviewer::Vec initVec = qglviewer::Vec(0,0,0);
@@ -158,15 +157,14 @@ Dragon::Dragon() {
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
-
     createBody(indexBody, indexTail-1);
-    createTail(30.0, indexTail, indexNeck-1);
+    createTail(indexTail, indexNeck-1);
     createNeck(indexNeck, indexPawLeftUp-1);
     createPawLeftUp(-70, indexPawLeftUp, indexPawRightUp-1);
     createPawRightUp(-110, indexPawRightUp, indexPawLeftDown-1);
     createPawLeftDown(-70, indexPawLeftDown, indexPawRightDown-1);
     createPawRightDown(-110, indexPawRightDown, indexLastPawRightDown);
-    createHead(indexHead, indexHead+12);
+    createHead(indexHead);
     wingR1 = (Sphere***)malloc(nbw1*sizeof(Sphere**));
     for(int i = 0 ; i < nbw1 ; i++){
         wingR1[i] = (Sphere**)malloc(nbw1*sizeof(Sphere*));
@@ -206,10 +204,22 @@ Dragon::Dragon() {
     }
     wing1root = skeleton[7]->getPosition() + qglviewer::Vec (0,5*R,5*R);
     wing2root = skeleton[7]->getPosition() + qglviewer::Vec (0,-5*R,5*R);
+    nbSpheresWings1 = 20;
+    nbSpheresWings2 = 30;
+    nbSpheresWings3 = 26;
+    nbSpheresWings4 = 22;
+    nbSpheresWings5 = 20;
+    nbSpheresWings6 = 8;
+    indexWing2 = nbSpheresWings1;
+    indexWing3 = indexWing2 + nbSpheresWings2;
+    indexWing4 = indexWing3 + nbSpheresWings3;
+    indexWing5 = indexWing4 + nbSpheresWings4;
+    indexWing6 = indexWing5 + nbSpheresWings5;
+
     createWingR();
-    meshWingR();
+    //meshWingR();
     createWingL();
-    meshWingL();
+    //meshWingL();
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
@@ -219,8 +229,8 @@ Dragon::Dragon() {
 
     hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
     this->moveQueue = false;
-    hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead-1);
-    this->moveQueue = false;
+    hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead);
+    this->moveNeck = false;
 }
 
 
@@ -287,6 +297,14 @@ Dragon::~Dragon() {
         Sphere* s = *it;
         delete s;
     }
+    for(std::vector<Sphere*>::iterator it = wingLeft.begin() ; it != wingLeft.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
+    for(std::vector<Sphere*>::iterator it = wingRight.begin() ; it != wingRight.end(); it++){
+        Sphere* s = *it;
+        delete s;
+    }
 
 }
 
@@ -321,11 +339,18 @@ void Dragon::init(Viewer &v) {
         Sphere* s = skeleton[i];
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
             Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
+           // if (s->estTexturee())
+             //   s->setTexture(tex_body);
+             //else
                 s->setColor(0,0,20,0);
             s->init(v);
+        }
+        if (i >= indexHead) {
+            if ((i == indexEyeLeft) || (i == indexEyeRight)) {
+                s->setTexture(tex_skeleton);
+            } else {
+                s->setTexture(tex_body);
+            }
         }
         s->init(v);
     }
@@ -419,10 +444,27 @@ void Dragon::init(Viewer &v) {
             s->setColor(0,0,20,0);
         s->init(v);
     }
+    for(std::vector<Sphere*>::iterator it = wingLeft.begin() ; it != wingLeft.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
+    for(std::vector<Sphere*>::iterator it = wingRight.begin() ; it != wingRight.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
 
 
-    int somme = skeleton.size() + body.size() + tail.size() + neck.size() +
-            pawLeftUp.size() + pawRightUp.size() + pawLeftDown.size() + pawRightDown.size();
+    int somme = 0;
+    for(int i = 0; i < (int)skeleton.size(); i++){
+        somme++;
+        Sphere* s = skeleton[i];
+        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
+            somme++;
+        }
+    }
+    somme = somme + wingLeft.size() + wingRight.size();
     printf("nb total = %i\n", somme);
     for(int i = 0 ; i < nbw1 ; i++){
         for(int j= 0 ; j < nbw1 ; j++){
@@ -726,7 +768,7 @@ void Dragon::animate(){
         moveTail();
     //Rotation du cou
     if (moveNeck)
-        ;
+        moveNeckHead();
     /*
     //
     updateWingPos();
@@ -897,7 +939,7 @@ void Dragon::draw(){
 
 
     GLCHECK(glUseProgram( (GLint)program ));
-    skybox->draw();
+    //skybox->draw();
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
@@ -909,7 +951,7 @@ void Dragon::draw(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
 
 
-    /*drawWingR();
+    drawWingR();
     drawWingL();
     glPushMatrix();
     drawBody(indexBody, indexTail-1);
@@ -940,9 +982,8 @@ void Dragon::draw(){
     glPopMatrix();
 
     glPushMatrix();
-    drawHead(indexHead, indexHead+12);
+    drawHead(indexHead);
     glPopMatrix();
-    */
 
     //drawSprings();
     drawSkeleton();
@@ -1109,13 +1150,17 @@ void Dragon::drawPawRightDown(int first, int last) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Dragon::drawHead(int first, int last) {
+void Dragon::drawHead(int first) {
     for (int i = first; i < (int)skeleton.size(); i++) {
         skeleton[i]->draw();
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
             Sphere* s = *it;
             s->draw();
         }
+    }
+    for(std::vector<Tooth*>::iterator it = teeths.begin() ; it != teeths.end(); it++){
+        Tooth* t = *it;
+        t->draw();
     }
 }
 
@@ -1205,7 +1250,7 @@ void Dragon::createBody(int first, int last){
 }
 
 ////////////////////////////////////////////////////////////////////
-void Dragon::createTail(float angle, int first, int last){
+void Dragon::createTail(int first, int last){
     float x0 = skeleton[first-1]->getX();
     float z0 = skeleton[first-1]->getZ();
     for (int i = first; i <= last; i++) {
@@ -1254,7 +1299,7 @@ void Dragon::createTail(float angle, int first, int last){
                     contour[contour.size()-1]->doitEtreTexturee(false);
                 }
         }
-        thicknessTail = thicknessTail - 4*R/((last-first)/2+1);
+        thicknessTail = thicknessTail - 0.75*thicknessBody/((last-first)/2+1);
     }
     for (int i = (last+first)/2 + 1; i < last; i++) {
         x1 = skeleton[i]->getX() - skeleton[i-1]->getX();
@@ -1292,7 +1337,7 @@ void Dragon::createTail(float angle, int first, int last){
                 contour[contour.size()-1]->doitEtreTexturee(false);
             }
         }
-        thicknessTail = thicknessTail-2*R/(last-first);
+        thicknessTail = thicknessTail-0.5*thicknessBody/(last-first);
     }
     x1 = skeleton[last]->getX() - skeleton[last-1]->getX();
     z1 = skeleton[last]->getZ() - skeleton[last-1]->getZ();
@@ -1783,7 +1828,7 @@ void Dragon::drawSprings(){
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-void Dragon::createHead(int first, int last){
+void Dragon::createHead(int first){
     float x0 = skeleton[indexPawLeftUp-1]->getX();
     float y0 = skeleton[indexPawLeftUp-1]->getY();
     float z0 = skeleton[indexPawLeftUp-1]->getZ();
@@ -1792,10 +1837,9 @@ void Dragon::createHead(int first, int last){
     float norme = sqrt(dx*dx + dz*dz);
     dx = dx/norme;
     dz = dz/norme;
-    nbSpheresJaw = 11;
-    indexJawUp = first;
+    indexJawUp = first-1;
     //fin du cou;
-    for (int i = 1; i <= 4; i++) {
+    for (int i = 1; i <= 2; i++) {
         skeleton.push_back(new Sphere(x0 + 2*R*i*dx,
                                       y0,
                                       z0 + 2*R*i*dz,
@@ -1806,123 +1850,192 @@ void Dragon::createHead(int first, int last){
     x0 = skeleton[skeleton.size()-1]->getX();
     z0 = skeleton[skeleton.size()-1]->getZ();
     //machoire haute
-    for (int i = 1; i <= 3; i++) {
-        skeleton.push_back(new Sphere(x0 + 2*R*i*dz,
+    for (int i = 1; i <= 4; i++) {
+        skeleton.push_back(new Sphere(x0 + R*i*dz,
                                       y0,
-                                      z0 - 2*R*i*dx,
+                                      z0 - R*i*dx,
                                       R));
+        indexJawDown++;
     }
-    skeleton.push_back(new Sphere(skeleton[indexJawUp]->getX(),
-                                  skeleton[indexJawUp]->getY(),
-                                  skeleton[indexJawUp]->getZ(),
-                                  R));
-    indexJawDown++;
-    float x1 = skeleton[skeleton.size()-2]->getX();
-    float z1 = skeleton[skeleton.size()-2]->getZ();
-    for (int i = 1; i <= 3; i++) {
-        skeleton.push_back(new Sphere(x0 - 2*R*i*dz,
-                                      y0,
-                                      z0 + 2*R*i*dx,
-                                      R));
-    }
-    float x2 = skeleton[skeleton.size()-1]->getX();
-    float z2 = skeleton[skeleton.size()-1]->getZ();
-    for (int i = 1; i <= 6; i++) {
+    int i_debutMachoireHaute = skeleton.size()-1;
+    float x1 = skeleton[i_debutMachoireHaute]->getX();
+    float z1 = skeleton[i_debutMachoireHaute]->getZ();
+    for (int i = 1; i <= 4; i++) {
         skeleton.push_back(new Sphere(x1 + 2*R*i*dx,
                                       y0,
                                       z1 + 2*R*i*dz,
                                       R));
+        indexJawDown++;
     }
-    float x_boutMachHaute = skeleton[skeleton.size()-1]->getX();
-    float y_boutMachHaute = skeleton[skeleton.size()-1]->getY();
-    float z_boutMachHaute = skeleton[skeleton.size()-1]->getZ();
-    for (int i = 1; i <= 6; i++) {
+    int i_boutMachHaute = (int)skeleton.size()-1;
+    skeleton.push_back(new Sphere(skeleton[indexJawUp]->getX(),
+                                  y0,
+                                  skeleton[indexJawUp]->getZ(),
+                                  R));
+    indexJawDown++;
+    for (int i = 1; i <= 4; i++) {
+        skeleton.push_back(new Sphere(x0 - R*i*dz,
+                                      y0,
+                                      z0 + R*i*dx,
+                                      R));
+    }
+    float x2 = skeleton[skeleton.size()-1]->getX();
+    float z2 = skeleton[skeleton.size()-1]->getZ();
+    for (int i = 1; i <= 4; i++) {
         skeleton.push_back(new Sphere(x2 + 2*R*i*dx,
                                       y0,
                                       z2 + 2*R*i*dz,
                                       R));
     }
-    float x_boutMachBasse = skeleton[skeleton.size()-1]->getX();
-    float y_boutMachBasse = skeleton[skeleton.size()-1]->getY();
-    float z_boutMachBasse = skeleton[skeleton.size()-1]->getZ();
+    int i_boutMachBasse = skeleton.size()-1;
     float x,y,z,dy;
-    skeleton.push_back(new Sphere(x_boutMachHaute + 2*R*(dx*cos(-3.0*M_PI/4.0)-dz*sin(-3.0*M_PI/4.0)),
-                                  y_boutMachHaute,
-                                  z_boutMachHaute + 2*R*(dz*cos(-3.0*M_PI/4.0)+dx*sin(-3.0*M_PI/4.0)),
-                                  R));
-    for (int i = 2; i <= 4; i++) {
-        x = skeleton[skeleton.size()-1]->getX();
-        y = skeleton[skeleton.size()-1]->getY();
-        z = skeleton[skeleton.size()-1]->getZ();
-        skeleton.push_back(new Sphere(x + 2*R*(dx*cos(-3.0*M_PI/4.0)-dz*sin(-3.0*M_PI/4.0)),
-                                      y,
-                                      z + 2*R*(dz*cos(-3.0*M_PI/4.0)+dx*sin(-3.0*M_PI/4.0)),
-                                      R));
-
-    }
-    //float x_endNeck = skeleton[first]->getX();
-    x = skeleton[skeleton.size()-1]->getX() - 2*R*dx;
-    z = skeleton[skeleton.size()-1]->getZ() - 2*R*dz;
-    for (int i = 1; i <= 6; i++)  {
-        skeleton.push_back(new Sphere(x,
-                                      y,
-                                      z,
-                                      R));
-        x = x - 2*R*dx;
-        z = z - 2*R*dz;
-    }
-    x = skeleton[skeleton.size()-1]->getX() - 2*R*dz;
-    z = skeleton[skeleton.size()-1]->getZ() + 2*R*dx;
-    for (int i = 1; i <= 5; i++)  {
-        skeleton.push_back(new Sphere(x,
-                                      y,
-                                      z,
-                                      R));
-        x = x - 2*R*dz;
-        z = z + 2*R*dx;
-    }
-    x = x_boutMachBasse - 2*R*dz;
-    z = z_boutMachBasse + 2*R*dx;
-    skeleton.push_back(new Sphere(x,
-                                  y,
-                                  z,
-                                  R));
-
-    for (int i = 1; i <= 9; i++)  {
-        x = x - 2*R*dx;
-        z = z - 2*R*dz;
-        skeleton.push_back(new Sphere(x,
-                                      y,
-                                      z,
-                                      R));
-    }
-    x = skeleton[skeleton.size()-1]->getX() + 2*R*dz;
-    z = skeleton[skeleton.size()-1]->getZ() - 2*R*dx;
-    for (int i = 1; i <= 3; i++)  {
-        skeleton.push_back(new Sphere(x,
-                                      y,
-                                      z,
-                                      R));
-        x = x + 2*R*dz;
-        z = z - 2*R*dx;
-    }
     for (int i = first; i < (int)skeleton.size(); i++) {
         x = skeleton[i]->getX();
         y = skeleton[i]->getY();
         z = skeleton[i]->getZ();
         dy = dx*dx + dz*dz;
         std::vector<Sphere*> &contour = skeleton[i]->getContour();
-        for (int j = -3; j <= 3; j++) {
-            contour.push_back(new Sphere(x,
-                                         y + 2*R*j*dy,
-                                         z,
-                                         R));
+        if (((i - indexJawUp >= 0) && (i -indexJawUp <= 4)) || ((i - indexJawDown >= 0) && (i -indexJawDown <= 4))) {
+            for (int j = -2; j <= 2; j++) {
+                contour.push_back(new Sphere(x,
+                                             y + R*j*dy,
+                                             z,
+                                             R));
+            }
+        } else {
+            for (int j = -1; j <= 1; j++) {
+                contour.push_back(new Sphere(x,
+                                             y + 2*R*j*dy,
+                                             z,
+                                             R));
+            }
         }
+    }
+    Sphere* s = skeleton[i_boutMachHaute]->getContour()[0];
+    skeleton.push_back(new Sphere(s->getX() + 2*R*dz,
+                                  s->getY(),
+                                  s->getZ() - 2*R*dx,
+                                  1.25*R));
+    s = skeleton[i_boutMachHaute]->getContour()[2];
+    skeleton.push_back(new Sphere(s->getX() + 2*R*dz,
+                                  s->getY(),
+                                  s->getZ() - 2*R*dx,
+                                  1.25*R));
+    for (int i = 0; i <= 2; i++) {
+        s = skeleton[i_debutMachoireHaute + i];
+        std::vector<Sphere*> &contour = s->getContour();
+        if (i == 0) {
+            for (int j = 0; j <= 4; j++) {
+                Sphere* s2 = contour[j];
+                for (int k = 1; k <= 2; k++) {
+                    if (((j == 0) || (j == 4)) && (k == 1)) {
+                        skeleton.push_back(new Sphere(s2->getX() + 2*R*k*dz,
+                                                      s2->getY(),
+                                                      s2->getZ() - 2*R*k*dx,
+                                                      2.25*R));
+                        if (j == 0) {
+                            indexEyeLeft = skeleton.size()-1;
+                        }
+                        if (j == 4) {
+                            indexEyeRight = skeleton.size()-1;
+                        }
+                    }
+                    if ((i != 2) || (k == 1)) {
+                        skeleton.push_back(new Sphere(s2->getX() + 2*R*k*dz,
+                                                      s2->getY(),
+                                                      s2->getZ() - 2*R*k*dx,
+                                                      1.25*R));
+                    }
+                }
+            }
+        } else {
+            for (int j = 0; j <= 2; j++) {
+                Sphere* s2 = contour[j];
+                for (int k = 1; k <= 2; k++) {
+                    if ((i != 2) || (k == 1)) {
+                        skeleton.push_back(new Sphere(s2->getX() + 2*R*k*dz,
+                                                      s2->getY(),
+                                                      s2->getZ() - 2*R*k*dx,
+                                                      1.25*R));
+                    }
+                }
+            }
+        }
+    }
+    x = skeleton[first]->getX();
+    y = skeleton[first]->getY();
+    z = skeleton[first]->getZ();
+    for (int i = -1; i <= 4; i++) {
+        skeleton.push_back(new Sphere(x + 2*R*i*dz,
+                                      y,
+                                      z - 2*R*i*dx,
+                                      R));
+    }
+    for (int i = 1; i <= 6; i++) {
+        s = skeleton[skeleton.size()-i];
+        x = s->getX();
+        y = s->getY();
+        z = s->getZ();
+        std::vector<Sphere*> &contour = s->getContour();
+        for (int j = -2; j <= 2; j++) {
+            contour.push_back(new Sphere(x,
+                                         y + j*2*R,
+                                         z,
+                                         1.25*R));
+        }
+    }
+    for (int i = 0; i <= 2; i+=2) {
+        s = skeleton[i_boutMachBasse-i]->getContour()[0];
+        x = s->getX();
+        y = s->getY();
+        z = s->getZ();
+        qglviewer::Vec v1(x-R*dx*sin(3*M_PI/4), y+R*cos(3*M_PI/4), z-R*dz*sin(3*M_PI/4));
+        qglviewer::Vec v2(x-R*dx*sin(M_PI/4), y+R*cos(M_PI/4), z-R*dz*sin(M_PI/4));
+        qglviewer::Vec v3(x-R*dx*sin(7*M_PI/4), y+R*cos(7*M_PI/4), z-R*dz*sin(7*M_PI/4));
+        qglviewer::Vec v4(x-R*dx*sin(5*M_PI/4), y+R*cos(5*M_PI/4), z-R*dz*sin(5*M_PI/4));
+        qglviewer::Vec v5(x + 3.5*R*dz,y,z - 3.5*R*dx);
+        teeths.push_back(new Tooth(v1,v2,v3,v4,v5));
+    }
+    for (int i = 0; i <= 2; i+=2) {
+        s = skeleton[i_boutMachBasse-i]->getContour()[2];
+        x = s->getX();
+        y = s->getY();
+        z = s->getZ();
+        qglviewer::Vec v1(x-R*dx*sin(3*M_PI/4), y+R*cos(3*M_PI/4), z-R*dz*sin(3*M_PI/4));
+        qglviewer::Vec v2(x-R*dx*sin(M_PI/4), y+R*cos(M_PI/4), z-R*dz*sin(M_PI/4));
+        qglviewer::Vec v3(x-R*dx*sin(7*M_PI/4), y+R*cos(7*M_PI/4), z-R*dz*sin(7*M_PI/4));
+        qglviewer::Vec v4(x-R*dx*sin(5*M_PI/4), y+R*cos(5*M_PI/4), z-R*dz*sin(5*M_PI/4));
+        qglviewer::Vec v5(x + 3.5*R*dz,y,z - 3.5*R*dx);
+        teeths.push_back(new Tooth(v1,v2,v3,v4,v5));
+    }
+    for (int i = 1; i <= 3; i+=2) {
+        s = skeleton[i_boutMachHaute-i]->getContour()[0];
+        x = s->getX();
+        y = s->getY();
+        z = s->getZ();
+        qglviewer::Vec v1(x-R*dx*sin(3*M_PI/4), y+R*cos(3*M_PI/4), z-R*dz*sin(3*M_PI/4));
+        qglviewer::Vec v2(x-R*dx*sin(5*M_PI/4), y+R*cos(5*M_PI/4), z-R*dz*sin(5*M_PI/4));
+        qglviewer::Vec v3(x-R*dx*sin(7*M_PI/4), y+R*cos(7*M_PI/4), z-R*dz*sin(7*M_PI/4));
+        qglviewer::Vec v4(x-R*dx*sin(M_PI/4), y+R*cos(M_PI/4), z-R*dz*sin(M_PI/4));
+        qglviewer::Vec v5(x - 3.5*R*dz,y,z + 3.5*R*dx);
+        teeths.push_back(new Tooth(v1,v2,v3,v4,v5));
+    }
+    for (int i = 1; i <= 3; i+=2) {
+        s = skeleton[i_boutMachHaute-i]->getContour()[2];
+        x = s->getX();
+        y = s->getY();
+        z = s->getZ();
+        qglviewer::Vec v1(x-R*dx*sin(3*M_PI/4), y+R*cos(3*M_PI/4), z-R*dz*sin(3*M_PI/4));
+        qglviewer::Vec v2(x-R*dx*sin(5*M_PI/4), y+R*cos(5*M_PI/4), z-R*dz*sin(5*M_PI/4));
+        qglviewer::Vec v3(x-R*dx*sin(7*M_PI/4), y+R*cos(7*M_PI/4), z-R*dz*sin(7*M_PI/4));
+        qglviewer::Vec v4(x-R*dx*sin(M_PI/4), y+R*cos(M_PI/4), z-R*dz*sin(M_PI/4));
+        qglviewer::Vec v5(x - 3.5*R*dz,y,z + 3.5*R*dx);
+        teeths.push_back(new Tooth(v1,v2,v3,v4,v5));
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-void Dragon::createWingR(){
+/*void Dragon::createWingR(){
     int r = 1;
     wingR1[0][0] = new Sphere(wing1root,wing1vel,wr,10,0,true,false);
     for(int i = 1 ; i < nbw1 ; i++){
@@ -1959,9 +2072,9 @@ void Dragon::createWingR(){
             }
         }
     }
-}
+}*/
 
-void Dragon::drawWingR(){
+/*void Dragon::drawWingR(){
     GLCHECK(glUseProgram(program));
     GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_ail));
@@ -2111,6 +2224,69 @@ void Dragon::drawWingR(){
         }
     }
     GLCHECK(glUseProgram( 0 ));
+}*/
+
+void Dragon::createWingR() {
+    float x = skeleton[indexBody]->getX();
+    float y = skeleton[indexBody]->getY() + thicknessBody;
+    float z = skeleton[indexBody]->getZ();
+    float dx = cos(M_PI/180.0*160);
+    float dy = sin(M_PI/180.0*160);
+    for (int i = 1; i <= nbSpheresWings1; i++) {
+        wingRight.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    x = wingRight[wingRight.size()-1]->getX();
+    y = wingRight[wingRight.size()-1]->getY();
+    for (int i = 1; i <= nbSpheresWings2; i++) {
+        wingRight.push_back(new Sphere(x,
+                                      y + 2*R*i,
+                                      z,
+                                      2*R));
+    }
+    dx = cos(M_PI/180.0*75.0);
+    dy = sin(M_PI/180.0*75.0);
+    for (int i = 1; i <= nbSpheresWings3; i++) {
+        wingRight.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    dx = cos(M_PI/180.0*60.0);
+    dy = sin(M_PI/180.0*60.0);
+    for (int i = 1; i <= nbSpheresWings4; i++) {
+        wingRight.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    dx = cos(M_PI/180.0*45.0);
+    dy = sin(M_PI/180.0*45.0);
+    for (int i = 1; i <= nbSpheresWings5; i++) {
+        wingRight.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    x = wingRight[nbSpheresWings1/3]->getX();
+    y = wingRight[nbSpheresWings1/3]->getY();
+    dx = cos(M_PI/180.0*45.0);
+    dy = sin(M_PI/180.0*45.0);
+    for (int i = 1; i <= nbSpheresWings6; i++) {
+        wingRight.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+}
+
+void Dragon::drawWingR() {
+    for(std::vector<Sphere*>::iterator it = wingRight.begin() ; it != wingRight.end(); it++){
+        Sphere* s = *it;
+        s->draw();
+    }
 }
 
 void Dragon::meshWingR(){
@@ -2189,7 +2365,7 @@ void Dragon::drawMeshWingR(){
     }
 }
 
-void Dragon::createWingL(){
+/*void Dragon::createWingL(){
     int r = 1;
     wingL1[0][0] = new Sphere(wing2root,wing2vel,wr,10,0,true,false);
     for(int i = 1 ; i < nbw1 ; i++){
@@ -2221,9 +2397,66 @@ void Dragon::createWingL(){
             }
         }
     }
+}*/
+
+void Dragon::createWingL() {
+    float x = skeleton[indexBody]->getX();
+    float y = skeleton[indexBody]->getY() - thicknessBody;
+    float z = skeleton[indexBody]->getZ();
+    float dx = cos(M_PI/180.0*200);
+    float dy = sin(M_PI/180.0*200);
+    for (int i = 1; i <= nbSpheresWings1; i++) {
+        wingLeft.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    x = wingLeft[wingLeft.size()-1]->getX();
+    y = wingLeft[wingLeft.size()-1]->getY();
+    for (int i = 1; i <= nbSpheresWings2; i++) {
+        wingLeft.push_back(new Sphere(x,
+                                      y - 2*R*i,
+                                      z,
+                                      2*R));
+    }
+    dx = cos(-M_PI/180.0*75.0);
+    dy = sin(-M_PI/180.0*75.0);
+    for (int i = 1; i <= nbSpheresWings3; i++) {
+        wingLeft.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    dx = cos(-M_PI/180.0*60.0);
+    dy = sin(-M_PI/180.0*60.0);
+    for (int i = 1; i <= nbSpheresWings4; i++) {
+        wingLeft.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    dx = cos(-M_PI/180.0*45.0);
+    dy = sin(-M_PI/180.0*45.0);
+    for (int i = 1; i <= nbSpheresWings5; i++) {
+        wingLeft.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+    x = wingLeft[nbSpheresWings1/3]->getX();
+    y = wingLeft[nbSpheresWings1/3]->getY();
+    dx = cos(-M_PI/180.0*45.0);
+    dy = sin(-M_PI/180.0*45.0);
+    for (int i = 1; i <= nbSpheresWings6; i++) {
+        wingLeft.push_back(new Sphere(x + 2*R*i*dx,
+                                      y + 2*R*i*dy,
+                                      z,
+                                      2*R));
+    }
+
 }
 
-void Dragon::drawWingL(){
+/*void Dragon::drawWingL(){
     GLCHECK(glUseProgram(program));
     GLCHECK(glActiveTexture(GL_TEXTURE0));
     GLCHECK(glBindTexture(GL_TEXTURE_2D, tex_ail));
@@ -2380,6 +2613,13 @@ void Dragon::drawWingL(){
         }
     }
     GLCHECK(glUseProgram( 0 ));
+}*/
+
+void Dragon::drawWingL() {
+    for(std::vector<Sphere*>::iterator it = wingLeft.begin() ; it != wingLeft.end(); it++){
+        Sphere* s = *it;
+        s->draw();
+    }
 }
 
 void Dragon::meshWingL(){
@@ -2556,8 +2796,14 @@ void Dragon::computeTail(float angle){
 void Dragon::computeNeck(float angle){
     for (int i = indexNeck; i < indexPawLeftUp; i++) {
         std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4,indexNeck);
-        hermiteQueue[i-indexNeck] = Hermite::generate(tmp, 0.05);
+        hermiteTete[i-indexNeck] = Hermite::generate(tmp, 0.05);
         angle *= 1.01;
+    }
+    int beginHeadHermite = indexPawLeftUp - indexNeck;
+    for (int i = beginHeadHermite; i < skeleton.size() - indexHead + beginHeadHermite; i++) {
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i - beginHeadHermite + indexHead , angle, 1, 4,indexNeck);
+        hermiteTete[i] = Hermite::generate(tmp, 0.05);
+        //angle *= 1.01;
     }
 }
 
@@ -2690,10 +2936,13 @@ void Dragon::moveTail() {
 void Dragon::moveNeckHead() {
     if(walk)
         walk = false;
-    for (int i = indexNeck; i < indexPawLeftUp; i++) {
+    for (int i = indexNeck; i < indexPawLeftUp; i++)
         skeleton[i]->setPosition(hermiteTete[i-indexNeck][dtTete]);
-    }
-
+   for(int i = indexHead ; i < skeleton.size() ; i++)
+        skeleton[i]->setPosition(hermiteTete[i + (indexPawLeftUp - indexNeck) - indexHead][dtTete]);
+    if ((dtTete + 1) % hermiteTete[0].size() == 0)
+        moveNeck = false;
+    dtTete++;
     /*// Si on arrive à la fin du mouvement, on le fait dans l'autre sens
     if ((dtQueue + 1) % hermiteQueue[0].size() == 0)
         retourQueue = true;
