@@ -65,9 +65,11 @@ private:
     void updateWingPos();
     void moveTail();
     void moveNeckHead();
+    void moveWings();
     void updateDrag();
     void computeTail(float angle);
     void computeNeck(float angle);
+    void computeWings(float angle);
     void walking();
     void updateHermit(std::vector<qglviewer::Vec> diff);
 
@@ -196,6 +198,7 @@ private:
 
     bool moveQueue;     // true si on veut bouger la queue; false sinon
     bool moveNeck;      //true si on veut bouger la tete; false sinon
+    bool moveWing;      // true si on veut bouger les ailes; false sinon
 
     // Permet de générer les points de controle de la courbe d'Hermite
     std::vector<qglviewer::Vec> generateCtlPts(int i, double angle, int xyz,
