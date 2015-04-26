@@ -163,7 +163,7 @@ void FireSmoke::initParticle(Particule &p) {
     // Initialisation de la position et de la vitesse des particules
 	p.setPos(origin);
     if(!dust)
-        p.setMovVec(qglviewer::Vec(-alea(0.5,1), alea(0.5,1), alea(0.5,1)));
+        p.setMovVec(qglviewer::Vec(-alea(0.5,1), alea(-0.5,0.5), alea(0,0.5)));
     else{
         double angle = -alea(0,2*M_PI);
         double amort = 5*alea(0,1);

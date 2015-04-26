@@ -27,7 +27,7 @@ void Tooth::draw() {
     nx = nx/normeN;
     ny = ny/normeN;
     nz = nz/normeN;
-
+    glColor3f(255,255,255);
     glBegin(GL_TRIANGLES);
     glNormal3f(nx,ny,nz);
     glVertex3fv(v1);
@@ -113,5 +113,40 @@ float Tooth::zNormal(qglviewer::Vec &v1, qglviewer::Vec &v2, qglviewer::Vec &v3)
     float dy2 = v3.y-v1.y;
 
     return dx1*dy2 - dy1*dx2;
+}
+
+qglviewer::Vec Tooth::getV1() const {
+    return this->v1;
+}
+qglviewer::Vec Tooth::getV2() const{
+    return this->v2;
+}
+qglviewer::Vec Tooth::getV3() const{
+    return this->v3;
+}
+qglviewer::Vec Tooth::getV4() const{
+    return this->v4;
+}
+qglviewer::Vec Tooth::getV5() const{
+    return this->v5;
+}
+void Tooth::setV1(qglviewer::Vec pos){
+    this->v1 = pos;
+}
+
+void Tooth::setV2(qglviewer::Vec pos){
+    this->v2 = pos;
+}
+
+void Tooth::setV3(qglviewer::Vec pos){
+    this->v3 = pos;
+}
+
+void Tooth::setV4(qglviewer::Vec pos){
+    this->v4 = pos;
+}
+
+void Tooth::setV5(qglviewer::Vec pos){
+    this->v5 = pos;
 }
 

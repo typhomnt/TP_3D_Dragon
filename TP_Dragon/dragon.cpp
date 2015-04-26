@@ -82,6 +82,7 @@ static float tks = 0.03;
 static float fact = 1;
 static float tailAngle = M_PI/16;
 static float neckAngle = M_PI/16;
+static float wingAngle = M_PI/16;
 static qglviewer::Vec diffBody ;
 static qglviewer::Vec diffNeck ;
 static qglviewer::Vec diffTail ;
@@ -92,14 +93,19 @@ static qglviewer::Vec diffPawRD;
 
 // Tableau permettant de calculer le mouvement de chaque sphère de la queue
 static std::vector< std::vector<qglviewer::Vec> > hermiteQueue;
-
+static bool retourQueue = false;
 static int dtQueue = 0;
 
 // Tableau permettant de calculer le mouvement de chaque sphère de la tete
 static std::vector< std::vector<qglviewer::Vec> > hermiteTete;
-static bool retourQueue = false;
+static std::vector< std::vector<qglviewer::Vec> > hermiteTeeth;
 
 static int dtTete = 0;
+
+static std::vector< std::vector<qglviewer::Vec> > hermiteLWing;
+static std::vector< std::vector<qglviewer::Vec> > hermiteRWing;
+static bool retourAiles = false;
+int dtAiles = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 Dragon::Dragon() {
@@ -173,12 +179,18 @@ Dragon::Dragon() {
     indexWing4 = indexWing3 + nbSpheresWings3;
     indexWing5 = indexWing4 + nbSpheresWings4;
     indexWing6 = indexWing5 + nbSpheresWings5;
-
     createWingR();
     //meshWingR();
     createWingL();
     //meshWingL();
+
+    // Feu du dragon
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
+
+    // Fumée qui sort de ses narines
+    this->smoke1 = new FireSmoke(false, qglviewer::Vec(), 1000);
+    this->smoke2 = new FireSmoke(false, qglviewer::Vec(), 1000);
+
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
     this->mount = new Mountain(25,80,qglviewer::Vec(0,0,0));
@@ -188,7 +200,12 @@ Dragon::Dragon() {
     hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
     this->moveQueue = false;
     hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead);
+    hermiteTeeth = std::vector< std::vector<qglviewer::Vec> >(teeths.size()*5);
     this->moveNeck = false;
+
+    hermiteLWing = std::vector< std::vector<qglviewer::Vec> >(wingLeft.size());
+    hermiteRWing = std::vector< std::vector<qglviewer::Vec> >(wingRight.size());
+    this->moveWing = false;
 }
 
 
@@ -197,6 +214,9 @@ Dragon::~Dragon() {
     delete dragPart;
 
     delete firesmoke;
+    delete smoke1;
+    delete smoke2;
+
     delete dust;
     delete grass;
     delete skybox;
@@ -277,6 +297,12 @@ void Dragon::init(Viewer &v) {
         s->setTexture(tex_aile);
         s->init(v);
     }
+    for(std::vector<Sphere*>::iterator it = wingmemb.begin() ; it != wingmemb.end(); it++){
+        Sphere* s = *it;
+        s->setTexture(tex_body);
+        s->init(v);
+    }
+
     int somme = 0;
     for(int i = 0; i < (int)skeleton.size(); i++){
         somme++;
@@ -528,14 +554,17 @@ void Dragon::animate(){
     }*/
     /*
     tp++;*/
-    std::vector<qglviewer::Vec> diff;
-    for(int i = 0 ; i < skeleton.size() ; i++)
-        diff.push_back(skeleton[i]->getPosition());
+    std::vector<qglviewer::Vec> diffh;
+    std::vector<qglviewer::Vec> diffa;
+    for(int i = 0 ; i < skeleton.size() ; i++){
+        diffh.push_back(skeleton[i]->getPosition());
+        diffa.push_back(skeleton[i]->getPosition());
+    }
     if(walk)
         walking();
     for(int i = 0 ; i < skeleton.size() ; i++)
-        diff[i] -= skeleton[i]->getPosition();
-    updateHermit(diff);
+        diffh[i] -= skeleton[i]->getPosition();
+    updateHermit(diffh);
     /*
     if(take_off){
         take_off = false;
@@ -544,9 +573,19 @@ void Dragon::animate(){
             skeleton[i]->setVelocity(qglviewer::Vec(0,0,5));
         }
     }*/
-    firesmoke->setOrigin(qglviewer::Vec(skeleton[indexHead + 3]->getX() - R,skeleton[indexHead + 3]->getY() + R,skeleton[indexHead + 3]->getZ() + R));
+
+    firesmoke->setOrigin(qglviewer::Vec(skeleton[indexJawUp]->getX() - R,skeleton[indexJawUp]->getY() + R,skeleton[indexJawUp]->getZ() + R));
+
+    smoke1->setOrigin(qglviewer::Vec(1,1,1));
+    smoke2->setOrigin(qglviewer::Vec(-1,-1,-1));
+
+
     if (firesmoke->isActive())
         firesmoke->animate();
+    if (smoke1->isActive())
+        smoke1->animate();
+    if (smoke2->isActive())
+        smoke2->animate();
     if (dust->isActive())
         dust->animate();
     fly_up = false;
@@ -559,6 +598,9 @@ void Dragon::animate(){
     //Rotation du cou
     if (moveNeck)
         moveNeckHead();
+
+    if (moveWing)
+        moveWings();
     /*
     //
     updateWingPos();
@@ -571,6 +613,9 @@ void Dragon::animate(){
     diffPawRU -= skeleton[indexPawRightUp]->getPosition();
     //updateDrag();
     */
+    for(int i = 0 ; i < skeleton.size() ; i++)
+        diffa[i] -= skeleton[i]->getPosition();
+    updateDrag(diffa);
 }
 
 void Dragon::walking(){
@@ -693,36 +738,22 @@ void Dragon::updateHermit(std::vector<qglviewer::Vec> diff){
     }
 }
 
-/*void Dragon::updateDrag(){
-    for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffBody);
+void Dragon::updateDrag(std::vector<qglviewer::Vec> diff){
+    for(int i = 0; i < skeleton.size() ; i++){
+        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); ++it){
+            (*it)->setPosition((*it)->getPosition() - diff[i]);
+        }
+        if(i == indexJawDown)
+            for(std::vector<Tooth*>::iterator it = teeths.begin(); it != teeths.end(); ++it){
+                (*it)->setV1((*it)->getV1() - diff[i]);
+                (*it)->setV2((*it)->getV2() - diff[i]);
+                (*it)->setV3((*it)->getV3() - diff[i]);
+                (*it)->setV4((*it)->getV4() - diff[i]);
+                (*it)->setV5((*it)->getV5() - diff[i]);
+            }
     }
-    for(std::vector<Sphere*>::iterator it = tail.begin() ; it != tail.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffTail);
-    }
-    for(std::vector<Sphere*>::iterator it = neck.begin() ; it != neck.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffNeck);
-    }
-    for(std::vector<Sphere*>::iterator it = pawLeftUp.begin() ; it != pawLeftUp.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawLU);
-    }
-    for(std::vector<Sphere*>::iterator it = pawRightUp.begin() ; it != pawRightUp.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawRU);
-    }
-    for(std::vector<Sphere*>::iterator it = pawLeftDown.begin() ; it != pawLeftDown.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawLD);
-    }
-    for(std::vector<Sphere*>::iterator it = pawRightDown.begin() ; it != pawRightDown.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawRD);
-    }
-}*/
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void Dragon::draw(){
@@ -746,15 +777,24 @@ void Dragon::draw(){
     drawPart(indexBody, indexLastPawRightDown);
     drawHead(indexHead);
 
-    /*glPushMatrix();
-    mount->draw();
-    glPopMatrix();*/
+    //drawSprings();
+    //drawMeshWingR();
+    //grass->draw();
+    glPopMatrix();
+
+    glPushMatrix();
+    //mount->draw();
+    glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
     if(firesmoke->isActive())
         firesmoke->draw();
+    if (smoke1->isActive())
+        smoke1->draw();
+    if (smoke2->isActive())
+        smoke2->draw();
     if(dust->isActive())
         dust->draw();
     glDisable(GL_BLEND);
@@ -1449,6 +1489,71 @@ void Dragon::createWingR() {
                                        z,
                                        2*R));
     }
+    wingmemb.push_back(new Sphere((wingRight[indexWing2 - 1]->getX()+
+                                    wingRight[indexWing3-1]->getX()+
+                                    wingRight[indexWing4-1]->getX())/3,
+                                  (wingRight[indexWing2-1]->getY()+
+                                    wingRight[indexWing3-1]->getY()+
+                                    wingRight[indexWing4-1]->getY())/3,
+                                   (wingRight[indexWing2-1]->getZ()+
+                                     wingRight[indexWing3-1]->getZ()+
+                                     wingRight[indexWing4-1]->getZ())/3,R,false));
+    wingspring.push_back(new Spring(wingmemb[0],wingRight[indexWing2 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[0],wingRight[indexWing3 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[0],wingRight[indexWing4 - 1],k,lo,amort));
+    wingmemb.push_back(new Sphere((wingRight[indexWing2 - 1]->getX()+
+                                    wingRight[indexWing4-1]->getX()+
+                                    wingRight[indexWing5-1]->getX())/3,
+                                  (wingRight[indexWing2-1]->getY()+
+                                    wingRight[indexWing4-1]->getY()+
+                                    wingRight[indexWing5-1]->getY())/3,
+                                   (wingRight[indexWing2-1]->getZ()+
+                                     wingRight[indexWing4-1]->getZ()+
+                                     wingRight[indexWing5-1]->getZ())/3,R,false));
+    wingspring.push_back(new Spring(wingmemb[1],wingRight[indexWing2 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[1],wingRight[indexWing4 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[1],wingRight[indexWing5 - 1],k,lo,amort));
+    wingmemb.push_back(new Sphere((wingRight[indexWing2 - 1]->getX()+
+                                    wingRight[indexWing5-1]->getX()+
+                                    wingRight[indexWing6-1]->getX())/3,
+                                  (wingRight[indexWing2-1]->getY()+
+                                    wingRight[indexWing5-1]->getY()+
+                                    wingRight[indexWing6-1]->getY())/3,
+                                   (wingRight[indexWing2-1]->getZ()+
+                                     wingRight[indexWing5-1]->getZ()+
+                                     wingRight[indexWing6-1]->getZ())/3,R,false));
+    wingspring.push_back(new Spring(wingmemb[2],wingRight[indexWing2 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[2],wingRight[indexWing5 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[2],wingRight[indexWing6 - 1],k,lo,amort));
+    wingmemb.push_back(new Sphere((wingRight[indexWing2 - 1]->getX()+
+                                    wingRight[indexWing6-1]->getX()+
+                                    wingRight[indexWing6]->getX() +
+                                    wingRight[wingRight.size()-1]->getX())/4,
+                                  (wingRight[indexWing2 - 1]->getY()+
+                                     wingRight[indexWing6-1]->getY()+
+                                     wingRight[indexWing6]->getY() +
+                                    wingRight[wingRight.size()-1]->getY())/4,
+                                  (wingRight[indexWing2 - 1]->getZ()+
+                                     wingRight[indexWing6-1]->getZ()+
+                                     wingRight[indexWing6]->getZ() +
+                                     wingRight[wingRight.size()-1]->getZ())/4,R,false));
+    wingspring.push_back(new Spring(wingmemb[3],wingRight[indexWing2 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[3],wingRight[indexWing6 - 1],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[3],wingRight[indexWing6],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[3],wingRight[wingRight.size() -1],k,lo,amort));
+    wingmemb.push_back(new Sphere((wingRight[0]->getX()+
+                                    wingRight[indexWing6]->getX()+
+                                    wingRight[wingRight.size()-1]->getX())/3,
+                                  (wingRight[0]->getY()+
+                                    wingRight[indexWing6]->getY()+
+                                    wingRight[wingRight.size()-1]->getY())/3,
+                                   (wingRight[0]->getZ()+
+                                     wingRight[indexWing6]->getZ()+
+                                     wingRight[wingRight.size()-1]->getZ())/3,R,false));
+    wingspring.push_back(new Spring(wingmemb[4],wingRight[0],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[4],wingRight[indexWing6],k,lo,amort));
+    wingspring.push_back(new Spring(wingmemb[4],wingRight[wingRight.size()-1],k,lo,amort));
+
 }
 
 void Dragon::drawWingR() {
@@ -1456,6 +1561,80 @@ void Dragon::drawWingR() {
         Sphere* s = *it;
         s->draw();
     }
+    for(std::vector<Sphere*>::iterator it = wingmemb.begin() ; it != wingmemb.end(); it++){
+        Sphere* s = *it;
+        s->draw();
+    }
+    for(std::vector<Spring*>::iterator it = wingspring.begin() ; it != wingspring.end(); it++){
+        Spring* s = *it;
+        s->draw();
+    }
+    glColor3b(255,100,100);
+    glBegin(GL_TRIANGLES);
+    glVertex3f(wingmemb[0]->getX(),wingmemb[0]->getY(),wingmemb[0]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing3-1]->getX(),wingRight[indexWing3-1]->getY(),wingRight[indexWing3-1]->getZ());
+
+    glVertex3f(wingmemb[0]->getX(),wingmemb[0]->getY(),wingmemb[0]->getZ());
+    glVertex3f(wingRight[indexWing3-1]->getX(),wingRight[indexWing3-1]->getY(),wingRight[indexWing3-1]->getZ());
+    glVertex3f(wingRight[indexWing4-1]->getX(),wingRight[indexWing4-1]->getY(),wingRight[indexWing4-1]->getZ());
+
+    glVertex3f(wingmemb[0]->getX(),wingmemb[0]->getY(),wingmemb[0]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing4-1]->getX(),wingRight[indexWing4-1]->getY(),wingRight[indexWing4-1]->getZ());
+
+    glVertex3f(wingmemb[1]->getX(),wingmemb[1]->getY(),wingmemb[1]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing4-1]->getX(),wingRight[indexWing4-1]->getY(),wingRight[indexWing4-1]->getZ());
+
+    glVertex3f(wingmemb[1]->getX(),wingmemb[1]->getY(),wingmemb[1]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing5-1]->getX(),wingRight[indexWing5-1]->getY(),wingRight[indexWing5-1]->getZ());
+
+    glVertex3f(wingmemb[1]->getX(),wingmemb[1]->getY(),wingmemb[1]->getZ());
+    glVertex3f(wingRight[indexWing4-1]->getX(),wingRight[indexWing4-1]->getY(),wingRight[indexWing4-1]->getZ());
+    glVertex3f(wingRight[indexWing5-1]->getX(),wingRight[indexWing5-1]->getY(),wingRight[indexWing5-1]->getZ());
+
+    glVertex3f(wingmemb[2]->getX(),wingmemb[2]->getY(),wingmemb[2]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing6-1]->getX(),wingRight[indexWing6-1]->getY(),wingRight[indexWing6-1]->getZ());
+
+    glVertex3f(wingmemb[2]->getX(),wingmemb[2]->getY(),wingmemb[2]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing5-1]->getX(),wingRight[indexWing5-1]->getY(),wingRight[indexWing5-1]->getZ());
+
+    glVertex3f(wingmemb[2]->getX(),wingmemb[2]->getY(),wingmemb[2]->getZ());
+    glVertex3f(wingRight[indexWing6-1]->getX(),wingRight[indexWing6-1]->getY(),wingRight[indexWing6-1]->getZ());
+    glVertex3f(wingRight[indexWing5-1]->getX(),wingRight[indexWing5-1]->getY(),wingRight[indexWing5-1]->getZ());
+
+    glVertex3f(wingmemb[3]->getX(),wingmemb[3]->getY(),wingmemb[3]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing6-1]->getX(),wingRight[indexWing6-1]->getY(),wingRight[indexWing6-1]->getZ());
+
+    glVertex3f(wingmemb[3]->getX(),wingmemb[3]->getY(),wingmemb[3]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[indexWing6]->getX(),wingRight[indexWing6]->getY(),wingRight[indexWing6]->getZ());
+
+    glVertex3f(wingmemb[3]->getX(),wingmemb[3]->getY(),wingmemb[3]->getZ());
+    glVertex3f(wingRight[indexWing6]->getX(),wingRight[indexWing6]->getY(),wingRight[indexWing6]->getZ());
+    glVertex3f(wingRight[wingRight.size()-1]->getX(),wingRight[wingRight.size()-1]->getY(),wingRight[wingRight.size()-1]->getZ());
+
+    glVertex3f(wingmemb[3]->getX(),wingmemb[3]->getY(),wingmemb[3]->getZ());
+    glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
+    glVertex3f(wingRight[wingRight.size()-1]->getX(),wingRight[wingRight.size()-1]->getY(),wingRight[wingRight.size()-1]->getZ());
+
+    glVertex3f(wingmemb[4]->getX(),wingmemb[4]->getY(),wingmemb[4]->getZ());
+    glVertex3f(wingRight[0]->getX(),wingRight[0]->getY(),wingRight[0]->getZ());
+    glVertex3f(wingRight[indexWing6]->getX(),wingRight[indexWing6]->getY(),wingRight[indexWing6]->getZ());
+
+    glVertex3f(wingmemb[4]->getX(),wingmemb[4]->getY(),wingmemb[4]->getZ());
+    glVertex3f(wingRight[indexWing6]->getX(),wingRight[indexWing6]->getY(),wingRight[indexWing6]->getZ());
+    glVertex3f(wingRight[wingRight.size()-1]->getX(),wingRight[wingRight.size()-1]->getY(),wingRight[wingRight.size()-1]->getZ());
+
+    glVertex3f(wingmemb[4]->getX(),wingmemb[4]->getY(),wingmemb[4]->getZ());
+    glVertex3f(wingRight[0]->getX(),wingRight[0]->getY(),wingRight[0]->getZ());
+    glVertex3f(wingRight[wingRight.size()-1]->getX(),wingRight[wingRight.size()-1]->getY(),wingRight[wingRight.size()-1]->getZ());
+    glEnd();
 }
 
 void Dragon::createWingL() {
@@ -1629,16 +1808,52 @@ void Dragon::computeTail(float angle){
 void Dragon::computeNeck(float angle){
     for (int i = indexNeck; i < indexPawLeftUp; i++) {
         std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4,indexNeck);
-        hermiteTete[i-indexNeck] = Hermite::generate(tmp, 0.05);
+        hermiteTete[i-indexNeck] = Hermite::generate(tmp, 0.2);
         angle *= 1.01;
     }
     int beginHeadHermite = indexPawLeftUp - indexNeck;
     for (int i = beginHeadHermite; i < skeleton.size() - indexHead + beginHeadHermite; i++) {
         std::vector<qglviewer::Vec> tmp = generateCtlPts(i - beginHeadHermite + indexHead , angle, 1, 4,indexNeck);
-        hermiteTete[i] = Hermite::generate(tmp, 0.05);
+        hermiteTete[i] = Hermite::generate(tmp, 0.2);
         //angle *= 1.01;
     }
+    for(int i = 0 ; i < hermiteTeeth.size() ; i++){
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4,-3);
+        hermiteTeeth[i] = Hermite::generate(tmp, 0.2);
+    }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::computeWings(float angle) {
+    for (unsigned int i = 0; i < wingLeft.size(); i++) {
+        // Phase de descente des ailes
+        std::vector<qglviewer::Vec> tmp1 = generateCtlPts(i, -angle, 0, 4, -1);
+        std::vector<qglviewer::Vec> tmp2 = generateCtlPts(i, angle, 0, 4, -2);
+        std::vector<qglviewer::Vec> v1 = Hermite::generate(tmp1, 0.05);
+        std::vector<qglviewer::Vec> v2 = Hermite::generate(tmp2, 0.05);
+
+        // Phase de montée des ailes
+        std::vector<qglviewer::Vec> tmp3 = generateCtlPts(i, angle, 0, 4, -1);
+        std::vector<qglviewer::Vec> tmp4 = generateCtlPts(i, -angle, 0, 4, -2);
+        std::vector<qglviewer::Vec> v3 = Hermite::generate(tmp3, 0.05);
+        std::vector<qglviewer::Vec> v4 = Hermite::generate(tmp4, 0.05);
+
+        // On crée le vecteur final
+        dtAiles = v3.size();
+        for (unsigned int j = v3.size()-1; j > 0; j--) {
+            hermiteLWing[i].push_back(v3[j]);
+            hermiteRWing[i].push_back(v4[j]);
+        }
+
+        for (unsigned int j = 0; j < v1.size(); j++) {
+            hermiteLWing[i].push_back(v1[j]);
+            hermiteRWing[i].push_back(v2[j]);
+        }        
+    }
+}
+
+
 
 void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     // Get event modifiers key
@@ -1698,8 +1913,25 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
                 paw1w = true;
             stopw = false;
         }
-        take_off = false;
+         take_off = false;
+    } else if ((e->key()==Qt::Key_P) && (modifiers==Qt::NoButton)) {
+        if (!this->moveWing) {
+            this->moveWing = true;
+            computeWings(wingAngle);
+        }
+        else
+            this->moveWing = false;
+    } else if ((e->key()==Qt::Key_K) && (modifiers==Qt::NoButton)) {
+        if (!smoke1->isActive()) {
+            smoke1->activate();
+            smoke2->activate();
+        }
+        else {
+            smoke1->inactivate();
+            smoke2->inactivate();
+        }
     }
+
 }
 
 
@@ -1708,8 +1940,48 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
                                                    int xyz, int nbPts,int indexRoot) {
     // On récupère la sphère correspondant à l'indice i
-    qglviewer::Vec v = skeleton[i]->getPosition();
-    qglviewer::Vec origin = skeleton[indexRoot]->getPosition();
+    qglviewer::Vec v; 
+    qglviewer::Vec origin; 
+        switch (indexRoot) {
+            case -3:
+                switch (i%5) {
+                case 0:
+                    v = teeths[i/5]->getV1();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 1:
+                    v = teeths[i/5]->getV2();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 2:
+                    v = teeths[i/5]->getV3();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 3:
+                    v = teeths[i/5]->getV4();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 4:
+                    v = teeths[i/5]->getV5();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                default:
+                    break;
+                }
+            break;
+            case -2:
+                v = wingRight[i]->getPosition();
+                origin = wingRight[0]->getPosition();
+            break;
+            case -1:
+                v = wingLeft[i]->getPosition();
+                origin = wingLeft[0]->getPosition();
+            break;
+            default:
+                v = skeleton[i]->getPosition();
+                origin = skeleton[indexRoot]->getPosition();
+            break;
+        }
 
     // On crée le vecteur résultat
     std::vector<qglviewer::Vec> res;
@@ -1721,8 +1993,8 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
         switch (xyz) {
         case 0:     // Rotation axe X
             tmp[0] = tmp[0];
-            tmp[1] = tmp[1]*cos(angle) - tmp[2]*sin(angle);
-            tmp[2] = tmp[1]*sin(angle) + tmp[2]*cos(angle);
+            tmp[1] = tmp[1]*cos(angle) + tmp[2]*sin(angle);
+            tmp[2] = -tmp[1]*sin(angle) + tmp[2]*cos(angle);
             break;
         case 1:     // Rotation axe Y
             tmp[0] =  tmp[0]*cos(angle) - tmp[2]*sin(angle);
@@ -1743,6 +2015,42 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
     }
 
     return res;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::fly(float z) {
+    qglviewer::Vec mov(0.0, 0.0, z);
+
+    // Squelette
+    for (unsigned int i = 0; i < skeleton.size(); i++)
+        skeleton[i]->incrPosition(mov);
+
+    // Mise à jour des courbes Hermite si nécessaire
+    if (moveQueue) {
+        for (unsigned int i = 0; i < hermiteQueue.size(); i++) {
+            for (unsigned int j = 0; j < hermiteQueue[i].size(); j++) {
+                hermiteQueue[i][j] += mov;
+            }
+        }
+    }
+    
+    if (moveNeck) {
+        for (unsigned int i = 0; i < hermiteTete.size(); i++)
+            for (unsigned int j = 0; j < hermiteTete[i].size(); j++)
+                hermiteTete[i][j] += mov;
+    }
+
+    if (moveWing) {
+        for (unsigned int i = 0; i < hermiteLWing.size(); i++) {
+            for (unsigned int j = 0; j < hermiteLWing[i].size(); j++) {
+                hermiteLWing[i][j] += mov;        
+                hermiteRWing[i][j] += mov;        
+            }
+        }
+    }
+    
 }
 
 
@@ -1773,8 +2081,18 @@ void Dragon::moveNeckHead() {
         skeleton[i]->setPosition(hermiteTete[i-indexNeck][dtTete]);
     for(int i = indexHead ; i < skeleton.size() ; i++)
         skeleton[i]->setPosition(hermiteTete[i + (indexPawLeftUp - indexNeck) - indexHead][dtTete]);
-    if ((dtTete + 1) % hermiteTete[0].size() == 0)
+   for(int i = 0 ; i < teeths.size() ; i++){
+    teeths[i]->setV1(hermiteTeeth[i*5][dtTete]);
+    teeths[i]->setV2(hermiteTeeth[i*5+1][dtTete]);
+    teeths[i]->setV3(hermiteTeeth[i*5+2][dtTete]);
+    teeths[i]->setV4(hermiteTeeth[i*5+3][dtTete]);
+    teeths[i]->setV5(hermiteTeeth[i*5+4][dtTete]);
+   }
+
+    if ((dtTete + 1) % hermiteTete[0].size() == 0){
         moveNeck = false;
+        firesmoke->activate();
+    }
     dtTete++;
     /*// Si on arrive à la fin du mouvement, on le fait dans l'autre sens
     if ((dtQueue + 1) % hermiteQueue[0].size() == 0)
@@ -1788,3 +2106,26 @@ void Dragon::moveNeckHead() {
         dtQueue++;*/
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::moveWings() {
+    for (int i = 0; i < wingLeft.size(); i++) {
+        wingLeft[i] ->setPosition(hermiteLWing[i][dtAiles]);
+        wingRight[i]->setPosition(hermiteRWing[i][dtAiles]);
+    }
+
+    // Si on arrive à la fin du mouvement, on le fait dans l'autre sens
+    if ((dtAiles + 1) % hermiteLWing[0].size() == 0)
+        retourAiles = true;
+    else if (dtAiles == 0)
+        retourAiles = false;
+
+    if (retourAiles) {
+        dtAiles--;
+        fly(-0.01);
+    }
+    else {
+        dtAiles++;
+        fly(0.1);
+    }
+}

@@ -53,11 +53,14 @@ private:
     void updateWingPos();
     void moveTail();
     void moveNeckHead();
-    void updateDrag();
+    void updateDrag(std::vector<qglviewer::Vec> diff);
+    void moveWings();
     void computeTail(float angle);
     void computeNeck(float angle);
+    void computeWings(float angle);
     void walking();
     void updateHermit(std::vector<qglviewer::Vec> diff);
+    void fly(float z);
 
     std::vector<Sphere*> skeleton;
     int nbSpheresContourBody;
@@ -89,6 +92,8 @@ private:
     std::vector<Tooth*> teeths;
     std::vector<Sphere*> wingLeft;
     std::vector<Sphere*> wingRight;
+    std::vector<Sphere*> wingmemb;
+    std::vector<Spring*> wingspring;
     int nbSpheresWings1;
     int nbSpheresWings2;
     int nbSpheresWings3;
@@ -158,6 +163,9 @@ private:
     FireSmoke *firesmoke;
     FireSmoke *dust;
 
+    FireSmoke *smoke1;
+    FireSmoke *smoke2;
+
     Grass *grass;
     Mountain *mount;
 
@@ -166,6 +174,7 @@ private:
 
     bool moveQueue;     // true si on veut bouger la queue; false sinon
     bool moveNeck;      //true si on veut bouger la tete; false sinon
+    bool moveWing;      // true si on veut bouger les ailes; false sinon
 
     // Permet de générer les points de controle de la courbe d'Hermite
     std::vector<qglviewer::Vec> generateCtlPts(int i, double angle, int xyz,
