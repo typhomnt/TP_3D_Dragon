@@ -64,6 +64,9 @@ private:
     void updateWingPos();
     void moveTail();
     void updateDrag();
+    void computeTail(float angle);
+    void walking();
+    void updateHermit(std::vector<qglviewer::Vec> diff);
 
     std::vector<Sphere*> skeleton;
     std::vector<Sphere*> body;

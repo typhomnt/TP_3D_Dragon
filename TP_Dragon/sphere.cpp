@@ -233,13 +233,13 @@ void Sphere::setCollisions(bool enable) {
 }
 ///////////////////////////////////////////////////////////////////////////////
 
-const qglviewer::Vec & Sphere::getPosition() const
+const qglviewer::Vec  Sphere::getPosition() const
 {
     return position;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-const qglviewer::Vec & Sphere::getVelocity() const
+const qglviewer::Vec  Sphere::getVelocity() const
 {
     return velocity;
 }

@@ -80,7 +80,7 @@ static float coeffw = -1;
 static float walkstep = 0.05;
 static float tks = 0.03;
 static float fact = 1;
-static float tailAngle = M_PI/4;
+static float tailAngle = M_PI/16;
 static qglviewer::Vec diffBody ;
 static qglviewer::Vec diffNeck ;
 static qglviewer::Vec diffTail ;
@@ -94,7 +94,10 @@ static std::vector< std::vector<qglviewer::Vec> > hermiteQueue;
 
 static int dtQueue = 0;
 
+// Tableau permettant de calculer le mouvement de chaque sphère de la tete
+static std::vector< std::vector<qglviewer::Vec> > hermiteTete;
 
+static int dtTete = 0;
 
 /*nouveau dragon*/
 
@@ -688,8 +691,50 @@ void Dragon::animate(){
         }
     }*/
         /*
-    tp++;
-    if(walk){
+    tp++;*/
+    std::vector<qglviewer::Vec> diff;
+    for(int i = 0 ; i < skeleton.size() ; i++)
+        diff.push_back(skeleton[i]->getPosition());
+    if(walk)
+        walking();
+    for(int i = 0 ; i < skeleton.size() ; i++)
+        diff[i] -= skeleton[i]->getPosition();
+    updateHermit(diff);
+    /*
+    if(take_off){
+        take_off = false;
+        stopw = true;
+        for(int i = indexBody ; i <= indexLastPawRightDown  ; i++){
+            skeleton[i]->setVelocity(qglviewer::Vec(0,0,5));
+        }
+    }*/
+    firesmoke->setOrigin(qglviewer::Vec(skeleton[indexHead + 3]->getX() - R,skeleton[indexHead + 3]->getY() + R,skeleton[indexHead + 3]->getZ() + R));
+    if (firesmoke->isActive())
+        firesmoke->animate();
+    if (dust->isActive())
+        dust->animate();
+    fly_up = false;
+    fact+=1.5;
+
+
+    //Roation de la queue
+    if (moveQueue)
+        moveTail();
+    /*
+    //
+    updateWingPos();
+    diffBody -= skeleton[indexBody]->getPosition();
+    diffNeck -= skeleton[indexNeck]->getPosition();
+    diffTail -= skeleton[indexTail]->getPosition();
+    diffPawLD -= skeleton[indexPawLeftDown]->getPosition();
+    diffPawLU -= skeleton[indexPawLeftUp]->getPosition();
+    diffPawRD -= skeleton[indexPawRightDown]->getPosition();
+    diffPawRU -= skeleton[indexPawRightUp]->getPosition();
+    //updateDrag();
+    */
+}
+
+void Dragon::walking(){
         if(paw1w){
             dust->inactivate();
             dust->setOrigin(skeleton[indexPawRightDown -1]->getPosition());
@@ -714,6 +759,8 @@ void Dragon::animate(){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
                 //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
+            for(int i = indexHead ; i < skeleton.size(); i++)
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
        }
        else if(paw2w){
            dust->inactivate();
@@ -739,6 +786,8 @@ void Dragon::animate(){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
                 //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
+            for(int i = indexHead ; i < skeleton.size() ; i++)
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
        }
        else if(paw3w){
            dust->inactivate();
@@ -764,6 +813,8 @@ void Dragon::animate(){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
                 //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
+            for(int i = indexHead ; i < skeleton.size(); i++)
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
        }
        else if(paw4w){
            dust->inactivate();
@@ -789,40 +840,18 @@ void Dragon::animate(){
                 skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
                 //skeleton[i]->setY(skeleton[i]->getY() - walkstep/4);
             }
+            for(int i = indexHead ; i < skeleton.size() ; i++)
+                skeleton[i]->setX(skeleton[i]->getX() - walkstep/4);
        }
     tw++;
-    }
-    if(take_off){
-        take_off = false;
-        stopw = true;
-        for(int i = indexBody ; i <= indexLastPawRightDown  ; i++){
-            skeleton[i]->setVelocity(qglviewer::Vec(0,0,5));
-        }
-    }
-    firesmoke->setOrigin(qglviewer::Vec(skeleton[indexPawLeftUp -1]->getX() - R,skeleton[indexPawLeftUp -1]->getY() + R,skeleton[indexPawLeftUp -1]->getZ() + R));
-    if (firesmoke->isActive())
-        firesmoke->animate();
-    if (dust->isActive())
-        dust->animate();
-    fly_up = false;
-    fact+=1.5;
+}
 
-    */
-    //Roation de la queue
-    if (moveQueue)
-        moveTail();
-    /*
-    //
-    updateWingPos();
-    diffBody -= skeleton[indexBody]->getPosition();
-    diffNeck -= skeleton[indexNeck]->getPosition();
-    diffTail -= skeleton[indexTail]->getPosition();
-    diffPawLD -= skeleton[indexPawLeftDown]->getPosition();
-    diffPawLU -= skeleton[indexPawLeftUp]->getPosition();
-    diffPawRD -= skeleton[indexPawRightDown]->getPosition();
-    diffPawRU -= skeleton[indexPawRightUp]->getPosition();
-    //updateDrag();
-    */
+void Dragon::updateHermit(std::vector<qglviewer::Vec> diff){
+    if(moveQueue){
+        for(int i = indexTail ; i < indexNeck ; i++)
+            for(int j = 0 ; j < hermiteQueue[0].size() ; j++)
+                hermiteQueue[i - indexTail][j] -= diff[i];
+    }
 }
 
 void Dragon::updateDrag(){
@@ -2509,6 +2538,13 @@ void Dragon::updateWingPos(){
     }
 }
 
+void Dragon::computeTail(float angle){
+    for (int i = indexTail; i < indexNeck; i++) {
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4);
+        hermiteQueue[i-indexTail] = Hermite::generate(tmp, 0.05);
+        angle *= 1.01;
+    }
+}
 
 void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     // Get event modifiers key
@@ -2538,12 +2574,7 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         // On met à jour le vecteur indiquant la position des sphères de la queue
         if (!this->moveQueue) {
             this->moveQueue = true;
-            double angleRot = M_PI / 16;
-            for (int i = indexTail; i < indexNeck; i++) {
-                std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angleRot, 1, 4);
-                hermiteQueue[i-indexTail] = Hermite::generate(tmp, 0.1);
-                angleRot *= 1.1;
-            }
+            computeTail(tailAngle);
         }
         else
             this->moveQueue = false;
@@ -2625,6 +2656,10 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
 void Dragon::moveTail() {
     for (int i = indexTail; i < indexNeck; i++) {
         skeleton[i]->setPosition(hermiteQueue[i-indexTail][dtQueue]);
+    }
+    if((dtQueue + 1) % hermiteQueue[0].size() == 0 ){
+        tailAngle = -tailAngle;
+        computeTail(tailAngle);
     }
     dtQueue = (dtQueue + 1) % hermiteQueue[0].size();
 }

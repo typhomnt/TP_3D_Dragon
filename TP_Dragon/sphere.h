@@ -36,8 +36,8 @@ class Sphere : public Renderable
 		bool getCollisions();
 		void setCollisions(bool enable);
 
-        const qglviewer::Vec & getPosition() const;
-        const qglviewer::Vec & getVelocity() const;
+        const qglviewer::Vec  getPosition() const;
+        const qglviewer::Vec  getVelocity() const;
         float getMass() const;
         float getInvMass() const;
 
