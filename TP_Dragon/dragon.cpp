@@ -1419,15 +1419,15 @@ void Dragon::drawWingR() {
 }
 
 void Dragon::drawWingMemb(){
-    for(std::vector<Sphere*>::iterator it = wingmemb.begin() ; it != wingmemb.end(); it++){
+    /*for(std::vector<Sphere*>::iterator it = wingmemb.begin() ; it != wingmemb.end(); it++){
         Sphere* s = *it;
         s->draw();
     }
     for(std::vector<Spring*>::iterator it = wingspring.begin() ; it != wingspring.end(); it++){
         Spring* s = *it;
         s->draw();
-    }
-    glColor3b(255,100,100);
+    }*/
+    glColor3b(255,150,160);
     glBegin(GL_TRIANGLES);
     glVertex3f(wingmemb[0]->getX(),wingmemb[0]->getY(),wingmemb[0]->getZ());
     glVertex3f(wingRight[indexWing2-1]->getX(),wingRight[indexWing2-1]->getY(),wingRight[indexWing2-1]->getZ());
@@ -1747,42 +1747,9 @@ void Dragon::collisionParticleParticle(Sphere *s1, Sphere *s2)
         s1->setVelocity((1 + rebound) * s1->getVelocity());
 }
 
-/*void Dragon::updateWingPos(){
-    qglviewer::Vec diff = wingR1[0][0]->getPosition();
-    wing1root = skeleton[7]->getPosition() + qglviewer::Vec (0,5*R,5*R);
-    wingR1[0][0]->setPosition(wing1root);
-    diff = diff - wingR1[0][0]->getPosition();
-    for(int i = 0 ; i < nbw1 ; i++){
-        for(int j = 0 ; j < nbw1 ; j++){
-            if(i !=0 || j !=0)
-                if(wingR1[i][j] != NULL)
-                    wingR1[i][j]->incrPosition(-diff);
-        }
-    }
-    for(int i = 0 ; i < nbw2 ; i++){
-        for(int j = 0 ; j < nbw2 ; j++){
-            if(wingR2[i][j] != NULL)
-                wingR2[i][j]->incrPosition(-diff);
-        }
-    }
-    qglviewer::Vec diff2 = wingL1[0][0]->getPosition();
-    wing2root = skeleton[7]->getPosition() + qglviewer::Vec (0,-5*R,5*R);
-    wingL1[0][0]->setPosition(wing2root);
-    diff2 = diff2 - wingL1[0][0]->getPosition();
-    for(int i = 0 ; i < nbw1 ; i++){
-        for(int j = 0 ; j < nbw1 ; j++){
-            if(i !=0 || j !=0)
-                if(wingL1[i][j] != NULL)
-                    wingL1[i][j]->incrPosition(-diff2);
-        }
-    }
-    for(int i = 0 ; i < nbw2 ; i++){
-        for(int j = 0 ; j < nbw2 ; j++){
-            if(wingL2[i][j] != NULL)
-                wingL2[i][j]->incrPosition(-diff2);
-        }
-    }
-}*/
+void Dragon::updateWingPos(){
+;
+}
 
 void Dragon::computeTail(float angle){
     for (int i = indexTail; i < indexNeck; i++) {
