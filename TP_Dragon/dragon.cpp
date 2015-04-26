@@ -97,6 +97,7 @@ static int dtQueue = 0;
 
 // Tableau permettant de calculer le mouvement de chaque sphère de la tete
 static std::vector< std::vector<qglviewer::Vec> > hermiteTete;
+static std::vector< std::vector<qglviewer::Vec> > hermiteTeeth;
 static bool retourQueue = false;
 
 static int dtTete = 0;
@@ -230,6 +231,7 @@ Dragon::Dragon() {
     hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
     this->moveQueue = false;
     hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead);
+    hermiteTeeth = std::vector< std::vector<qglviewer::Vec> >(teeths.size()*5);
     this->moveNeck = false;
 }
 
@@ -910,10 +912,20 @@ void Dragon::updateHermit(std::vector<qglviewer::Vec> diff){
 }
 
 void Dragon::updateDrag(std::vector<qglviewer::Vec> diff){
-    for(int i = 0; i < skeleton.size() ; i++)
+    for(int i = 0; i < skeleton.size() ; i++){
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); ++it){
             (*it)->setPosition((*it)->getPosition() - diff[i]);
         }
+        if(i == indexJawDown)
+            for(std::vector<Tooth*>::iterator it = teeths.begin(); it != teeths.end(); ++it){
+                (*it)->setV1((*it)->getV1() - diff[i]);
+                (*it)->setV2((*it)->getV2() - diff[i]);
+                (*it)->setV3((*it)->getV3() - diff[i]);
+                (*it)->setV4((*it)->getV4() - diff[i]);
+                (*it)->setV5((*it)->getV5() - diff[i]);
+            }
+    }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2787,6 +2799,10 @@ void Dragon::computeNeck(float angle){
         std::vector<qglviewer::Vec> tmp = generateCtlPts(i - beginHeadHermite + indexHead , angle, 1, 4,indexNeck);
         hermiteTete[i] = Hermite::generate(tmp, 0.05);
         //angle *= 1.01;
+    }
+    for(int i = 0 ; i < hermiteTeeth.size() ; i++){
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i-hermiteTeeth.size()-3, angle, 1, 4,indexNeck);
+        hermiteTeeth[i] = Hermite::generate(tmp, 0.05);
     }
 }
 
