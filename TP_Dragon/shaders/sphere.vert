@@ -1,5 +1,6 @@
 # version 120
 
+
 // Infos sur le matériel
 struct material_info {
     vec4 ka;
@@ -27,21 +28,27 @@ uniform light_info light;
 // Couleur de la lumière qui sera transmise au fragment shader
 varying vec4 light_color;
 
+// Coordonnées de texture qui seront passées au fragment shader
 varying vec2 uvCoord;
 
-vec2 sphereMap(vec3 cameraPosition, vec3 normal)
-{
-     float m ;
-     vec3 r, u ;
-     u = normalize(cameraPosition) ;
-     r =reflect(u, normal) ;
-     m = 2.0 * sqrt(r.x * r.x + r.y * r.y + (r.z + 1.0) * (r.z + 1.0)) ;
-     return vec2(r.x / m + 0.5, r.y / m + 0.5);
+
+/**
+ * uv-mapping pour la sphère
+ */
+vec2 sphereMap(vec3 cameraPosition, vec3 normal) {
+    float m;
+    vec3 r, u;
+    
+    u = normalize(cameraPosition);
+    r = reflect(u, normal);
+    m = 2.0 * sqrt(r.x * r.x + r.y * r.y + (r.z + 1.0) * (r.z + 1.0));
+    
+    return vec2(r.x / m + 0.5, r.y / m + 0.5);
 }
 
+
 // Illumination de Phong
-vec4 phongWithMaterial( vec4 position, vec3 norm )
-{
+vec4 phongWithMaterial( vec4 position, vec3 norm ) {
     vec3 L = normalize( light.position.xyz - position.xyz );
     vec3 V = normalize( -position.xyz ); //camera is at (0,0,0) in this referential
     vec3 R = normalize( -reflect( L, norm ) );
@@ -54,8 +61,9 @@ vec4 phongWithMaterial( vec4 position, vec3 norm )
     return i_emission + i_ambient + clamp( i_diffuse, 0, 1 ) + clamp( i_specular, 0, 1 );
 }
 
-void main(void)
-{
+
+///////////////////////////////////////////////////////////////////////////////
+void main(void) {
 	gl_Position = ftransform();
 
 	vec4 position = gl_ModelViewMatrix * gl_Vertex; 
