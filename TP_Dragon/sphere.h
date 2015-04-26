@@ -9,8 +9,8 @@ class Sphere : public Renderable
 {
 	public:
 		Sphere();
-        Sphere(float x, float y, float z, float radius, bool texturee=true, float mass=10.0,GLint tex=0,bool fix=false, bool col=true);
-        Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass=10.0,GLint tex=0,bool fix=false, bool col=true);
+        Sphere(float x, float y, float z, float radius, bool texturee=true, float mass=10.0,GLint tex=0,bool fix=true, bool col=true);
+        Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass=10.0,GLint tex=0,bool fix=true, bool col=true);
 		void init(Viewer &v);
 		void draw();
         void generate(float radius);
