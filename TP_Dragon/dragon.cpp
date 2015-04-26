@@ -738,14 +738,17 @@ void Dragon::animate(){
     }*/
         /*
     tp++;*/
-    std::vector<qglviewer::Vec> diff;
-    for(int i = 0 ; i < skeleton.size() ; i++)
-        diff.push_back(skeleton[i]->getPosition());
+    std::vector<qglviewer::Vec> diffh;
+    std::vector<qglviewer::Vec> diffa;
+    for(int i = 0 ; i < skeleton.size() ; i++){
+        diffh.push_back(skeleton[i]->getPosition());
+        diffa.push_back(skeleton[i]->getPosition());
+    }
     if(walk)
         walking();
     for(int i = 0 ; i < skeleton.size() ; i++)
-        diff[i] -= skeleton[i]->getPosition();
-    updateHermit(diff);
+        diffh[i] -= skeleton[i]->getPosition();
+    updateHermit(diffh);
     /*
     if(take_off){
         take_off = false;
@@ -781,6 +784,9 @@ void Dragon::animate(){
     diffPawRU -= skeleton[indexPawRightUp]->getPosition();
     //updateDrag();
     */
+    for(int i = 0 ; i < skeleton.size() ; i++)
+        diffa[i] -= skeleton[i]->getPosition();
+    updateDrag(diffa);
 }
 
 void Dragon::walking(){
@@ -903,35 +909,11 @@ void Dragon::updateHermit(std::vector<qglviewer::Vec> diff){
     }
 }
 
-void Dragon::updateDrag(){
-    for(std::vector<Sphere*>::iterator it = body.begin() ; it != body.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffBody);
-    }
-    for(std::vector<Sphere*>::iterator it = tail.begin() ; it != tail.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffTail);
-    }
-    for(std::vector<Sphere*>::iterator it = neck.begin() ; it != neck.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffNeck);
-    }
-    for(std::vector<Sphere*>::iterator it = pawLeftUp.begin() ; it != pawLeftUp.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawLU);
-    }
-    for(std::vector<Sphere*>::iterator it = pawRightUp.begin() ; it != pawRightUp.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawRU);
-    }
-    for(std::vector<Sphere*>::iterator it = pawLeftDown.begin() ; it != pawLeftDown.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawLD);
-    }
-    for(std::vector<Sphere*>::iterator it = pawRightDown.begin() ; it != pawRightDown.end(); it++){
-        Sphere* s = *it;
-        s->incrPosition(-diffPawRD);
-    }
+void Dragon::updateDrag(std::vector<qglviewer::Vec> diff){
+    for(int i = 0; i < skeleton.size() ; i++)
+        for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); ++it){
+            (*it)->setPosition((*it)->getPosition() - diff[i]);
+        }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

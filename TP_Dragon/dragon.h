@@ -65,7 +65,7 @@ private:
     void updateWingPos();
     void moveTail();
     void moveNeckHead();
-    void updateDrag();
+    void updateDrag(std::vector<qglviewer::Vec> diff);
     void computeTail(float angle);
     void computeNeck(float angle);
     void walking();
