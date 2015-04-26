@@ -1569,13 +1569,14 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
             }
             thicknessPaw = thicknessPaw - 2*R/(last-first+1);
     }
+    std::vector<Sphere*> &contour = skeleton[skeleton.size()-1]->getContour();
     y2 = skeleton[last]->getY();
     z2 = skeleton[last]->getZ();
     paw.push_back(new Sphere(skeleton[last]->getX(),
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
-    foot.push_back(new Sphere(skeleton[last]->getX(),
+    contour.push_back(new Sphere(skeleton[last]->getX(),
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
@@ -1586,9 +1587,9 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                                  paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*10.0),
                                  z2,
                                  r, 10, tex_body));
-        float lastIndexFoot = foot.size()-1;
-        foot.push_back(new Sphere(foot[lastIndexFoot]->getX() - foot[lastIndexFoot]->getRadius()*cos(M_PI/180.0*10.0),
-                                  foot[lastIndexFoot]->getY() - foot[lastIndexFoot]->getRadius()*sin(M_PI/180.0*10.0),
+        float lastIndexcontour = contour.size()-1;
+        contour.push_back(new Sphere(contour[lastIndexcontour]->getX() - contour[lastIndexcontour]->getRadius()*cos(M_PI/180.0*10.0),
+                                  contour[lastIndexcontour]->getY() - contour[lastIndexcontour]->getRadius()*sin(M_PI/180.0*10.0),
                                   z2,
                                  r, 10, tex_body));
         r = abs(r - 0.05*R);
@@ -1598,7 +1599,7 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
-    foot.push_back(new Sphere(skeleton[last]->getX(),
+    contour.push_back(new Sphere(skeleton[last]->getX(),
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
@@ -1608,9 +1609,9 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                                  paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*(-10.0)),
                                  z2,
                                  r, 10, tex_body));
-        float lastIndexFoot = foot.size()-1;
-        foot.push_back(new Sphere(foot[lastIndexFoot]->getX() - foot[lastIndexFoot]->getRadius()*cos(M_PI/180.0*(-10.0)),
-                                  foot[lastIndexFoot]->getY() - foot[lastIndexFoot]->getRadius()*sin(M_PI/180.0*(-10.0)),
+        float lastIndexcontour = contour.size()-1;
+        contour.push_back(new Sphere(contour[lastIndexcontour]->getX() - contour[lastIndexcontour]->getRadius()*cos(M_PI/180.0*(-10.0)),
+                                  contour[lastIndexcontour]->getY() - contour[lastIndexcontour]->getRadius()*sin(M_PI/180.0*(-10.0)),
                                   z2,
                                  r, 10, tex_body));
         r = abs(r - 0.05*R);
@@ -1620,7 +1621,7 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
-    foot.push_back(new Sphere(skeleton[last]->getX(),
+    contour.push_back(new Sphere(skeleton[last]->getX(),
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
@@ -1630,9 +1631,9 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                                  paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*40.0),
                                  z2,
                                  r, 10, tex_body));
-        float lastIndexFoot = foot.size()-1;
-        foot.push_back(new Sphere(foot[lastIndexFoot]->getX() - foot[lastIndexFoot]->getRadius()*cos(M_PI/180.0*40.0),
-                                  foot[lastIndexFoot]->getY() - foot[lastIndexFoot]->getRadius()*sin(M_PI/180.0*40.0),
+        float lastIndexcontour = contour.size()-1;
+        contour.push_back(new Sphere(contour[lastIndexcontour]->getX() - contour[lastIndexcontour]->getRadius()*cos(M_PI/180.0*40.0),
+                                  contour[lastIndexcontour]->getY() - contour[lastIndexcontour]->getRadius()*sin(M_PI/180.0*40.0),
                                   z2,
                                  r, 10, tex_body));
         r = abs(r - 0.05*R);
@@ -1642,7 +1643,7 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
-    foot.push_back(new Sphere(skeleton[last]->getX(),
+    contour.push_back(new Sphere(skeleton[last]->getX(),
                              y2,
                              z2,
                              1.01*R, 10, tex_body));
@@ -1652,9 +1653,9 @@ void Dragon::completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, 
                                  paw[lastIndex]->getY() - paw[lastIndex]->getRadius()*sin(M_PI/180.0*(-40.0)),
                                  z2,
                                  r, 10, tex_body));
-        float lastIndexFoot = foot.size()-1;
-        foot.push_back(new Sphere(foot[lastIndexFoot]->getX() - foot[lastIndexFoot]->getRadius()*cos(M_PI/180.0*(-40.0)),
-                                  foot[lastIndexFoot]->getY() - foot[lastIndexFoot]->getRadius()*sin(M_PI/180.0*(-40.0)),
+        float lastIndexcontour = contour.size()-1;
+        contour.push_back(new Sphere(contour[lastIndexcontour]->getX() - contour[lastIndexcontour]->getRadius()*cos(M_PI/180.0*(-40.0)),
+                                  contour[lastIndexcontour]->getY() - contour[lastIndexcontour]->getRadius()*sin(M_PI/180.0*(-40.0)),
                                   z2,
                                  r, 10, tex_body));
         r = abs(r - 0.05*R);
