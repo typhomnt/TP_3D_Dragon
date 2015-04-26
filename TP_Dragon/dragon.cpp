@@ -96,6 +96,7 @@ static int dtQueue = 0;
 
 // Tableau permettant de calculer le mouvement de chaque sphère de la tete
 static std::vector< std::vector<qglviewer::Vec> > hermiteTete;
+static bool retourQueue = false;
 
 static int dtTete = 0;
 
@@ -2657,10 +2658,16 @@ void Dragon::moveTail() {
     for (int i = indexTail; i < indexNeck; i++) {
         skeleton[i]->setPosition(hermiteQueue[i-indexTail][dtQueue]);
     }
-    if((dtQueue + 1) % hermiteQueue[0].size() == 0 ){
-        tailAngle = -tailAngle;
-        computeTail(tailAngle);
-    }
-    dtQueue = (dtQueue + 1) % hermiteQueue[0].size();
+
+    // Si on arrive à la fin du mouvement, on le fait dans l'autre sens
+    if ((dtQueue + 1) % hermiteQueue[0].size() == 0)
+        retourQueue = true;
+    else if (dtQueue == 0)
+        retourQueue = false;
+
+    if (retourQueue)
+        dtQueue--;
+    else
+        dtQueue++;
 }
 
