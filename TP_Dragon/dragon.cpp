@@ -339,9 +339,9 @@ void Dragon::init(Viewer &v) {
         Sphere* s = skeleton[i];
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
             Sphere* s = *it;
-            if (s->estTexturee())
-                s->setTexture(tex_body);
-             else
+           // if (s->estTexturee())
+             //   s->setTexture(tex_body);
+             //else
                 s->setColor(0,0,20,0);
             s->init(v);
         }
@@ -1928,7 +1928,7 @@ void Dragon::createHead(int first){
             for (int j = 0; j <= 4; j++) {
                 Sphere* s2 = contour[j];
                 for (int k = 1; k <= 2; k++) {
-                    if (((j == 0) || (j == 12)) && (k == 1)) {
+                    if (((j == 0) || (j == 4)) && (k == 1)) {
                         skeleton.push_back(new Sphere(s2->getX() + 2*R*k*dz,
                                                       s2->getY(),
                                                       s2->getZ() - 2*R*k*dx,
@@ -1936,7 +1936,7 @@ void Dragon::createHead(int first){
                         if (j == 0) {
                             indexEyeLeft = skeleton.size()-1;
                         }
-                        if (j == 12) {
+                        if (j == 4) {
                             indexEyeRight = skeleton.size()-1;
                         }
                     }
