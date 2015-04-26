@@ -82,6 +82,7 @@ static float tks = 0.03;
 static float fact = 1;
 static float tailAngle = M_PI/16;
 static float neckAngle = M_PI/16;
+static float wingAngle = M_PI/16;
 static qglviewer::Vec diffBody ;
 static qglviewer::Vec diffNeck ;
 static qglviewer::Vec diffTail ;
@@ -92,15 +93,20 @@ static qglviewer::Vec diffPawRD;
 
 // Tableau permettant de calculer le mouvement de chaque sphère de la queue
 static std::vector< std::vector<qglviewer::Vec> > hermiteQueue;
-
+static bool retourQueue = false;
 static int dtQueue = 0;
 
 // Tableau permettant de calculer le mouvement de chaque sphère de la tete
 static std::vector< std::vector<qglviewer::Vec> > hermiteTete;
 static std::vector< std::vector<qglviewer::Vec> > hermiteTeeth;
-static bool retourQueue = false;
 
 static int dtTete = 0;
+
+
+static std::vector< std::vector<qglviewer::Vec> > hermiteLWing;
+static std::vector< std::vector<qglviewer::Vec> > hermiteRWing;
+static bool retourAiles = false;
+int dtAiles = 0;
 
 /*nouveau dragon*/
 
@@ -233,6 +239,10 @@ Dragon::Dragon() {
     hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead);
     hermiteTeeth = std::vector< std::vector<qglviewer::Vec> >(teeths.size()*5);
     this->moveNeck = false;
+
+    hermiteLWing = std::vector< std::vector<qglviewer::Vec> >(wingLeft.size());
+    hermiteRWing = std::vector< std::vector<qglviewer::Vec> >(wingRight.size());
+    this->moveWing = false;
 }
 
 
@@ -774,6 +784,9 @@ void Dragon::animate(){
     //Rotation du cou
     if (moveNeck)
         moveNeckHead();
+
+    if (moveWing)
+        moveWings();
     /*
     //
     updateWingPos();
@@ -986,7 +999,7 @@ void Dragon::draw(){
     glPopMatrix();
 
     glPushMatrix();
-    mount->draw();
+    //mount->draw();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
@@ -2801,10 +2814,42 @@ void Dragon::computeNeck(float angle){
         //angle *= 1.01;
     }
     for(int i = 0 ; i < hermiteTeeth.size() ; i++){
-        std::vector<qglviewer::Vec> tmp = generateCtlPts(i-hermiteTeeth.size()-3, angle, 1, 4,indexNeck);
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4,-3);
         hermiteTeeth[i] = Hermite::generate(tmp, 0.05);
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::computeWings(float angle) {
+    for (unsigned int i = 0; i < wingLeft.size(); i++) {
+        // Phase de descente des ailes
+        std::vector<qglviewer::Vec> tmp1 = generateCtlPts(i, -angle, 0, 4, -1);
+        std::vector<qglviewer::Vec> tmp2 = generateCtlPts(i, angle, 0, 4, -2);
+        std::vector<qglviewer::Vec> v1 = Hermite::generate(tmp1, 0.05);
+        std::vector<qglviewer::Vec> v2 = Hermite::generate(tmp2, 0.05);
+
+        // Phase de montée des ailes
+        std::vector<qglviewer::Vec> tmp3 = generateCtlPts(i, angle, 0, 4, -1);
+        std::vector<qglviewer::Vec> tmp4 = generateCtlPts(i, -angle, 0, 4, -2);
+        std::vector<qglviewer::Vec> v3 = Hermite::generate(tmp3, 0.05);
+        std::vector<qglviewer::Vec> v4 = Hermite::generate(tmp4, 0.05);
+
+        // On crée le vecteur final
+        dtAiles = v3.size();
+        for (unsigned int j = v3.size()-1; j > 0; j--) {
+            hermiteLWing[i].push_back(v3[j]);
+            hermiteRWing[i].push_back(v4[j]);
+        }
+
+        for (unsigned int j = 0; j < v1.size(); j++) {
+            hermiteLWing[i].push_back(v1[j]);
+            hermiteRWing[i].push_back(v2[j]);
+        }        
+    }
+}
+
+
 
 void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
     // Get event modifiers key
@@ -2865,7 +2910,15 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
              stopw = false;
          }
          take_off = false;
+    } else if ((e->key()==Qt::Key_P) && (modifiers==Qt::NoButton)) {
+        if (!this->moveWing) {
+            this->moveWing = true;
+            computeWings(wingAngle);
+        }
+        else
+            this->moveWing = false;
     }
+
 }
 
 
@@ -2874,8 +2927,48 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
                                                         int xyz, int nbPts,int indexRoot) {
     // On récupère la sphère correspondant à l'indice i
-    qglviewer::Vec v = skeleton[i]->getPosition();
-    qglviewer::Vec origin = skeleton[indexRoot]->getPosition();
+    qglviewer::Vec v; 
+    qglviewer::Vec origin; 
+        switch (indexRoot) {
+            case -3:
+                switch (i%5) {
+                case 0:
+                    v = teeths[i/5]->getV1();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 1:
+                    v = teeths[i/5]->getV2();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 2:
+                    v = teeths[i/5]->getV3();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 3:
+                    v = teeths[i/5]->getV4();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                case 4:
+                    v = teeths[i/5]->getV5();
+                    origin = skeleton[indexNeck]->getPosition();
+                    break;
+                default:
+                    break;
+                }
+            break;
+            case -2:
+                v = wingRight[i]->getPosition();
+                origin = wingRight[0]->getPosition();
+            break;
+            case -1:
+                v = wingLeft[i]->getPosition();
+                origin = wingLeft[0]->getPosition();
+            break;
+            default:
+                v = skeleton[i]->getPosition();
+                origin = skeleton[indexRoot]->getPosition();
+            break;
+        }
 
     // On crée le vecteur résultat
     std::vector<qglviewer::Vec> res;
@@ -2887,8 +2980,8 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
         switch (xyz) {
             case 0:     // Rotation axe X
                 tmp[0] = tmp[0];
-                tmp[1] = tmp[1]*cos(angle) - tmp[2]*sin(angle);
-                tmp[2] = tmp[1]*sin(angle) + tmp[2]*cos(angle);
+                tmp[1] = tmp[1]*cos(angle) + tmp[2]*sin(angle);
+                tmp[2] = -tmp[1]*sin(angle) + tmp[2]*cos(angle);
             break;
             case 1:     // Rotation axe Y
                 tmp[0] =  tmp[0]*cos(angle) - tmp[2]*sin(angle);
@@ -2939,6 +3032,14 @@ void Dragon::moveNeckHead() {
         skeleton[i]->setPosition(hermiteTete[i-indexNeck][dtTete]);
    for(int i = indexHead ; i < skeleton.size() ; i++)
         skeleton[i]->setPosition(hermiteTete[i + (indexPawLeftUp - indexNeck) - indexHead][dtTete]);
+   for(int i = 0 ; i < teeths.size() ; i++){
+    teeths[i]->setV1(hermiteTeeth[i*5][dtTete]);
+    teeths[i]->setV2(hermiteTeeth[i*5+1][dtTete]);
+    teeths[i]->setV3(hermiteTeeth[i*5+2][dtTete]);
+    teeths[i]->setV4(hermiteTeeth[i*5+3][dtTete]);
+    teeths[i]->setV5(hermiteTeeth[i*5+4][dtTete]);
+   }
+
     if ((dtTete + 1) % hermiteTete[0].size() == 0)
         moveNeck = false;
     dtTete++;
@@ -2952,5 +3053,27 @@ void Dragon::moveNeckHead() {
         dtQueue--;
     else
         dtQueue++;*/
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::moveWings() {
+    for (int i = 0; i < wingLeft.size(); i++) {
+        wingLeft[i] ->setPosition(hermiteLWing[i][dtAiles]);
+        wingRight[i]->setPosition(hermiteRWing[i][dtAiles]);
+    }
+
+    // Si on arrive à la fin du mouvement, on le fait dans l'autre sens
+    if ((dtAiles + 1) % hermiteLWing[0].size() == 0) {
+        std::cout << "descente" << std::endl;
+        retourAiles = true;
+    }
+    else if (dtAiles == 0)
+        retourAiles = false;
+
+    if (retourAiles)
+        dtAiles--;
+    else
+        dtAiles++;
 }
 
