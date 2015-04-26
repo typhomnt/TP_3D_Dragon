@@ -1172,11 +1172,13 @@ void Dragon::createHead(int first){
                                   s->getY(),
                                   s->getZ() - 2*R*dx,
                                   1.25*R));
+    indexNoseLeft = skeleton.size()-1;
     s = skeleton[i_boutMachHaute]->getContour()[2];
     skeleton.push_back(new Sphere(s->getX() + 2*R*dz,
                                   s->getY(),
                                   s->getZ() - 2*R*dx,
                                   1.25*R));
+    indexNoseRight = skeleton.size()-1;
     for (int i = 0; i <= 2; i++) {
         s = skeleton[i_debutMachoireHaute + i];
         std::vector<Sphere*> &contour = s->getContour();
