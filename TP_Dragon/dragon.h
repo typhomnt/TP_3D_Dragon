@@ -87,6 +87,8 @@ private:
     int indexJawDown;
     int indexEyeLeft;
     int indexEyeRight;
+    int indexNoseLeft;
+    int indexNoseRight;
     float thicknessBody;
     float R;
     float height;
