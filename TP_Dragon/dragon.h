@@ -115,6 +115,8 @@ private:
     std::vector<Tooth*> teeths;
     std::vector<Sphere*> wingLeft;
     std::vector<Sphere*> wingRight;
+    std::vector<Sphere*> wingmemb;
+    std::vector<Spring*> wingspring;
     int nbSpheresWings1;
     int nbSpheresWings2;
     int nbSpheresWings3;
