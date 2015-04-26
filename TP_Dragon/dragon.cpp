@@ -3007,6 +3007,42 @@ std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void Dragon::fly(float z) {
+    qglviewer::Vec mov(0.0, 0.0, z);
+
+    // Squelette
+    for (unsigned int i = 0; i < skeleton.size(); i++)
+        skeleton[i]->incrPosition(mov);
+
+    // Mise à jour des courbes Hermite si nécessaire
+    if (moveQueue) {
+        for (unsigned int i = 0; i < hermiteQueue.size(); i++) {
+            for (unsigned int j = 0; j < hermiteQueue[i].size(); j++) {
+                hermiteQueue[i][j] += mov;
+            }
+        }
+    }
+    
+    if (moveNeck) {
+        for (unsigned int i = 0; i < hermiteTete.size(); i++)
+            for (unsigned int j = 0; j < hermiteTete[i].size(); j++)
+                hermiteTete[i][j] += mov;
+    }
+
+    if (moveWing) {
+        for (unsigned int i = 0; i < hermiteLWing.size(); i++) {
+            for (unsigned int j = 0; j < hermiteLWing[i].size(); j++) {
+                hermiteLWing[i][j] += mov;        
+                hermiteRWing[i][j] += mov;        
+            }
+        }
+    }
+    
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 void Dragon::moveTail() {
     for (int i = indexTail; i < indexNeck; i++) {
         skeleton[i]->setPosition(hermiteQueue[i-indexTail][dtQueue]);
@@ -3064,16 +3100,17 @@ void Dragon::moveWings() {
     }
 
     // Si on arrive à la fin du mouvement, on le fait dans l'autre sens
-    if ((dtAiles + 1) % hermiteLWing[0].size() == 0) {
-        std::cout << "descente" << std::endl;
+    if ((dtAiles + 1) % hermiteLWing[0].size() == 0)
         retourAiles = true;
-    }
     else if (dtAiles == 0)
         retourAiles = false;
 
-    if (retourAiles)
+    if (retourAiles) {
         dtAiles--;
-    else
+        fly(-0.01);
+    }
+    else {
         dtAiles++;
+        fly(0.1);
+    }
 }
-
