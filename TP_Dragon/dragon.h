@@ -193,6 +193,9 @@ private:
     FireSmoke *firesmoke;
     FireSmoke *dust;
 
+    FireSmoke *smoke1;
+    FireSmoke *smoke2;
+
     Grass *grass;
     Mountain *mount;
 

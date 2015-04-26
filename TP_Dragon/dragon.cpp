@@ -226,7 +226,14 @@ Dragon::Dragon() {
     //meshWingR();
     createWingL();
     //meshWingL();
-    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 20000);
+
+    // Feu du dragon
+    this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
+
+    // Fumée qui sort de ses narines
+    this->smoke1 = new FireSmoke(false, qglviewer::Vec(), 1000);
+    this->smoke2 = new FireSmoke(false, qglviewer::Vec(), 1000);
+
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
     this->mount = new Mountain(25,80,qglviewer::Vec(0,0,0));
@@ -252,6 +259,9 @@ Dragon::~Dragon() {
     delete dragPart;
 
     delete firesmoke;
+    delete smoke1;
+    delete smoke2;
+
     delete dust;
     delete grass;
     delete skybox;
@@ -773,9 +783,19 @@ void Dragon::animate(){
             skeleton[i]->setVelocity(qglviewer::Vec(0,0,5));
         }
     }*/
+
     firesmoke->setOrigin(qglviewer::Vec(skeleton[indexJawUp]->getX() - R,skeleton[indexJawUp]->getY() + R,skeleton[indexJawUp]->getZ() + R));
+
+    smoke1->setOrigin(qglviewer::Vec(1,1,1));
+    smoke2->setOrigin(qglviewer::Vec(-1,-1,-1));
+
+
     if (firesmoke->isActive())
         firesmoke->animate();
+    if (smoke1->isActive())
+        smoke1->animate();
+    if (smoke2->isActive())
+        smoke2->animate();
     if (dust->isActive())
         dust->animate();
     fly_up = false;
@@ -1011,6 +1031,10 @@ void Dragon::draw(){
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
     if(firesmoke->isActive())
         firesmoke->draw();
+    if (smoke1->isActive())
+        smoke1->draw();
+    if (smoke2->isActive())
+        smoke2->draw();
     if(dust->isActive())
         dust->draw();
      glDisable(GL_BLEND);
@@ -3060,6 +3084,15 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         }
         else
             this->moveWing = false;
+    } else if ((e->key()==Qt::Key_K) && (modifiers==Qt::NoButton)) {
+        if (!smoke1->isActive()) {
+            smoke1->activate();
+            smoke2->activate();
+        }
+        else {
+            smoke1->inactivate();
+            smoke2->inactivate();
+        }
     }
 
 }
