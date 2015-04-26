@@ -23,6 +23,7 @@ protected :
   /* Scene methods */
   // List of the scene objects, to render, animate, ...
   std::list<Renderable *> renderableList;
+  bool toggleRecord;
 		
   // Create the scene and initializes rendering parameters
   virtual void init();

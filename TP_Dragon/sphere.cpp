@@ -103,6 +103,7 @@ void Sphere::initLighting() {
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::draw() {
+    glPushMatrix();
     if(!colored){
         GLCHECK(glUseProgram(program));
         GLCHECK(glActiveTexture(GL_TEXTURE0));
@@ -114,9 +115,9 @@ void Sphere::draw() {
         GLCHECK(glUniform4fv(glGetUniformLocation(program, "material.ks"), 1, &material.ks.x));
         GLCHECK(glUniform1f(glGetUniformLocation(program, "material.shininess"), material.shininess));
     }else{
-        glColor4f(r,g,b,a);
+        glColor4ub(r,g,b,a);
     }
-
+    glPopMatrix();
 
     glPushMatrix();
     glTranslatef(this->x, this->y, this->z);
@@ -125,7 +126,7 @@ void Sphere::draw() {
 
 	GLCHECK(glUseProgram(0));
 }
-void Sphere::setColor(float r, float g, float b, float a){
+void Sphere::setColor(GLubyte r, GLubyte g, GLubyte b, GLubyte a){
     colored = true;
     this->r = r;
     this->g = g;
