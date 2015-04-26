@@ -18,7 +18,7 @@ Mountain::Mountain(float size, float slice, qglviewer::Vec pos)
     for(int i = 0 ;  i < this->slice ; i++){
         for(int j = 0 ; j < this->slice ; j++){
             (ground[i][j])[0] = (this->pos)[0] + float(i)*size/this->slice;
-            (ground[i][j])[1] = (this->pos)[1] - float(j)*size/this->slice;
+            (ground[i][j])[1] = (this->pos)[1] + float(j)*size/this->slice;
             (ground[i][j])[2] = (this->pos)[2];
         }
     }
@@ -44,7 +44,10 @@ void Mountain::build(){
         int stp = pow(2,n);
         for(int i = 0 ; i < size ; i+= stp){
             for(int j = 0 ; j < size ; j+= stp){
-                map[i][j] += ((float)rand()/(float)RAND_MAX)*stp;
+                if(i== 0 || j==0 || i == size -1 || j == size - 1)
+                    map[i][j] = 0 ;
+                else
+                    map[i][j] += ((float)rand()/(float)RAND_MAX)*stp*0.4;
             }
         }
         for(int i = 0 ; i < size ; i++){
@@ -56,6 +59,10 @@ void Mountain::build(){
             }
         }
     }
+    /*for(int i = 0 ; i < size ; i++)
+        for(int j = 0 ; j < size ; j++)
+            if(i== 0 || j==0 || i == size -1 || j == size - 1)
+                map[i][j] = 0 ;*/
     for(int i = 0 ; i < slice ; i++)
         for(int j = 0 ; j < slice ; j++){
             (ground[i][j])[2] =  map[i][j];
@@ -70,13 +77,11 @@ float Mountain::interpol(float beg, float end, float diff, int step){
 
 
 void Mountain::draw(){
+     glTranslatef(-size/2, -size/2, 0.0);
     glBegin(GL_QUADS);
-    float max = 0;
     for(int i = 0 ; i < slice - 1 ; i++){
         for(int j = 0 ; j < slice - 1 ; j++){
-            if((ground[i][j])[2] > max)
-                max = (ground[i][j])[2];
-            glColor3f(0,colArr[i][j],0);
+            glColor3f(colArr[i][j],colArr[i][j],colArr[i][j]);
             glVertex3f((ground[i][j])[0],(ground[i][j])[1],(ground[i][j])[2]);
             glVertex3f((ground[i][j+1])[0],(ground[i][j+1])[1],(ground[i][j+1])[2]);
             glVertex3f((ground[i+1][j+1])[0],(ground[i+1][j+1])[1],(ground[i+1][j+1])[2]);

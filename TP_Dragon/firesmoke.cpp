@@ -59,7 +59,7 @@ void FireSmoke::animate() {
 			Particule &p = particles[i];
 			qglviewer::Vec mov = particles[i].getMovVec();
 
-			p.incrPos(mov / 100);
+            p.incrPos(mov / 20);
 			p.incrLife(-p.getVelDis());
 
 			double life = p.getLife();
