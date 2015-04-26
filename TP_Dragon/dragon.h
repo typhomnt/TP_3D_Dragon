@@ -10,6 +10,7 @@
 #include "grass.h"
 #include "mountain.h"
 #include "skybox.h"
+#include "tooth.h"
 
 #include <vector>
 #include <string>
@@ -39,18 +40,18 @@ private:
     void drawPawLeftDown(int first, int last);
     void drawPawRightDown(int first, int last);
     void drawWing(bool left);
-    void drawHead(int first, int last);
+    void drawHead(int first);
 
     void createBody(int first, int last);
     void completeTail(int first, int last, bool dessus);
-    void createTail(float angle, int first, int last);
+    void createTail(int first, int last);
     void createNeck(int first, int last);
     void completePaw(std::vector<Sphere*>& paw, std::vector<Sphere*>& foot, int first, int last);
     void createPawLeftUp(float angle, int first, int last);
     void createPawRightUp(float angle, int first, int last);
     void createPawLeftDown(float angle, int first, int last);
     void createPawRightDown(float angle, int first, int last);
-    void createHead(int first, int last);
+    void createHead(int first);
     void drawSkeleton();
     void drawSprings();
     void createWingR();
@@ -85,7 +86,6 @@ private:
     int nbSpheresTail;
     int nbSpheresNeck;
     int nbSpheresPaw;
-    int nbSpheresJaw;
     std::vector<Spring*> sprgSkel;
     std::vector<Spring*> sprgWing1R;
     int indexBody;
@@ -99,10 +99,25 @@ private:
     int indexHead;
     int indexJawUp;
     int indexJawDown;
+    int indexEyeLeft;
+    int indexEyeRight;
     float thicknessBody;
     float R;
     float height;
-
+    std::vector<Tooth*> teeths;
+    std::vector<Sphere*> wingLeft;
+    std::vector<Sphere*> wingRight;
+    int nbSpheresWings1;
+    int nbSpheresWings2;
+    int nbSpheresWings3;
+    int nbSpheresWings4;
+    int nbSpheresWings5;
+    int nbSpheresWings6;
+    int indexWing2;
+    int indexWing3;
+    int indexWing4;
+    int indexWing5;
+    int indexWing6;
     TrapezeIsocele *t;
     TrapezeIsocele *t2;
 
