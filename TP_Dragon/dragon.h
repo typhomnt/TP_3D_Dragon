@@ -63,8 +63,10 @@ private:
     void drawMeshWingL();
     void updateWingPos();
     void moveTail();
+    void moveNeckHead();
     void updateDrag();
     void computeTail(float angle);
+    void computeNeck(float angle);
     void walking();
     void updateHermit(std::vector<qglviewer::Vec> diff);
 
@@ -178,10 +180,11 @@ private:
     Skybox *skybox;     // Skybox
 
     bool moveQueue;     // true si on veut bouger la queue; false sinon
+    bool moveNeck;      //true si on veut bouger la tete; false sinon
 
     // Permet de générer les points de controle de la courbe d'Hermite
     std::vector<qglviewer::Vec> generateCtlPts(int i, double angle, int xyz,
-                                                    int nbPts);
+                                                    int nbPts,int indexRoot);
 
 };
 

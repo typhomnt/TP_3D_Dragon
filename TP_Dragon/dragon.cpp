@@ -81,6 +81,7 @@ static float walkstep = 0.05;
 static float tks = 0.03;
 static float fact = 1;
 static float tailAngle = M_PI/16;
+static float neckAngle = -M_PI/16;
 static qglviewer::Vec diffBody ;
 static qglviewer::Vec diffNeck ;
 static qglviewer::Vec diffTail ;
@@ -217,6 +218,8 @@ Dragon::Dragon() {
     this->skybox = new Skybox(50.0, texture0, texcoord0);
 
     hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
+    this->moveQueue = false;
+    hermiteTete = std::vector< std::vector<qglviewer::Vec> >(nbSpheresNeck + skeleton.size() - indexHead-1);
     this->moveQueue = false;
 }
 
@@ -721,6 +724,9 @@ void Dragon::animate(){
     //Roation de la queue
     if (moveQueue)
         moveTail();
+    //Rotation du cou
+    if (moveNeck)
+        ;
     /*
     //
     updateWingPos();
@@ -2541,8 +2547,16 @@ void Dragon::updateWingPos(){
 
 void Dragon::computeTail(float angle){
     for (int i = indexTail; i < indexNeck; i++) {
-        std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4);
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4,indexTail);
         hermiteQueue[i-indexTail] = Hermite::generate(tmp, 0.05);
+        angle *= 1.01;
+    }
+}
+
+void Dragon::computeNeck(float angle){
+    for (int i = indexNeck; i < indexPawLeftUp; i++) {
+        std::vector<qglviewer::Vec> tmp = generateCtlPts(i, angle, 1, 4,indexNeck);
+        hermiteQueue[i-indexNeck] = Hermite::generate(tmp, 0.05);
         angle *= 1.01;
     }
 }
@@ -2563,13 +2577,14 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         viewer.displayMessage("Set gravity to "
             + (toggleGravity ? QString("true") : QString("false")));*/
 
-    } else if ((e->key()==Qt::Key_D) && (modifiers==Qt::NoButton)) {
-        for(int i = 0; i < hermiteQueue[0].size(); i++)
-        std::cout << hermiteQueue[0][i] << std::endl;
-        /*toggleViscosity = !toggleViscosity;
-        setViscosity(toggleViscosity);
-        viewer.displayMessage("Set viscosity to "
-            + (toggleViscosity ? QString("true") : QString("false")));*/
+    } else if ((e->key()==Qt::Key_N) && (modifiers==Qt::NoButton)) {
+         // On met à jour le vecteur indiquant la position des sphères de la queue
+         if (!this->moveNeck) {
+             this->moveNeck = true;
+             computeNeck(neckAngle);
+         }
+         else
+             this->moveNeck = false;
 
     } else if ((e->key()==Qt::Key_Q) && (modifiers==Qt::NoButton)) {
         // On met à jour le vecteur indiquant la position des sphères de la queue
@@ -2612,10 +2627,10 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 
 ///////////////////////////////////////////////////////////////////////////////
 std::vector<qglviewer::Vec> Dragon::generateCtlPts(int i, double angle,
-                                                        int xyz, int nbPts) {
+                                                        int xyz, int nbPts,int indexRoot) {
     // On récupère la sphère correspondant à l'indice i
     qglviewer::Vec v = skeleton[i]->getPosition();
-    qglviewer::Vec origin = skeleton[indexTail]->getPosition();
+    qglviewer::Vec origin = skeleton[indexRoot]->getPosition();
 
     // On crée le vecteur résultat
     std::vector<qglviewer::Vec> res;
@@ -2669,5 +2684,25 @@ void Dragon::moveTail() {
         dtQueue--;
     else
         dtQueue++;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::moveNeckHead() {
+    if(walk)
+        walk = false;
+    for (int i = indexNeck; i < indexPawLeftUp; i++) {
+        skeleton[i]->setPosition(hermiteTete[i-indexNeck][dtTete]);
+    }
+
+    /*// Si on arrive à la fin du mouvement, on le fait dans l'autre sens
+    if ((dtQueue + 1) % hermiteQueue[0].size() == 0)
+        retourQueue = true;
+    else if (dtQueue == 0)
+        retourQueue = false;
+
+    if (retourQueue)
+        dtQueue--;
+    else
+        dtQueue++;*/
 }
 
