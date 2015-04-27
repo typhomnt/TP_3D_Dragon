@@ -85,7 +85,7 @@ void Mountain::draw(){
     for(int i = 0 ; i < slice - 1 ; i++){
         for(int j = 0 ; j < slice - 1 ; j++){
             if(!ice)
-                glColor3f(colArr[i][j],colArr[i][j],colArr[i][j]);
+                glColor3f(20*colArr[i][j],colArr[i][j],colArr[i][j]);
             else
                  glColor3f(colArr[i][j],colArr[i][j],20*colArr[i][j]);
             glVertex3f((ground[i][j])[0],(ground[i][j])[1],(ground[i][j])[2]);

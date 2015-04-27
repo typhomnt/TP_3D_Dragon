@@ -173,6 +173,10 @@ private:
     Grass *grass;
     Mountain *mount;
     Mountain *iced;
+    Mountain *iced2;
+    Mountain *iced3;
+    bool computedH;
+    bool computedT;
 
 
     Skybox *skybox;     // Skybox
@@ -180,6 +184,7 @@ private:
     bool moveQueue;     // true si on veut bouger la queue; false sinon
     bool moveNeck;      //true si on veut bouger la tete; false sinon
     bool moveWing;      // true si on veut bouger les ailes; false sinon
+    bool highNeck;
 
     // Permet de générer les points de controle de la courbe d'Hermite
     std::vector<qglviewer::Vec> generateCtlPts(int i, double angle, int xyz,

@@ -160,6 +160,9 @@ Dragon::Dragon() {
     paw3w = false;
     paw4w = false;
     stopw = false;
+    highNeck = false;
+    computedH = false;
+    computedT = false;
     dist_flyx = 0.1;
     dist_flyy = 0.1;
     dist_flyz = 0.1;
@@ -171,8 +174,6 @@ Dragon::Dragon() {
     createPawLeftDown(-70, indexPawLeftDown, indexPawRightDown-1);
     createPawRightDown(-110, indexPawRightDown, indexLastPawRightDown);
     createHead(indexHead);
-    wing1root = skeleton[7]->getPosition() + qglviewer::Vec (0,5*R,5*R);
-    wing2root = skeleton[7]->getPosition() + qglviewer::Vec (0,-5*R,5*R);
     nbSpheresWings1 = 20;
     nbSpheresWings2 = 30;
     nbSpheresWings3 = 26;
@@ -185,9 +186,8 @@ Dragon::Dragon() {
     indexWing5 = indexWing4 + nbSpheresWings4;
     indexWing6 = indexWing5 + nbSpheresWings5;
     createWingR();
-    //meshWingR();
     createWingL();
-    //meshWingL();
+
 
     // Feu du dragon
     this->firesmoke = new FireSmoke(true, qglviewer::Vec(1,1,1), 10000);
@@ -197,10 +197,12 @@ Dragon::Dragon() {
     this->smoke2 = new FireSmoke(false, qglviewer::Vec(), 1000);
 
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
-    this->grass = new Grass(2,100,20);
-    this->mount = new Mountain(25,80,qglviewer::Vec(0,0,0));
+    this->grass = new Grass(2,1000,10);
+    this->mount = new Mountain(25,80,qglviewer::Vec(15,-15,0));
 
-    this->iced = new Mountain(5,50,qglviewer::Vec(0,0,0),true);
+    this->iced = new Mountain(10,50,qglviewer::Vec(0,0,0),true);
+    this->iced2 = new Mountain(10,50,qglviewer::Vec(0,10,0),true);
+    this->iced3 = new Mountain(10,50,qglviewer::Vec(0,20,0),true);
     this->skybox = new Skybox(75.0, texture0, texcoord0);
 
 
@@ -253,9 +255,9 @@ void Dragon::init(Viewer &v) {
     // load textures
     tex_skeleton = loadTexture("images/texture_drag1.png");
     tex_field = loadTexture("images/ground.jpg");
-    tex_body = loadTexture("images/peau.png");
+    tex_body = loadTexture("images/corps.jpg");
     tex_feu = loadTexture("images/feu1.jpg");
-    tex_aile = loadTexture("images/ailes3.jpg");
+    tex_aile = loadTexture("images/ailes4.jpg");
     tex_eye = loadTexture("images/oeil.jpeg");
 
     program.load("shaders/shader.vert", "shaders/shader.frag");
@@ -324,6 +326,8 @@ void Dragon::init(Viewer &v) {
     grass->init(v);
     mount->build();
     iced->build();
+    iced2->build();
+    iced3->build();
     skybox->setProgram(program);
     skybox->init(v);
 }
@@ -464,6 +468,8 @@ void Dragon::animate(){
     if (firesmoke->isActive()){
         firesmoke->animate();
         iced->animate();
+        iced2->animate();
+        iced3->animate();
     }
     if (smoke1->isActive())
         smoke1->animate();
@@ -650,6 +656,7 @@ void Dragon::draw(){
     drawPart(indexBody, indexLastPawRightDown);
     drawHead(indexHead);
 
+    glPushMatrix();
     grass->draw();
     glPopMatrix();
 
@@ -659,6 +666,14 @@ void Dragon::draw(){
 
     glPushMatrix();
     iced->draw();
+    glPopMatrix();
+
+    glPushMatrix();
+    iced2->draw();
+    glPopMatrix();
+
+    glPushMatrix();
+    iced3->draw();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
@@ -700,9 +715,9 @@ void Dragon::drawHead(int first) {
 /////////////////////////////////////////////////////////////////////
 void Dragon::createBody(int first, int last){
     height = 30*R;
-    skeleton.push_back(new Sphere(0,0,height,R,10,0));
+    skeleton.push_back(new Sphere(15,15,height,R,10,0));
     for (int i = first+1; i <= last; i++) {
-        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,0,skeleton[0]->getZ(),R,10,tex_skeleton));
+        skeleton.push_back(new Sphere(skeleton[i-1]->getX()+2*R,skeleton[i-1]->getY(),skeleton[0]->getZ(),R,10,tex_skeleton));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
     }
     nbSpheresContourBody = (int)(float)(M_PI*thicknessBody/R)+1;
@@ -732,7 +747,7 @@ void Dragon::createTail(int first, int last){
     for (int i = first; i <= last; i++) {
         float x = x0 + 2*R*(i-first+1);
         skeleton.push_back(new Sphere(x,
-                                      0,
+                                      skeleton[i-1]->getY(),
                                       z0 + (x-x0)*(x-x0)/(80.0*R),
                                       R,10,tex_skeleton));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
@@ -818,7 +833,7 @@ void Dragon::createTail(int first, int last){
 /////////////////////////////////////////////////////////////////////
 void Dragon::createNeck(int first, int last){
     skeleton.push_back(new Sphere(skeleton[indexBody]->getX()-2*R,
-                                  0,
+                                  skeleton[indexBody]->getY(),
                                   skeleton[indexBody]->getZ(),
                                   R,10,tex_skeleton));
     sprgSkel.push_back(new Spring(skeleton[first],skeleton[0],k,R,amort));
@@ -827,7 +842,7 @@ void Dragon::createNeck(int first, int last){
     for (int i = first+1; i <= last; i++) {
         float x = x0 - 2*R*(i-first);
         skeleton.push_back(new Sphere(x,
-                                      0,
+                                      skeleton[i-1]->getY(),
                                       z0 + (x-x0)*(x-x0)/(30.0*R),
                                       R,10,tex_skeleton));
         sprgSkel.push_back(new Spring(skeleton[i-1],skeleton[i],k,lo,amort));
@@ -1842,21 +1857,19 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 
     /* Controls added for Lab Session 6 "Physicall Modeling" */
     if ((e->key()==Qt::Key_E) && (modifiers==Qt::NoButton)) {
-        fly_up = true;
-        fly_down = true;
-        walk = false;
-        take_off = false;
-        fly_force -= 800*gravity;
-        /*toggleGravity = !toggleGravity;
-        setGravity(toggleGravity);
-        viewer.displayMessage("Set gravity to "
-            + (toggleGravity ? QString("true") : QString("false")));*/
+        if(highNeck)
+            highNeck = false;
+        else
+           highNeck = true;
 
     } else if ((e->key()==Qt::Key_N) && (modifiers==Qt::NoButton)) {
         // On met à jour le vecteur indiquant la position des sphères de la queue
         if (!this->moveNeck) {
             this->moveNeck = true;
-            computeNeck(neckAngle);
+            if(!computedH){
+                computeNeck(neckAngle);
+                computedH = true;
+            }
         }
         else
             this->moveNeck = false;
@@ -1865,7 +1878,11 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         // On met à jour le vecteur indiquant la position des sphères de la queue
         if (!this->moveQueue) {
             this->moveQueue = true;
-            computeTail(tailAngle);
+
+            if(!computedT){
+                computeTail(tailAngle);
+                computedT = true;
+            }
         }
         else
             this->moveQueue = false;
@@ -1921,7 +1938,7 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
 
     // On autorise la translation uniquement en vol
     if (moveWing) {
-        double step = 0.1;
+        double step = 0.5;
         if ((e->key() == Qt::Key_5) && (modifiers == Qt::KeypadModifier)) {
             trVec = qglviewer::Vec(step, 0, 0);
             translate = true;
@@ -2130,20 +2147,15 @@ void Dragon::moveNeckHead() {
    }
 
     if ((dtTete + 1) % hermiteTete[0].size() == 0){
-        moveNeck = false;
-        firesmoke->activate();
+        highNeck = true;
     }
-    dtTete++;
-    /*// Si on arrive à la fin du mouvement, on le fait dans l'autre sens
-    if ((dtQueue + 1) % hermiteQueue[0].size() == 0)
-        retourQueue = true;
-    else if (dtQueue == 0)
-        retourQueue = false;
+    else if (dtTete == 0)
+        highNeck = false;
 
-    if (retourQueue)
-        dtQueue--;
+    if(!highNeck)
+        dtTete++;
     else
-        dtQueue++;*/
+        dtTete--;
 }
 
 

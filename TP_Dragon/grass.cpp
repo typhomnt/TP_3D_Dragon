@@ -63,7 +63,7 @@ void Grass::draw() {
 		qglviewer::Vec pos = elements[i].getPos();
 
 		glPushMatrix();
-        glTranslatef(pos[0], pos[1], pos[2]);
+        glTranslatef(pos[0] - 20, pos[1] - 20, pos[2]);
         glutSolidCube(actRadius);
 		glPopMatrix();
 		
