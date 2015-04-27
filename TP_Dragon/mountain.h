@@ -5,9 +5,10 @@
 class Mountain : public Renderable
 {
 public:
-    Mountain(float size, float slice, qglviewer::Vec pos);
+    Mountain(float size, float slice, qglviewer::Vec pos,bool ice=false);
     void build();
     void draw();
+    void animate();
 private:
      float size;
      float slice;
@@ -15,6 +16,7 @@ private:
      qglviewer::Vec pos;
      float interpol(float beg, float end, float diff, int step);
      float **colArr;
+     bool ice;
 };
 
 

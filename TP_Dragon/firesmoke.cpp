@@ -83,7 +83,7 @@ void FireSmoke::animate() {
 				else if (life > 0.25 && life <= 0.50)
 					p.setColor(qglviewer::Vec(2, 2, 2));
 				else
-					p.setColor(qglviewer::Vec(255, 255, 255));
+                    p.setColor(qglviewer::Vec(0.5, 0.5, 0.5));
 			}
 			else {
                 // Poussière de couleur marron

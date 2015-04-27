@@ -7,7 +7,8 @@
     #include <GLUT/glut.h>
 #endif
 #include "mountain.h"
-Mountain::Mountain(float size, float slice, qglviewer::Vec pos)
+static float amp = 0.4;
+Mountain::Mountain(float size, float slice, qglviewer::Vec pos,bool ice)
 {
     this->size = size;
     this->slice = pow(2,ceil(log2(slice)));;
@@ -32,6 +33,7 @@ Mountain::Mountain(float size, float slice, qglviewer::Vec pos)
             colArr[i][j] = 0;
         }
     }
+    this->ice=ice;
 }
 
 void Mountain::build(){
@@ -47,7 +49,7 @@ void Mountain::build(){
                 if(i== 0 || j==0 || i == size -1 || j == size - 1)
                     map[i][j] = 0 ;
                 else
-                    map[i][j] += ((float)rand()/(float)RAND_MAX)*stp*0.4;
+                    map[i][j] += ((float)rand()/(float)RAND_MAX)*stp*amp;
             }
         }
         for(int i = 0 ; i < size ; i++){
@@ -63,6 +65,7 @@ void Mountain::build(){
         for(int j = 0 ; j < size ; j++)
             if(i== 0 || j==0 || i == size -1 || j == size - 1)
                 map[i][j] = 0 ;*/
+
     for(int i = 0 ; i < slice ; i++)
         for(int j = 0 ; j < slice ; j++){
             (ground[i][j])[2] =  map[i][j];
@@ -81,7 +84,10 @@ void Mountain::draw(){
     glBegin(GL_QUADS);
     for(int i = 0 ; i < slice - 1 ; i++){
         for(int j = 0 ; j < slice - 1 ; j++){
-            glColor3f(colArr[i][j],colArr[i][j],colArr[i][j]);
+            if(!ice)
+                glColor3f(colArr[i][j],colArr[i][j],colArr[i][j]);
+            else
+                 glColor3f(colArr[i][j],colArr[i][j],20*colArr[i][j]);
             glVertex3f((ground[i][j])[0],(ground[i][j])[1],(ground[i][j])[2]);
             glVertex3f((ground[i][j+1])[0],(ground[i][j+1])[1],(ground[i][j+1])[2]);
             glVertex3f((ground[i+1][j+1])[0],(ground[i+1][j+1])[1],(ground[i+1][j+1])[2]);
@@ -91,4 +97,17 @@ void Mountain::draw(){
     glEnd();
     /*std::cout << max << std::endl;
     std::cout << slice << std::endl;*/
+}
+
+void Mountain::animate(){
+    if(ice){
+         amp -= 0.01;
+         build();
+        }
+    if(amp < 0.001)
+        for(int i = 0 ; i < slice ; i++)
+            for(int j = 0 ; j < slice ; j++){
+                (ground[i][j])[2] = 0;
+            }
+
 }

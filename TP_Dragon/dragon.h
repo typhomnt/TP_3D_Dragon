@@ -50,7 +50,7 @@ private:
     void drawWingL();
     void meshWingL();
     void drawMeshWingL();
-    void updateWingPos();
+    void updateWingPos(std::vector<qglviewer::Vec>  diff);
     void moveTail();
     void moveNeckHead();
     void updateDrag(std::vector<qglviewer::Vec> diff);
@@ -171,6 +171,7 @@ private:
 
     Grass *grass;
     Mountain *mount;
+    Mountain *iced;
 
 
     Skybox *skybox;     // Skybox

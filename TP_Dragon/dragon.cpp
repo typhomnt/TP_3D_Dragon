@@ -194,7 +194,7 @@ Dragon::Dragon() {
     this->dust = new FireSmoke(false,qglviewer::Vec(1,1,1), 5000,true);
     this->grass = new Grass(2,100,20);
     this->mount = new Mountain(25,80,qglviewer::Vec(0,0,0));
-
+    this->iced = new Mountain(5,50,qglviewer::Vec(0,0,0),true);
     this->skybox = new Skybox(50.0, texture0, texcoord0);
 
     hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
@@ -272,9 +272,9 @@ void Dragon::init(Viewer &v) {
         Sphere* s = skeleton[i];
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
             Sphere* s = *it;
-            //if (s->estTexturee())
-               // s->setTexture(tex_body);
-            //else
+            if (s->estTexturee())
+               s->setTexture(tex_body);
+            else
                 s->setColor(254,150,160,1);
             s->init(v);
         }
@@ -316,6 +316,7 @@ void Dragon::init(Viewer &v) {
 
     grass->init(v);
     mount->build();
+    iced->build();
     skybox->setProgram(program);
     skybox->init(v);
 }
@@ -445,8 +446,10 @@ void Dragon::animate(){
     smoke2->setOrigin(skeleton[indexNoseRight]->getPosition());
 
 
-    if (firesmoke->isActive())
+    if (firesmoke->isActive()){
         firesmoke->animate();
+        iced->animate();
+    }
     if (smoke1->isActive())
         smoke1->animate();
     if (smoke2->isActive())
@@ -466,11 +469,9 @@ void Dragon::animate(){
 
     if (moveWing)
         moveWings();
-    /*
-       updateWingPos();
-    */
     for(int i = 0 ; i < skeleton.size() ; i++)
         diffa[i] -= skeleton[i]->getPosition();
+    updateWingPos(diffa);
     updateDrag(diffa);
 }
 
@@ -638,7 +639,11 @@ void Dragon::draw(){
     glPopMatrix();
 
     glPushMatrix();
-    //mount->draw();
+    mount->draw();
+    glPopMatrix();
+
+    glPushMatrix();
+    iced->draw();
     glPopMatrix();
 
     GLCHECK(glUseProgram( 0 ));
@@ -646,13 +651,13 @@ void Dragon::draw(){
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
     if(firesmoke->isActive())
         firesmoke->draw();
+    glDisable(GL_BLEND);
     if (smoke1->isActive())
         smoke1->draw();
     if (smoke2->isActive())
         smoke2->draw();
     if(dust->isActive())
         dust->draw();
-    glDisable(GL_BLEND);
 }
 
 
@@ -1749,8 +1754,13 @@ void Dragon::collisionParticleParticle(Sphere *s1, Sphere *s2)
         s1->setVelocity((1 + rebound) * s1->getVelocity());
 }
 
-void Dragon::updateWingPos(){
-;
+void Dragon::updateWingPos(std::vector<qglviewer::Vec> diff){
+    for(int i = 0 ; i < wingRight.size() ; i++){
+        wingRight[i]->incrPosition(-diff[0]);
+    }
+    for(int i = 0 ; i < wingLeft.size() ; i++){
+        wingLeft[i]->incrPosition(-diff[0]);
+    }
 }
 
 void Dragon::computeTail(float angle){
