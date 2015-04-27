@@ -12,10 +12,7 @@
 
 #include "grass.h"
 
-
-// Couleur vert herbe
-static qglviewer::Vec gazon(0.0, 105.0/255.0, 25.0/255.0);
-
+static qglviewer::Vec gazon(0.0, 255.0, 0);
 
 ///////////////////////////////////////////////////////////////////////////////
 Grass::Grass(double size, int nbParticles, int iter) {
@@ -66,7 +63,7 @@ void Grass::draw() {
 		qglviewer::Vec pos = elements[i].getPos();
 
 		glPushMatrix();
-		glTranslatef(pos[0], pos[1], pos[2] - 5.0);
+        glTranslatef(pos[0], pos[1], pos[2]);
         glutSolidCube(actRadius);
 		glPopMatrix();
 		

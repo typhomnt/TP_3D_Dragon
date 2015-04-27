@@ -61,6 +61,7 @@ private:
     void walking();
     void updateHermit(std::vector<qglviewer::Vec> diff);
     void fly(float z);
+    void translation(qglviewer::Vec v);
     void drawWingMemb();
 
     std::vector<Sphere*> skeleton;
