@@ -13,7 +13,7 @@ varying vec4 light_color;
 ///////////////////////////////////////////////////////////////////////////////
 void main() {
 
-	const float fogDensity = 0.02;					// Densité du brouillard
+	const float fogDensity = 0.007;					// Densité du brouillard
 	const vec4 fogColor = vec4(0.5, 0.5, 0.5, 1.0); // Couleur du brouillard
 	const float LOG2 = 1.442695;
 

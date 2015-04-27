@@ -38,10 +38,10 @@ static float no_shininess(0.0f);
 static float low_shininess(5.0f);
 static float high_shininess(50.0f);
 
-static const vec4 la(0.5f, 0.5f, 0.5f, 1.0f);
-static const vec4 ld(0.5f, 0.5f, 0.5f, 1.0f);
+static const vec4 la(0.5f, 0.0f, 0.0f, 1.0f);
+static const vec4 ld(0.5f, 0.0f, 0.0f, 1.0f);
 static const vec4 ls(0.5f, 0.5f, 0.5f, 1.0f);
-static Light light(vec4(0, 100, 100, 1), la, ld, ls);
+static Light light(vec4(0, 45, 45, 1), la, ld, ls);
 
 static const Material material(mat_ambient_color, mat_diffuse, white, low_shininess);
 
@@ -105,7 +105,12 @@ static int dtTete = 0;
 static std::vector< std::vector<qglviewer::Vec> > hermiteLWing;
 static std::vector< std::vector<qglviewer::Vec> > hermiteRWing;
 static bool retourAiles = false;
+static bool retourVol = false;
 int dtAiles = 0;
+
+// Tanslation du dragon
+bool translate = false;
+qglviewer::Vec trVec;
 
 ///////////////////////////////////////////////////////////////////////////////
 Dragon::Dragon() {
@@ -195,7 +200,7 @@ Dragon::Dragon() {
     this->grass = new Grass(2,100,20);
     this->mount = new Mountain(25,80,qglviewer::Vec(0,0,0));
 
-    this->skybox = new Skybox(50.0, texture0, texcoord0);
+    this->skybox = new Skybox(75.0, texture0, texcoord0);
 
     hermiteQueue = std::vector< std::vector<qglviewer::Vec> >(nbSpheresTail);
     this->moveQueue = false;
@@ -245,7 +250,7 @@ Dragon::~Dragon() {
 void Dragon::init(Viewer &v) {
     // load textures
     tex_skeleton = loadTexture("images/texture_drag1.png");
-    tex_field = loadTexture("images/field1.jpg");
+    tex_field = loadTexture("images/ground.jpg");
     tex_body = loadTexture("images/peau.png");
     tex_feu = loadTexture("images/feu1.jpg");
     tex_aile = loadTexture("images/ailes3.jpg");
@@ -272,9 +277,9 @@ void Dragon::init(Viewer &v) {
         Sphere* s = skeleton[i];
         for(std::vector<Sphere*>::iterator it = skeleton[i]->getContour().begin() ; it != skeleton[i]->getContour().end(); it++){
             Sphere* s = *it;
-            //if (s->estTexturee())
-               // s->setTexture(tex_body);
-            //else
+            if (s->estTexturee())
+                s->setTexture(tex_body);
+            else
                 s->setColor(254,150,160,1);
             s->init(v);
         }
@@ -331,7 +336,11 @@ void Dragon::initLighting() {
     glEnable(GL_LIGHTING);
     glDisable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
-    glClearColor(218.0 / 255.0, 200.0 / 255.0, 196.0 / 255.0, 1.0f);
+    //glClearColor(218.0 / 255.0, 200.0 / 255.0, 196.0 / 255.0, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+    glClearColor(120.0 / 255.0, 0.0 / 255.0, 0 / 255.0, 0.5f);
+    glDisable(GL_BLEND);
 }
 
 
@@ -432,6 +441,10 @@ void Dragon::animate(){
         diffh.push_back(skeleton[i]->getPosition());
         diffa.push_back(skeleton[i]->getPosition());
     }
+
+    if (translate)
+        translation(trVec);
+
     if(walk)
         walking();
     for(int i = 0 ; i < skeleton.size() ; i++)
@@ -616,7 +629,7 @@ void Dragon::draw(){
 
 
     GLCHECK(glUseProgram( (GLint)program ));
-    //skybox->draw();
+    skybox->draw();
     glPushMatrix();
     drawBasePlane(50.0);
     glPopMatrix();
@@ -634,7 +647,7 @@ void Dragon::draw(){
     drawPart(indexBody, indexLastPawRightDown);
     drawHead(indexHead);
 
-    //grass->draw();
+    grass->draw();
     glPopMatrix();
 
     glPushMatrix();
@@ -1877,6 +1890,12 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         }
         else
             this->moveWing = false;
+    } else if ((e->key()==Qt::Key_PageUp) && (modifiers==Qt::NoButton)) {
+        if (retourVol)
+            retourVol = false;
+    } else if ((e->key()==Qt::Key_PageDown) && (modifiers==Qt::NoButton)) {
+        if (!retourVol)
+            retourVol = true;
     } else if ((e->key()==Qt::Key_K) && (modifiers==Qt::NoButton)) {
         if (!smoke1->isActive()) {
             smoke1->activate();
@@ -1885,6 +1904,27 @@ void Dragon::keyPressEvent(QKeyEvent *e, Viewer & viewer){
         else {
             smoke1->inactivate();
             smoke2->inactivate();
+        }
+    }
+
+    // On autorise la translation uniquement en vol
+    if (moveWing) {
+        double step = 0.1;
+        if ((e->key() == Qt::Key_5) && (modifiers == Qt::KeypadModifier)) {
+            trVec = qglviewer::Vec(step, 0, 0);
+            translate = true;
+        }
+        if ((e->key() == Qt::Key_8) && (modifiers == Qt::KeypadModifier)) {
+            trVec = qglviewer::Vec(-step, 0, 0);
+            translate = true;
+        }
+        if ((e->key() == Qt::Key_4) && (modifiers == Qt::KeypadModifier)) {
+            trVec = qglviewer::Vec(0, -step, 0);
+            translate = true;
+        }
+        if ((e->key() == Qt::Key_6) && (modifiers == Qt::KeypadModifier)) {
+            trVec = qglviewer::Vec(0, step, 0);
+            translate = true;
         }
     }
 
@@ -2006,7 +2046,39 @@ void Dragon::fly(float z) {
             }
         }
     }
-    
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Dragon::translation(qglviewer::Vec v) {
+    // Squelette
+    for (unsigned int i = 0; i < skeleton.size(); i++)
+        skeleton[i]->incrPosition(v);
+
+    // Mise à jour des courbes Hermite si nécessaire
+    if (moveQueue) {
+        for (unsigned int i = 0; i < hermiteQueue.size(); i++) {
+            for (unsigned int j = 0; j < hermiteQueue[i].size(); j++) {
+                hermiteQueue[i][j] += v;
+            }
+        }
+    }
+
+    if (moveNeck) {
+        for (unsigned int i = 0; i < hermiteTete.size(); i++)
+            for (unsigned int j = 0; j < hermiteTete[i].size(); j++)
+                hermiteTete[i][j] += v;
+    }
+
+    if (moveWing) {
+        for (unsigned int i = 0; i < hermiteLWing.size(); i++) {
+            for (unsigned int j = 0; j < hermiteLWing[i].size(); j++) {
+                hermiteLWing[i][j] += v;
+                hermiteRWing[i][j] += v;
+            }
+        }
+    }
+    translate = false;
 }
 
 
@@ -2076,12 +2148,25 @@ void Dragon::moveWings() {
     else if (dtAiles == 0)
         retourAiles = false;
 
-    if (retourAiles) {
-        dtAiles--;
-        fly(-0.01);
+    if (!retourVol) {
+        if (retourAiles) {
+            dtAiles--;
+            fly(-0.01);
+        }
+        else {
+            dtAiles++;
+            fly(0.1);
+        }
     }
     else {
-        dtAiles++;
-        fly(0.1);
+        if (retourAiles) {
+            dtAiles--;
+            fly(0.01);
+        }
+        else {
+            dtAiles++;
+            fly(-0.1);
+        }
     }
+
 }
