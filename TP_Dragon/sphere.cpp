@@ -17,6 +17,9 @@
 
 
 
+/** Variables statiques utiles pour renseigner les infos sur la lumière et
+  * et le matériel de la sphère
+  */
 static const vec4 black(0.0f, 0.0f, 0.0f, 1.0f);
 static const vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -36,8 +39,11 @@ static const Material material(mat_ambient_color, mat_diffuse, white, 5);
 ///////////////////////////////////////////////////////////////////////////////
 Sphere::Sphere() : toggleCollisions(true),colored(false),fixed(false) {}
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
-Sphere::Sphere(float x, float y, float z, float radius, bool texturee, float mass,GLint tex,bool fix, bool col) :colored(false) {
+Sphere::Sphere(float x, float y, float z, float radius, bool texturee, float mass,
+                    GLint tex,bool fix, bool col) : colored(false) {
     this->x = x;
     this->y = y;
     this->z = z;
@@ -56,7 +62,10 @@ Sphere::Sphere(float x, float y, float z, float radius, bool texturee, float mas
     this->toggleCollisions = col;
 }
 
-Sphere::Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass,GLint tex,bool fix, bool col) : colored(false){
+
+///////////////////////////////////////////////////////////////////////////////
+Sphere::Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass,
+                    GLint tex,bool fix, bool col) : colored(false){
     this->x = pos[0];
     this->y = pos[1];
     this->z = pos[2];
@@ -74,6 +83,8 @@ Sphere::Sphere(qglviewer::Vec pos, qglviewer::Vec vel, float radius, float mass,
     this->toggleCollisions = col;
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::init(Viewer &v) {
 	(void)v; // Pour éviter un warning
@@ -88,6 +99,8 @@ void Sphere::init(Viewer &v) {
 	GLCHECK(glUseProgram(0));
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::initLighting() {
     GLCHECK(glUniform4fv(glGetUniformLocation(program, "light.la"), 1, &light.la.x));
@@ -99,6 +112,7 @@ void Sphere::initLighting() {
     glDisable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,6 +140,9 @@ void Sphere::draw() {
 
 	GLCHECK(glUseProgram(0));
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 void Sphere::setColor(GLubyte r, GLubyte g, GLubyte b, GLubyte a){
     colored = true;
     this->r = r;
@@ -133,6 +150,9 @@ void Sphere::setColor(GLubyte r, GLubyte g, GLubyte b, GLubyte a){
     this->b = b;
     this->a = a;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 void Sphere::setFixed(bool b){
     this->fixed = b;
 }
@@ -141,41 +161,50 @@ bool Sphere::getFixed() const{
     return this->fixed;
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::generate(float radius) {
     this->setRadius(radius);
     this->draw();
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 float Sphere::getRadius() {
     return this->radius;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 float Sphere::getX() {
     return this->x;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 float Sphere::getY() {
     return this->y;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 float Sphere::getZ() {
     return this->z;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 bool Sphere::estTexturee() {
     return this->texturee;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 std::vector<Sphere*>& Sphere::getContour() {
     return this->contour;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::setRadius(float radius) {
@@ -184,11 +213,13 @@ void Sphere::setRadius(float radius) {
 	this->radius = radius;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::setX(float x) {
     this->x = x;
     this->position[0] = x;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::setY(float y) {
@@ -196,16 +227,19 @@ void Sphere::setY(float y) {
     this->position[1] = y;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::setZ(float z) {
     this->z = z;
     this->position[2] = z;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::doitEtreTexturee(bool t) {
     this->texturee = t;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::operator=(const Sphere& s) {
@@ -214,6 +248,7 @@ void Sphere::operator=(const Sphere& s) {
     this->z = s.z;
     this->radius = s.radius;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void Sphere::setTexture(GLint id) {
@@ -232,63 +267,64 @@ bool Sphere::getCollisions() {
 void Sphere::setCollisions(bool enable) {
 	this->toggleCollisions = enable;
 }
-///////////////////////////////////////////////////////////////////////////////
 
-const qglviewer::Vec  Sphere::getPosition() const
-{
+
+///////////////////////////////////////////////////////////////////////////////
+const qglviewer::Vec  Sphere::getPosition() const {
     return position;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-const qglviewer::Vec  Sphere::getVelocity() const
-{
+const qglviewer::Vec  Sphere::getVelocity() const {
     return velocity;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-float Sphere::getMass() const
-{
+float Sphere::getMass() const {
     return mass;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-float Sphere::getInvMass() const
-{
+float Sphere::getInvMass() const {
     return invMass;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Sphere::setPosition(const qglviewer::Vec &pos)
-{
+void Sphere::setPosition(const qglviewer::Vec &pos) {
     this->position = pos;
     this->x = pos[0];
     this->y = pos[1];
     this->z = pos[2];
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-void Sphere::setVelocity(const qglviewer::Vec &vel)
-{
+void Sphere::setVelocity(const qglviewer::Vec &vel) {
     this->velocity = vel;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-void Sphere::incrPosition(const qglviewer::Vec &pos)
-{
+void Sphere::incrPosition(const qglviewer::Vec &pos) {
     this->position += pos;
     this->x += pos[0];
     this->y += pos[1];
     this->z += pos[2];
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-void Sphere::incrVelocity(const qglviewer::Vec &vel)
-{
+void Sphere::incrVelocity(const qglviewer::Vec &vel) {
     this->velocity += vel;
 }
 
-void Sphere::setMass(float m){
+
+///////////////////////////////////////////////////////////////////////////////
+void Sphere::setMass(float m) {
     this->mass = m;
     this->invMass = (mass > 0 ? 1 / mass : 0.0);
 }
